@@ -1,74 +1,89 @@
 import { defineStore } from 'pinia'
+import type { User, LoginRequest, LoginResponse } from '~/types/api'
+import { ref, computed } from 'vue'
+// import { useApi } from '@/composables/useApi'
 
-interface User {
-  id: number
-  username: string
-  email?: string
-}
+export const useAuthStore = defineStore('auth', () => {
+    const token = ref<string | null>(null)
+    const user = ref<User | null>(null)
 
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    token: null as string | null,
-    user: null as User | null
-  }),
+    const isAuthenticated = computed(() => !!token.value)
+    const currentUser = computed(() => user.value)
 
-  getters: {
-    isAuthenticated: (state) => !!state.token
-  },
+    /**
+     * Logs in a user
+     * @param {LoginRequest} credentials - The credentials to log in with
+     * @returns {Promise<{success: boolean, message?: string}>} - A promise that resolves to an object with a success boolean and an optional error message
+     */
+    async function login(credentials: LoginRequest) {
+        const { apiFetch } = useApi()
 
-  actions: {
-    async login(username: string, password: string) {
-      const { apiFetch } = useApi()
-      
-      try {
-        const response: any = await apiFetch('/login', {
-          method: 'POST',
-          body: { username, password }
-        })
-        
-        this.token = response.token
-        this.user = response.user
-        
-        if (import.meta.client) {
-          localStorage.setItem('auth_token', response.token)
+        try {
+            const response = await apiFetch<LoginResponse>('/login', {
+                method: 'POST',
+                body: credentials
+            })
+
+            token.value = response.token
+            user.value = response.user
+
+            return { success: true }
+        } catch (error: any) {
+            console.error('Login failed:', error)
+
+            let message = 'Échec de la connexion'
+
+            if (error?.data?.message) {
+                message = error.data.message
+            } else if (error?.data?.errors) {
+                const firstError = Object.values(error.data.errors)[0]
+                if (Array.isArray(firstError) && firstError.length > 0) {
+                    message = firstError[0] as string
+                }
+            }
+
+            return { success: false, message }
         }
-        
-        return { success: true }
-      } catch (error: any) {
-        console.error('Login failed:', error)
-        return { 
-          success: false, 
-          message: error?.data?.message || 'Login failed' 
-        }
-      }
-    },
-
-    async logout() {
-      const { apiFetch } = useApi()
-      
-      try {
-        await apiFetch('/logout', { method: 'POST' })
-      } catch (error) {
-        console.error('Logout failed:', error)
-      } finally {
-        this.token = null
-        this.user = null
-        
-        if (import.meta.client) {
-          localStorage.removeItem('auth_token')
-        }
-        
-        navigateTo('/login')
-      }
-    },
-
-    initAuth() {
-      if (import.meta.client) {
-        const token = localStorage.getItem('auth_token')
-        if (token) {
-          this.token = token
-        }
-      }
     }
-  }
-})
+    async function logout() {
+        const { apiFetch } = useApi()
+
+        try {
+            if (token) {
+                await apiFetch('/logout', { method: 'POST' })
+            }
+        } catch (error) {
+            console.error('Logout failed:', error)
+        } finally {
+            clearAuth()
+            navigateTo('/login')
+        }
+    }
+
+    function clearAuth() {
+        token.value = null
+        user.value = null
+    }
+    async function checkAuth(): Promise<boolean> {
+        return !!token.value
+    }
+
+    return {
+        token,
+        user,
+        isAuthenticated,
+        currentUser,
+        login,
+        logout,
+        checkAuth,
+        clearAuth,
+    }
+},
+    {
+        // 🔥 PERSISTANCE AUTOMATIQUE
+        persist: {
+            key: 'vta-auth',
+            storage: persistedState.localStorage,
+            paths: ['token', 'user'],
+        } as any
+    })

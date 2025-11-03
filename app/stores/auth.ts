@@ -15,18 +15,18 @@ export const useAuthStore = defineStore('auth', () => {
      * @param {LoginRequest} credentials - The credentials to log in with
      * @returns {Promise<{success: boolean, message?: string}>} - A promise that resolves to an object with a success boolean and an optional error message
      */
-    async function login(credentials: LoginRequest) {
+    const login = async (credentials: LoginRequest) => {
         const { apiFetch } = useApi()
 
         try {
             const response = await apiFetch<LoginResponse>('/login', {
                 method: 'POST',
                 body: credentials
-            })            
+            })
 
             token.value = response.data?.token
             user.value = response.data?.user
-            
+
             return { success: true }
         } catch (error: any) {
             console.error('Login failed:', error)
@@ -45,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
             return { success: false, message }
         }
     }
-    async function logout() {
+    const logout = async () => {
         const { apiFetch } = useApi()
 
         try {
@@ -60,11 +60,11 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    function clearAuth() {
+    const clearAuth = () => {
         token.value = null
         user.value = null
     }
-    async function checkAuth(): Promise<boolean> {
+    const checkAuth = async (): Promise<boolean> => {
         return !!token.value
     }
 

@@ -22,11 +22,11 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await apiFetch<LoginResponse>('/login', {
                 method: 'POST',
                 body: credentials
-            })
+            })            
 
-            token.value = response.token
-            user.value = response.user
-
+            token.value = response.data?.token
+            user.value = response.data?.user
+            
             return { success: true }
         } catch (error: any) {
             console.error('Login failed:', error)

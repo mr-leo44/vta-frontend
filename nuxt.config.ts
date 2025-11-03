@@ -36,7 +36,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: '/api'
+      apiBase: 'http://vta-app.test/api'
     }
   },
 

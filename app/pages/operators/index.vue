@@ -16,11 +16,7 @@
       <CardContent class="pt-6">
         <div class="flex gap-4">
           <div class="flex-1">
-            <Input
-              v-model="searchTerm"
-              placeholder="Rechercher par nom ou code IATA..."
-              @input="debouncedSearch"
-            />
+            <Input v-model="searchTerm" placeholder="Rechercher par nom ou code IATA..." @input="debouncedSearch" />
           </div>
           <Button variant="outline" @click="clearSearch">
             Effacer
@@ -36,14 +32,8 @@
 
     <div v-else-if="operators.length > 0" class="space-y-4">
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <OperatorCard
-          v-for="operator in operators"
-          :key="operator.id"
-          :operator="operator"
-          @view="openViewDialog"
-          @edit="openEditDialog"
-          @delete="confirmDelete"
-        />
+        <OperatorCard v-for="operator in operators" :key="operator.id" :operator="operator" @view="openViewDialog"
+          @edit="openEditDialog" @delete="confirmDelete" />
       </div>
     </div>
 
@@ -54,7 +44,11 @@
       </Button>
     </div>
 
-    <!-- Delete Confirmation Dialog -->
+    <!-- All Dialogs -->
+    <OperatorCreateDialog v-model:open="createDialogOpen" @created="fetchOperators" />
+    <OperatorEditDialog v-model:open="editDialogOpen" :operator="operatorToEdit" @updated="fetchOperators" />
+    <OperatorViewDialog v-model:open="viewDialogOpen" :operator="operatorToView" />
+
     <AlertDialog v-model:open="deleteDialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -96,6 +90,10 @@ import { useOperatorsStore } from '~/stores/operators'
 import { useToast } from '~/composables/useToast'
 import OperatorCard from '~/components/modules/operator/OperatorCard.vue'
 import OperatorSkeleton from '~/components/modules/operator/OperatorSkeleton.vue'
+import OperatorCreateDialog from '~/components/modules/operator/OperatorCreateDialog.vue'
+import OperatorEditDialog from '~/components/modules/operator/OperatorEditDialog.vue'
+import OperatorViewDialog from '~/components/modules/operator/OperatorViewDialog.vue'
+
 
 definePageMeta({
   middleware: 'auth'
@@ -110,19 +108,26 @@ const searchTerm = ref('')
 const deleteDialogOpen = ref(false)
 const operatorToDelete = ref<Operator | null>(null)
 
+const createDialogOpen = ref(false)
+const editDialogOpen = ref(false)
+const viewDialogOpen = ref(false)
+
+const operatorToEdit = ref<Operator | null>(null)
+const operatorToView = ref<Operator | null>(null)
+
 let searchTimeout: NodeJS.Timeout
 
 // Fetch initial operators
 const fetchOperators = async () => {
   loading.value = true
   const result = await operatorsStore.fetchOperators()
-  
+
   if (result.success) {
     operators.value = operatorsStore.operators
   } else {
     showError(result.message || 'Erreur lors du chargement des exploitants')
   }
-  
+
   loading.value = false
 }
 
@@ -133,7 +138,7 @@ const debouncedSearch = () => {
     if (searchTerm.value.trim()) {
       loading.value = true
       const result = await operatorsStore.searchOperator(searchTerm.value)
-      
+
       if (result.success && result.data) {
         operators.value = [result.data]
       } else {
@@ -142,7 +147,7 @@ const debouncedSearch = () => {
           showError(result.message)
         }
       }
-      
+
       loading.value = false
     } else {
       await fetchOperators()
@@ -156,18 +161,17 @@ const clearSearch = () => {
 }
 
 const openViewDialog = (operator: Operator) => {
-  // TODO: Implémenter le dialog de visualisation
-  console.log('View operator:', operator)
+  operatorToView.value = operator
+  viewDialogOpen.value = true
 }
 
 const openCreateDialog = () => {
-  // TODO: Implémenter le dialog de création
-  console.log('Create operator')
+  createDialogOpen.value = true
 }
 
 const openEditDialog = (operator: Operator) => {
-  // TODO: Implémenter le dialog d'édition
-  console.log('Edit operator:', operator)
+  operatorToEdit.value = operator
+  editDialogOpen.value = true
 }
 
 const confirmDelete = (operator: Operator) => {
@@ -177,9 +181,9 @@ const confirmDelete = (operator: Operator) => {
 
 const deleteOperator = async () => {
   if (!operatorToDelete.value) return
-  
+
   const result = await operatorsStore.deleteOperator(operatorToDelete.value.id)
-  
+
   if (result.success) {
     operators.value = operators.value.filter(o => o.id !== operatorToDelete.value!.id)
     showSuccess('Exploitant supprimé avec succès')

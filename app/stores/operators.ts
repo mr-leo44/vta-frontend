@@ -29,7 +29,7 @@ export const useOperatorsStore = defineStore('operators', () => {
   // Pagination
   const currentPage = ref(1)
   const lastPage = ref(1)
-  const perPage = ref(15)
+  const perPage = ref(10)
   const total = ref(0)
   const hasMorePages = computed(() => currentPage.value < lastPage.value)
 

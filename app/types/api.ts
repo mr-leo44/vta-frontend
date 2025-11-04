@@ -32,6 +32,8 @@ export interface Operator {
     value: 'commercial' | 'non_commercial'
     label: string
   }
+  flights?: Flight[]  
+  aircrafts?: Aircraft[] 
   created_at: string | null
   updated_at: string | null
 }
@@ -153,4 +155,18 @@ export interface ValidationError {
 export interface ApiError {
   message: string
   errors?: Record<string, string[]>
+}
+
+// ==================== KPIs ====================
+export interface OperatorKPIs {
+  total_flights_current_year: number
+  total_flights_previous_year: number
+  growth_percentage: number
+  active_aircrafts_count: number
+  inactive_aircrafts_count: number
+  total_aircrafts: number
+  fleet_average_age?: number
+  most_used_aircraft_type?: string
+  avg_passengers_per_flight?: number
+  on_time_performance?: number
 }

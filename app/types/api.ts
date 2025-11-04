@@ -32,8 +32,8 @@ export interface Operator {
     value: 'commercial' | 'non_commercial'
     label: string
   }
-  flights?: Flight[]  
-  aircrafts?: Aircraft[] 
+  flights?: Flight[]
+  aircrafts?: Aircraft[]
   created_at: string | null
   updated_at: string | null
 }
@@ -159,14 +159,38 @@ export interface ApiError {
 
 // ==================== KPIs ====================
 export interface OperatorKPIs {
+  // Vols
   total_flights_current_year: number
   total_flights_previous_year: number
   growth_percentage: number
+
+  // Flotte
   active_aircrafts_count: number
   inactive_aircrafts_count: number
   total_aircrafts: number
   fleet_average_age?: number
-  most_used_aircraft_type?: string
+
+  // Performance
+  on_time_performance?: number  // % de vols à l'heure
+  cancellation_rate?: number     // % de vols annulés
+  avg_delay_minutes?: number     // Délai moyen en minutes
+
+  // Passagers
   avg_passengers_per_flight?: number
-  on_time_performance?: number
+  total_passengers_current_year?: number
+  load_factor?: number  // Taux de remplissage en %
+
+  // Réseau
+  total_destinations?: number
+  domestic_routes_count?: number
+  international_routes_count?: number
+  most_frequent_destination?: string
+
+  // Types d'appareils
+  most_used_aircraft_type?: string
+  aircraft_types_count?: number
+
+  // Comparaison
+  market_share?: number  // Part de marché en %
+  ranking?: number       // Classement parmi les opérateurs
 }

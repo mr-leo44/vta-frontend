@@ -52,11 +52,11 @@ export const useOperatorsStore = defineStore('operators', () => {
         operators.value = response.data
       }
       
-      currentPage.value = response.current_page
-      lastPage.value = response.last_page
-      perPage.value = response.per_page
-      total.value = response.total
-      
+      currentPage.value = response.meta.current_page
+      lastPage.value = response.meta.last_page
+      perPage.value = response.meta.per_page
+      total.value = response.meta.total
+
       return { success: true, data: response.data }
     } catch (err: any) {
       error.value = handleApiError(err)

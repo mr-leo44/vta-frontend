@@ -1,6 +1,6 @@
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="sm:max-w-lg">
+    <DialogContent class="sm:max-w-lg transition-all duration-300 ease-out transform">
       <DialogHeader>
         <DialogTitle>Nouvel exploitant</DialogTitle>
         <DialogDescription>Remplissez les informations de l’exploitant à créer.</DialogDescription>
@@ -75,6 +75,19 @@ const form = ref<OperatorFormData>({
   flight_nature: 'commercial'
 })
 
+watch(open, (isOpen) => {
+  if (isOpen) {
+    form.value = {
+      name: '',
+      sigle: '',
+      iata_code: null,
+      icao_code: null,
+      country: null,
+      flight_type: 'regular',
+      flight_nature: 'commercial'
+    }
+  }
+})
 const handleSubmit = async () => {
   loading.value = true
   const result = await operatorsStore.createOperator(form.value)

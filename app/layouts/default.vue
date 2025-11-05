@@ -24,6 +24,63 @@
             >
               Exploitants
             </NuxtLink>
+            
+            <!-- Dropdown Aéronefs -->
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  class="px-3 py-2 h-auto font-medium hover:bg-muted"
+                >
+                  Aéronefs
+                  <ChevronDown class="ml-1 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" class="w-48">
+                <DropdownMenuItem as-child>
+                  <NuxtLink to="/aircrafts/types" class="cursor-pointer">
+                    <Layers class="mr-2 h-4 w-4" />
+                    Types d'aéronefs
+                  </NuxtLink>
+                </DropdownMenuItem>
+                <DropdownMenuItem as-child>
+                  <NuxtLink to="/aircrafts" class="cursor-pointer">
+                    <Plane class="mr-2 h-4 w-4" />
+                    Voir les aéronefs
+                  </NuxtLink>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <NuxtLink 
+              to="/flights" 
+              class="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-muted"
+              active-class="bg-muted"
+            >
+              Vols
+            </NuxtLink>
+            <NuxtLink 
+              to="/agents" 
+              class="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-muted"
+              active-class="bg-muted"
+            >
+              Agents
+            </NuxtLink>
+            <NuxtLink 
+              to="/reports" 
+              class="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-muted"
+              active-class="bg-muted"
+            >
+              Rapports
+            </NuxtLink>
+            <NuxtLink 
+              to="/permissions" 
+              class="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-muted"
+              active-class="bg-muted"
+            >
+              Permissions
+            </NuxtLink>
           </nav>
         </div>
         
@@ -64,7 +121,7 @@
 
 <script setup lang="ts">
 import { Toaster } from 'vue-sonner'
-import { User, LogOut, Settings } from 'lucide-vue-next'
+import { User, LogOut, Settings, ChevronDown, Layers, Plane } from 'lucide-vue-next'
 import {
   DropdownMenu,
   DropdownMenuContent,

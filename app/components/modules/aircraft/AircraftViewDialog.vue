@@ -114,6 +114,9 @@
           </CardContent>
         </Card>
 
+        <!-- Graphiques -->
+        <AircraftKPIsCharts v-if="kpis && !loadingKPIs" :kpis="kpis" :flights="aircraft.flights" />
+
         <!-- Vols récents -->
         <Card>
           <CardHeader>
@@ -208,6 +211,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import AircraftKPIsCharts from '~/components/modules/aircraft/AircraftKPIsCharts.vue'
 
 const props = defineProps<{
   aircraft: Aircraft | null

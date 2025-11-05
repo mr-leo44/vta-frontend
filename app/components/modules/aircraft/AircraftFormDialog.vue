@@ -121,6 +121,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { useAircraftsStore } from '~/stores/aircrafts'
+import { useToast } from '~/composables/useToast'
 
 const props = defineProps<{
   aircraft?: Aircraft | null

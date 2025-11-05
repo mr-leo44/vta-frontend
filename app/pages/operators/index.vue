@@ -20,33 +20,19 @@
         <div class="flex items-center gap-4">
           <div class="flex-1 relative">
             <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              v-model="searchTerm"
-              placeholder="Rechercher par nom, code IATA ou OACI..."
-              class="pl-10"
-              @input="debouncedSearch"
-            />
+            <Input v-model="searchTerm" placeholder="Rechercher par nom, code IATA ou OACI..." class="pl-10"
+              @input="debouncedSearch" />
           </div>
           <Button variant="outline" @click="clearSearch" :disabled="!searchTerm">
             <X class="h-4 w-4" />
           </Button>
-          
+
           <!-- View Toggle -->
           <div class="flex items-center border rounded-lg">
-            <Button
-              variant="ghost"
-              size="sm"
-              :class="{ 'bg-muted': viewMode === 'cards' }"
-              @click="viewMode = 'cards'"
-            >
+            <Button variant="ghost" size="sm" :class="{ 'bg-muted': viewMode === 'cards' }" @click="viewMode = 'cards'">
               <LayoutGrid class="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              :class="{ 'bg-muted': viewMode === 'table' }"
-              @click="viewMode = 'table'"
-            >
+            <Button variant="ghost" size="sm" :class="{ 'bg-muted': viewMode === 'table' }" @click="viewMode = 'table'">
               <List class="h-4 w-4" />
             </Button>
           </div>
@@ -54,120 +40,107 @@
       </CardContent>
     </Card>
 
-    <!-- Loading Initial -->
-    <div v-if="loading && operators.length === 0">
-      <OperatorTableSkeleton v-if="viewMode === 'table'" :count="6" />
-      <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <OperatorSkeleton v-for="i in 6" :key="i" />
-      </div>
-    </div>
-
-    <!-- Operators List -->
-    <div v-else-if="operators.length > 0" class="space-y-4">
-      <!-- Cards View -->
-      <div v-if="viewMode === 'cards'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <OperatorCard
-          v-for="operator in operators"
-          :key="operator.id"
-          :operator="operator"
-          @view="openViewDialog"
-          @edit="openEditDialog"
-          @delete="confirmDelete"
-        />
+    <!-- Filters Sidebar (Desktop) -->
+    <div class="grid gap-6 md:grid-cols-[280px_1fr]">
+      <div class="hidden md:block">
+        <OperatorFilters :filters="filters" :available-countries="availableCountries" @update:filters="filters = $event"
+          @apply="applyFilters" />
       </div>
 
-      <!-- Table View -->
-      <div v-else class="space-y-3">
-        <OperatorTableRow
-          v-for="operator in operators"
-          :key="operator.id"
-          :operator="operator"
-          @view="openViewDialog"
-          @edit="openEditDialog"
-          @delete="confirmDelete"
-        />
-      </div>
+      <!-- Main Content -->
+      <div class="space-y-4">
+        <!-- Le reste du contenu (loading, operators list, etc.) -->
 
-      <!-- Load More Trigger -->
-      <div
-        v-if="hasMorePages && !loading"
-        ref="loadMoreTrigger"
-        class="flex justify-center py-8"
-      >
-        <Button variant="outline" @click="loadMore" :disabled="loading">
-          Charger plus d'exploitants
-        </Button>
-      </div>
-
-      <!-- Loading More -->
-      <div v-if="loading && operators.length > 0" class="py-4">
-        <OperatorTableSkeleton v-if="viewMode === 'table'" :count="3" />
-        <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <OperatorSkeleton v-for="i in 3" :key="i" />
+        <!-- Loading Initial -->
+        <div v-if="loading && operators.length === 0">
+          <OperatorTableSkeleton v-if="viewMode === 'table'" :count="6" />
+          <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <OperatorSkeleton v-for="i in 6" :key="i" />
+          </div>
         </div>
+
+        <!-- Operators List -->
+        <div v-else-if="operators.length > 0" class="space-y-4">
+          <!-- Cards View -->
+          <div v-if="viewMode === 'cards'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <OperatorCard v-for="operator in operators" :key="operator.id" :operator="operator" @view="openViewDialog"
+              @edit="openEditDialog" @delete="confirmDelete" />
+          </div>
+
+          <!-- Table View -->
+          <div v-else class="space-y-3">
+            <OperatorTableRow v-for="operator in operators" :key="operator.id" :operator="operator"
+              @view="openViewDialog" @edit="openEditDialog" @delete="confirmDelete" />
+          </div>
+
+          <!-- Load More Trigger -->
+          <div v-if="hasMorePages && !loading" ref="loadMoreTrigger" class="flex justify-center py-8">
+            <Button variant="outline" @click="loadMore" :disabled="loading">
+              Charger plus d'exploitants
+            </Button>
+          </div>
+
+          <!-- Loading More -->
+          <div v-if="loading && operators.length > 0" class="py-4">
+            <OperatorTableSkeleton v-if="viewMode === 'table'" :count="3" />
+            <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <OperatorSkeleton v-for="i in 3" :key="i" />
+            </div>
+          </div>
+
+          <!-- End of list -->
+          <div v-if="!hasMorePages && operators.length > 0" class="text-center py-4 text-muted-foreground text-sm">
+            Tous les exploitants ont été chargés
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <Card v-else>
+          <CardContent class="flex flex-col items-center justify-center py-12">
+            <Building2 class="h-12 w-12 text-muted-foreground mb-4" />
+            <p class="text-lg font-medium mb-2">
+              {{ searchTerm ? 'Aucun résultat trouvé' : 'Aucun exploitant enregistré' }}
+            </p>
+            <p class="text-muted-foreground mb-4">
+              {{ searchTerm ? 'Essayez avec d\'autres termes de recherche' : 'Commencez par créer votre premier exploitant' }}
+            </p>
+            <Button v-if="!searchTerm" @click="openCreateDialog">
+              <Plus class="mr-2 h-4 w-4" />
+              Créer le premier exploitant
+            </Button>
+            <Button v-else variant="outline" @click="clearSearch">
+              Effacer la recherche
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
-      <!-- End of list -->
-      <div v-if="!hasMorePages && operators.length > 0" class="text-center py-4 text-muted-foreground text-sm">
-        Tous les exploitants ont été chargés
-      </div>
+      <!-- View Dialog -->
+      <OperatorViewDialog v-model:open="viewDialogOpen" :operator="selectedOperator" @edit="openEditDialog" />
+
+      <!-- Form Dialog (Create/Edit) -->
+      <OperatorFormDialog v-model:open="formDialogOpen" :operator="operatorToEdit" @success="handleFormSuccess" />
+
+      <!-- Delete Confirmation Dialog -->
+      <AlertDialog v-model:open="deleteDialogOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer l'exploitant <strong>"{{ operatorToDelete?.name }}"</strong> ?
+              Cette action est irréversible et supprimera également toutes les données associées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction @click="deleteOperator"
+              class="bg-destructive text-white hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-
-    <!-- Empty State -->
-    <Card v-else>
-      <CardContent class="flex flex-col items-center justify-center py-12">
-        <Building2 class="h-12 w-12 text-muted-foreground mb-4" />
-        <p class="text-lg font-medium mb-2">
-          {{ searchTerm ? 'Aucun résultat trouvé' : 'Aucun exploitant enregistré' }}
-        </p>
-        <p class="text-muted-foreground mb-4">
-          {{ searchTerm ? 'Essayez avec d\'autres termes de recherche' : 'Commencez par créer votre premier exploitant' }}
-        </p>
-        <Button v-if="!searchTerm" @click="openCreateDialog">
-          <Plus class="mr-2 h-4 w-4" />
-          Créer le premier exploitant
-        </Button>
-        <Button v-else variant="outline" @click="clearSearch">
-          Effacer la recherche
-        </Button>
-      </CardContent>
-    </Card>
-
-    <!-- View Dialog -->
-    <OperatorViewDialog
-      v-model:open="viewDialogOpen"
-      :operator="selectedOperator"
-      @edit="openEditDialog"
-    />
-
-    <!-- Form Dialog (Create/Edit) -->
-    <OperatorFormDialog
-      v-model:open="formDialogOpen"
-      :operator="operatorToEdit"
-      @success="handleFormSuccess"
-    />
-
-    <!-- Delete Confirmation Dialog -->
-    <AlertDialog v-model:open="deleteDialogOpen">
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-          <AlertDialogDescription>
-            Êtes-vous sûr de vouloir supprimer l'exploitant <strong>"{{ operatorToDelete?.name }}"</strong> ?
-            Cette action est irréversible et supprimera également toutes les données associées.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction
-            @click="deleteOperator"
-            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            Supprimer
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   </div>
 </template>
 
@@ -201,6 +174,7 @@ import OperatorSkeleton from '~/components/modules/operator/OperatorSkeleton.vue
 import OperatorTableSkeleton from '~/components/modules/operator/OperatorTableSkeleton.vue'
 import OperatorViewDialog from '~/components/modules/operator/OperatorViewDialog.vue'
 import OperatorFormDialog from '@/components/modules/operator/OperatorFormDialog.vue'
+import OperatorFilters, { type OperatorFilters as FilterType } from '~/components/modules/operator/OperatorFilters.vue'
 
 definePageMeta({
   middleware: 'auth'
@@ -238,7 +212,7 @@ let searchTimeout: NodeJS.Timeout
 const fetchOperators = async () => {
   operatorsStore.resetPagination()
   const result = await operatorsStore.fetchOperators(1)
-  
+
   if (!result.success) {
     showError(result.message || 'Erreur lors du chargement des exploitants')
   }
@@ -257,9 +231,9 @@ const debouncedSearch = () => {
     if (searchTerm.value.trim()) {
       isSearching.value = true
       operatorsStore.resetPagination()
-      
+
       const result = await operatorsStore.searchOperators(searchTerm.value)
-      
+
       if (result.success && result.data) {
         operatorsStore.operators = result.data
         operatorsStore.total = result.data.length
@@ -270,7 +244,7 @@ const debouncedSearch = () => {
           showError(result.message)
         }
       }
-      
+
       isSearching.value = false
     } else {
       isSearching.value = false
@@ -282,6 +256,74 @@ const debouncedSearch = () => {
 const clearSearch = () => {
   searchTerm.value = ''
   fetchOperators()
+}
+
+// State pour les filtres
+const filters = ref<FilterType>({
+  country: '',
+  flight_type: '',
+  flight_nature: '',
+  sort_by: '',
+  has_active_fleet: false
+})
+
+// Liste des pays disponibles
+const availableCountries = computed(() => {
+  const countries = operators.value
+    .map(o => o.country)
+    .filter((c): c is string => c !== null && c !== '')
+  return [...new Set(countries)].sort()
+})
+
+// Fonction pour appliquer les filtres
+const applyFilters = () => {
+  let filtered = [...operatorsStore.operators]
+
+  // Filtre par pays
+  if (filters.value.country) {
+    filtered = filtered.filter(o => o.country === filters.value.country)
+  }
+
+  // Filtre par type de vol
+  if (filters.value.flight_type) {
+    filtered = filtered.filter(o => o.flight_type.value === filters.value.flight_type)
+  }
+
+  // Filtre par nature de vol
+  if (filters.value.flight_nature) {
+    filtered = filtered.filter(o => o.flight_nature.value === filters.value.flight_nature)
+  }
+
+  // Filtre par flotte active
+  if (filters.value.has_active_fleet) {
+    filtered = filtered.filter(o =>
+      o.aircrafts && o.aircrafts.some(a => a.in_activity)
+    )
+  }
+
+  // Tri
+  switch (filters.value.sort_by) {
+    case 'name_asc':
+      filtered.sort((a, b) => a.name.localeCompare(b.name))
+      break
+    case 'name_desc':
+      filtered.sort((a, b) => b.name.localeCompare(a.name))
+      break
+    case 'created_desc':
+      filtered.sort((a, b) =>
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      )
+      break
+    case 'created_asc':
+      filtered.sort((a, b) =>
+        new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+      )
+      break
+  }
+
+  // Note: En vrai, ces filtres devraient être envoyés à l'API
+  // Pour l'instant on filtre côté client
+  operatorsStore.operators = filtered
 }
 
 // Dialog handlers
@@ -312,9 +354,9 @@ const confirmDelete = (operator: Operator) => {
 
 const deleteOperator = async () => {
   if (!operatorToDelete.value) return
-  
+
   const result = await operatorsStore.deleteOperator(operatorToDelete.value.id)
-  
+
   if (result.success) {
     showSuccess('Exploitant supprimé avec succès')
     deleteDialogOpen.value = false
@@ -336,7 +378,7 @@ const handleFormSuccess = async () => {
 // Setup Intersection Observer for infinite scroll
 const setupIntersectionObserver = () => {
   if (!loadMoreTrigger.value) return
-  
+
   observer = new IntersectionObserver(
     (entries) => {
       if (entries[0].isIntersecting && hasMorePages.value && !loading.value) {
@@ -345,14 +387,14 @@ const setupIntersectionObserver = () => {
     },
     { threshold: 0.5, rootMargin: '100px' }
   )
-  
+
   observer.observe(loadMoreTrigger.value)
 }
 
 // Lifecycle
 onMounted(async () => {
   await fetchOperators()
-  
+
   // Setup observer after a short delay to ensure DOM is ready
   setTimeout(() => {
     setupIntersectionObserver()

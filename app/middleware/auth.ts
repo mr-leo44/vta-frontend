@@ -1,7 +1,7 @@
 export default defineNuxtRouteMiddleware(async (to) => {
   const authStore = useAuthStore()
 
-  if (authStore.$hydrate) await authStore.$hydrate()
+  await authStore.$hydrate()
   const isAuth = await authStore.checkAuth()
 
   setTimeout(() => {
@@ -12,5 +12,5 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (isAuth && to.path === '/login') {
       return navigateTo('/')
     }
-  }, 50)
+  }, 100)
 })

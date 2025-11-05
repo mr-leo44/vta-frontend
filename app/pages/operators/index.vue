@@ -280,17 +280,17 @@ const applyFilters = () => {
   let filtered = [...operatorsStore.operators]
 
   // Filtre par pays
-  if (filters.value.country) {
+  if (filters.value.country && filters.value.country !== 'all') {
     filtered = filtered.filter(o => o.country === filters.value.country)
   }
 
   // Filtre par type de vol
-  if (filters.value.flight_type) {
+  if (filters.value.flight_type && filters.value.flight_type !== 'all') {
     filtered = filtered.filter(o => o.flight_type.value === filters.value.flight_type)
   }
 
   // Filtre par nature de vol
-  if (filters.value.flight_nature) {
+  if (filters.value.flight_nature && filters.value.flight_nature !== 'all') {
     filtered = filtered.filter(o => o.flight_nature.value === filters.value.flight_nature)
   }
 

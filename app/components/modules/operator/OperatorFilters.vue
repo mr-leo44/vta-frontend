@@ -18,7 +18,7 @@
             <SelectValue placeholder="Tous les pays" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tous les pays</SelectItem>
+            <SelectItem value="all">Tous les pays</SelectItem>
             <SelectItem v-for="country in availableCountries" :key="country" :value="country">
               {{ country }}
             </SelectItem>
@@ -34,7 +34,7 @@
             <SelectValue placeholder="Tous les types" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Tous les types</SelectItem>
+            <SelectItem value="all">Tous les types</SelectItem>
             <SelectItem value="regular">Vol régulier</SelectItem>
             <SelectItem value="non_regular">Vol non régulier (VNR)</SelectItem>
           </SelectContent>
@@ -49,7 +49,7 @@
             <SelectValue placeholder="Toutes les natures" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Toutes les natures</SelectItem>
+            <SelectItem value="all">Toutes les natures</SelectItem>
             <SelectItem value="commercial">Vol commercial</SelectItem>
             <SelectItem value="non_commercial">Vol non commercial</SelectItem>
           </SelectContent>

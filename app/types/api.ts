@@ -56,7 +56,6 @@ export interface AircraftType {
   created_at: string | null
   updated_at: string | null
 }
-
 // ==================== AIRCRAFTS ====================
 export interface Aircraft {
   id: number
@@ -65,12 +64,131 @@ export interface Aircraft {
   in_activity: boolean
   aircraft_type_id: number
   operator_id: number
-  aircraft_type?: AircraftType
+  type?: AircraftType
   operator?: Operator
+  flights?: Flight[]
   created_at: string | null
   updated_at: string | null
 }
 
+export interface AircraftResource {
+  id: number
+  immatriculation: string
+  pmad: number | null
+  in_activity: number
+  type: {
+    id: number
+    name: string
+    sigle: string
+  }
+  operator: {
+    id: number
+    name: string
+    sigle: string
+    iata_code: string
+    icao_code: string
+  }
+  flights: Flight[]
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface AircraftFormData {
+  immatriculation: string
+  pmad?: number | null
+  in_activity: boolean
+  aircraft_type_id: number
+  operator_id: number
+}
+
+// ==================== AIRCRAFTS - KPIs ====================
+export interface AircraftKPIs {
+  // Vols
+  total_flights_current_year: number
+  total_flights_current_month: number
+  average_flights_per_month: number
+
+  // Statut
+  is_active: boolean
+  pmad: number | null
+
+  // Performance (données génériques - à implémenter côté API)
+  total_flight_hours: number          // Total heures de vol
+  average_flight_duration: number     // Durée moyenne d'un vol (minutes)
+  utilization_rate: number            // Taux d'utilisation (%)
+  last_flight_date: string | null     // Date du dernier vol
+
+  // Suggestions pour l'API:
+  // - GET /aircrafts/{id}/kpis pour obtenir ces données
+  // - Ajouter dans la réponse:
+  //   * maintenance_hours?: number
+  //   * next_maintenance_date?: string
+  //   * fuel_consumption?: number
+  //   * destinations_count?: number
+  //   * most_frequent_route?: string
+  //   * flight_status_breakdown?: {
+  //       completed: number
+  //       scheduled: number
+  //       cancelled: number
+  //       diverted: number
+  //     }
+}
+
+// ==================== AIRCRAFTS - FILTERS ====================
+export interface AircraftFilters {
+  operator_id?: number | null
+  aircraft_type_id?: number | null
+  in_activity?: boolean | null
+  pmad_min?: number | null
+  pmad_max?: number | null
+  has_flights?: boolean
+  sort_by?: 'immatriculation' | 'created_at' | 'pmad' | 'operator' | 'type'
+  sort_order?: 'asc' | 'desc'
+}
+
+// ==================== AIRCRAFTS - MONTHLY STATS ====================
+// Suggestion pour endpoint: GET /aircrafts/{id}/monthly-stats?year=2025
+export interface AircraftMonthlyStats {
+  year: number
+  months: Array<{
+    month: number
+    flights_count: number
+    flight_hours: number
+    destinations_count: number
+    average_passengers?: number
+    cancelled_count?: number
+  }>
+}
+
+// ==================== AIRCRAFTS - MAINTENANCE ====================
+// Suggestion pour tracking de maintenance
+export interface AircraftMaintenance {
+  id: number
+  aircraft_id: number
+  maintenance_type: 'routine' | 'repair' | 'inspection' | 'overhaul'
+  scheduled_date: string
+  completed_date: string | null
+  duration_hours: number
+  cost?: number
+  description?: string
+  next_maintenance_date?: string
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled'
+}
+
+// ==================== AIRCRAFTS - UTILIZATION ====================
+// Suggestion pour suivi d'utilisation détaillé
+export interface AircraftUtilization {
+  aircraft_id: number
+  period: 'daily' | 'weekly' | 'monthly' | 'yearly'
+  start_date: string
+  end_date: string
+  total_flights: number
+  total_hours: number
+  available_hours: number
+  utilization_rate: number // Pourcentage
+  revenue_hours?: number
+  non_revenue_hours?: number
+}
 // ==================== FLIGHTS ====================
 export type FlightStatus = 'qrf' | 'prevu' | 'atteri' | 'annule' | 'detourne'
 export type FlightRegime = 'domestic' | 'international'

@@ -1,6 +1,6 @@
 <template>
   <Dialog v-model:open="isOpen">
-    <DialogContent class="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+    <DialogContent class="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{{ isEdit ? 'Modifier le vol' : 'Nouveau vol' }}</DialogTitle>
         <DialogDescription>
@@ -110,6 +110,102 @@
 
         <Separator />
 
+        <!-- Statistiques passagers -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-medium">Statistiques passagers</h3>
+            <Switch v-model:checked="includeStatistics" />
+          </div>
+          
+          <div v-if="includeStatistics" class="grid grid-cols-3 gap-4">
+            <div>
+              <Label for="passengers_count">Nombre de passagers</Label>
+              <Input
+                id="passengers_count"
+                v-model.number="formData.statistics.passengers_count"
+                type="number"
+                placeholder="0"
+                min="0"
+              />
+            </div>
+
+            <div>
+              <Label for="pax_bus">Passagers business</Label>
+              <Input
+                id="pax_bus"
+                v-model.number="formData.statistics.pax_bus"
+                type="number"
+                placeholder="0"
+                min="0"
+              />
+            </div>
+
+            <div>
+              <Label for="go_pass_count">Go pass</Label>
+              <Input
+                id="go_pass_count"
+                v-model.number="formData.statistics.go_pass_count"
+                type="number"
+                placeholder="0"
+                min="0"
+              />
+            </div>
+
+            <div class="col-span-3">
+              <Label for="passengers_ecart">Écart passagers</Label>
+              <Input
+                id="passengers_ecart"
+                v-model.number="formData.statistics.passengers_ecart"
+                type="number"
+                placeholder="0"
+              />
+              <p class="text-xs text-muted-foreground mt-1">
+                Positif = surréservation, Négatif = sous-occupation
+              </p>
+            </div>
+
+            <!-- Justification si écart -->
+            <div v-if="formData.statistics.passengers_ecart !== 0" class="col-span-3 p-4 border rounded-lg bg-amber-50">
+              <div class="flex items-start gap-2 mb-3">
+                <AlertCircle class="h-4 w-4 text-amber-600 mt-0.5" />
+                <div class="flex-1">
+                  <Label class="text-amber-900">Justification requise</Label>
+                  <p class="text-xs text-amber-700 mt-1">Un écart passagers nécessite une justification</p>
+                </div>
+                <Switch v-model:checked="formData.statistics.has_justification" />
+              </div>
+
+              <div v-if="formData.statistics.has_justification" class="space-y-3">
+                <div>
+                  <Label for="justification_id">Type de justification</Label>
+                  <Select v-model="formData.statistics.justification_id">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner une justification" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="just in justifications" :key="just.id" :value="just.id.toString()">
+                        {{ just.name }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label for="justification_comment">Commentaire (optionnel)</Label>
+                  <Textarea
+                    id="justification_comment"
+                    v-model="formData.statistics.justification_comment"
+                    placeholder="Détails supplémentaires..."
+                    rows="2"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
         <!-- Remarques -->
         <div>
           <Label for="remarks">Remarques</Label>
@@ -137,8 +233,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { Loader2 } from 'lucide-vue-next'
-import type { Flight, Operator, Aircraft } from '~/types/api'
+import { Loader2, AlertCircle } from 'lucide-vue-next'
+import type { Flight } from '~/types/api'
 import {
   Dialog,
   DialogContent,
@@ -152,6 +248,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -172,7 +269,7 @@ const emit = defineEmits<{
 
 const flightsStore = useFlightsStore()
 const { success: showSuccess, error: showError } = useToast()
-const { apiFetch } = useApi()
+const dropdownData = useSharedDropdownData()
 
 const isOpen = computed({
   get: () => props.open,
@@ -182,11 +279,14 @@ const isOpen = computed({
 const isEdit = computed(() => !!props.flight)
 
 const loading = ref(false)
-const loadingData = ref(false)
+const loadingData = computed(() => dropdownData.loading.value)
 const errors = ref<Record<string, string>>({})
 
-const operators = ref<Operator[]>([])
-const aircrafts = ref<Aircraft[]>([])
+const operators = computed(() => dropdownData.operators.value)
+const aircrafts = computed(() => dropdownData.aircrafts.value)
+const justifications = computed(() => dropdownData.justifications.value)
+
+const includeStatistics = ref(false)
 
 const formData = ref({
   flight_number: '',
@@ -196,44 +296,50 @@ const formData = ref({
   arrival: '',
   departure_time: '',
   arrival_time: '',
-  remarks: ''
-})
-
-const loadFormData = async () => {
-  loadingData.value = true
-  try {
-    const [operatorsRes, aircraftsRes] = await Promise.all([
-      apiFetch<any>('/operators?per_page=1000'),
-      apiFetch<any>('/aircrafts')
-    ])
-    
-    operators.value = Array.isArray(operatorsRes) ? operatorsRes : (operatorsRes.data || [])
-    aircrafts.value = Array.isArray(aircraftsRes) ? aircraftsRes : (aircraftsRes.data || [])
-  } catch (error) {
-    showError('Erreur lors du chargement des données')
-  } finally {
-    loadingData.value = false
+  remarks: '',
+  statistics: {
+    passengers_count: 0,
+    pax_bus: 0,
+    go_pass_count: 0,
+    passengers_ecart: 0,
+    has_justification: false,
+    justification_id: '',
+    justification_comment: ''
   }
-}
+})
 
 watch(() => props.flight, (flight) => {
   if (flight) {
     formData.value = {
       flight_number: flight.flight_number,
-      operator_id: flight.operator_id?.toString() || '',
+      operator_id: flight.operator?.id?.toString() || '',
       aircraft_id: flight.aircraft_id?.toString() || '',
       departure: flight.departure?.[0] || '',
       arrival: flight.arrival?.[0] || '',
       departure_time: formatDateTimeForInput(flight.departure_time),
       arrival_time: formatDateTimeForInput(flight.arrival_time),
-      remarks: flight.remarks || ''
+      remarks: flight.remarks || '',
+      statistics: {
+        passengers_count: flight.statistics?.passengers_count || 0,
+        pax_bus: flight.statistics?.pax_bus || 0,
+        go_pass_count: flight.statistics?.go_pass_count || 0,
+        passengers_ecart: flight.statistics?.passengers_ecart || 0,
+        has_justification: flight.statistics?.has_justification || false,
+        justification_id: '',
+        justification_comment: ''
+      }
     }
+    includeStatistics.value = !!flight.statistics
   }
 }, { immediate: true })
 
-watch(isOpen, (open) => {
+watch(isOpen, async (open) => {
   if (open) {
-    loadFormData()
+    await Promise.all([
+      dropdownData.loadOperators(),
+      dropdownData.loadAircrafts(),
+      dropdownData.loadJustifications()
+    ])
   } else if (!props.flight) {
     resetForm()
   }
@@ -253,8 +359,18 @@ const resetForm = () => {
     arrival: '',
     departure_time: '',
     arrival_time: '',
-    remarks: ''
+    remarks: '',
+    statistics: {
+      passengers_count: 0,
+      pax_bus: 0,
+      go_pass_count: 0,
+      passengers_ecart: 0,
+      has_justification: false,
+      justification_id: '',
+      justification_comment: ''
+    }
   }
+  includeStatistics.value = false
   errors.value = {}
 }
 
@@ -290,6 +406,13 @@ const validateForm = () => {
     errors.value.arrival_time = 'L\'heure d\'arrivée est requise'
   }
   
+  // Validation des statistiques
+  if (includeStatistics.value && formData.value.statistics.passengers_ecart !== 0) {
+    if (formData.value.statistics.has_justification && !formData.value.statistics.justification_id) {
+      errors.value.justification_id = 'Veuillez sélectionner une justification'
+    }
+  }
+  
   return Object.keys(errors.value).length === 0
 }
 
@@ -301,7 +424,7 @@ const handleSubmit = async () => {
 
   loading.value = true
 
-  const payload = {
+  const payload: any = {
     flight_number: formData.value.flight_number,
     operator_id: parseInt(formData.value.operator_id),
     aircraft_id: parseInt(formData.value.aircraft_id),
@@ -310,6 +433,23 @@ const handleSubmit = async () => {
     departure_time: new Date(formData.value.departure_time).toISOString(),
     arrival_time: new Date(formData.value.arrival_time).toISOString(),
     remarks: formData.value.remarks || null
+  }
+
+  // Ajouter les statistiques si activées
+  if (includeStatistics.value) {
+    payload.statistics = {
+      passengers_count: formData.value.statistics.passengers_count,
+      pax_bus: formData.value.statistics.pax_bus,
+      go_pass_count: formData.value.statistics.go_pass_count,
+      passengers_ecart: formData.value.statistics.passengers_ecart,
+      has_justification: formData.value.statistics.has_justification
+    }
+
+    // Ajouter la justification si nécessaire
+    if (formData.value.statistics.has_justification && formData.value.statistics.justification_id) {
+      payload.statistics.justification_id = parseInt(formData.value.statistics.justification_id)
+      payload.statistics.justification_comment = formData.value.statistics.justification_comment || null
+    }
   }
 
   let result
@@ -339,9 +479,13 @@ const handleSubmit = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (isOpen.value) {
-    loadFormData()
+    await Promise.all([
+      dropdownData.loadOperators(),
+      dropdownData.loadAircrafts(),
+      dropdownData.loadJustifications()
+    ])
   }
 })
 </script>

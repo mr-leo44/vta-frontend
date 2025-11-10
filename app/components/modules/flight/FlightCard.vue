@@ -1,88 +1,118 @@
 <template>
-  <div 
-    class="flex items-center gap-4 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-    @click="$emit('view', flight)"
-  >
-    <!-- Heure -->
-    <div class="text-center min-w-[60px]">
-      <div class="text-lg font-semibold">{{ departureTime }}</div>
-      <div class="text-xs text-muted-foreground">{{ arrivalTime }}</div>
-    </div>
+  <Card class="hover:shadow-lg transition-shadow cursor-pointer">
+    <CardHeader>
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <CardTitle class="text-lg font-semibold">{{ flight.flight_number }}</CardTitle>
+          <CardDescription class="mt-1">
+            <div class="flex items-center gap-2">
+              <Badge :variant="getStatusVariant(flight.status)">
+                {{ formatStatus(flight.status) }}
+              </Badge>
+              <Badge variant="outline">{{ formatRegime(flight.flight_regime) }}</Badge>
+            </div>
+          </CardDescription>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button variant="ghost" size="icon">
+              <MoreVertical class="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem @click="$emit('view', flight)">
+              <Eye class="mr-2 h-4 w-4" />
+              Voir les détails
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="$emit('edit', flight)">
+              <Pencil class="mr-2 h-4 w-4" />
+              Modifier
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem @click="$emit('delete', flight)" class="text-destructive">
+              <Trash2 class="mr-2 h-4 w-4" />
+              Supprimer
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <div class="space-y-3">
+        <!-- Route -->
+        <div class="flex items-center justify-between text-sm">
+          <div class="flex items-center gap-2">
+            <div class="font-medium">{{ formatLocation(flight.departure) }}</div>
+            <ArrowRight class="h-4 w-4 text-muted-foreground" />
+            <div class="font-medium">{{ formatLocation(flight.arrival) }}</div>
+          </div>
+        </div>
 
-    <Separator orientation="vertical" class="h-12" />
+        <!-- Horaires -->
+        <div class="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+          <div>
+            <div class="font-medium">Départ</div>
+            <div>{{ formatDateTime(flight.departure_time) }}</div>
+          </div>
+          <div>
+            <div class="font-medium">Arrivée</div>
+            <div>{{ formatDateTime(flight.arrival_time) }}</div>
+          </div>
+        </div>
 
-    <!-- Informations vol -->
-    <div class="flex-1 grid grid-cols-3 gap-4">
-      <!-- Numéro & Route -->
-      <div>
-        <div class="font-medium">{{ flight.flight_number }}</div>
-        <div class="text-sm text-muted-foreground">
-          {{ formatLocation(flight.departure) }} → {{ formatLocation(flight.arrival) }}
+        <!-- Opérateur & Aéronef -->
+        <div class="pt-2 border-t space-y-1 text-xs">
+          <div class="flex items-center gap-2 text-muted-foreground">
+            <Building2 class="h-3 w-3" />
+            <span>{{ flight.operator?.name || 'Opérateur inconnu' }}</span>
+          </div>
+          <div class="flex items-center gap-2 text-muted-foreground">
+            <Plane class="h-3 w-3" />
+            <span>{{ flight.aircraft || 'Aéronef inconnu' }}</span>
+          </div>
+        </div>
+
+        <!-- Statistiques si disponibles -->
+        <div v-if="flight.statistics" class="pt-2 border-t">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-muted-foreground">Passagers</span>
+            <span class="font-medium">{{ flight.statistics.passengers_count }}</span>
+          </div>
+          <div v-if="flight.statistics.passengers_ecart !== 0" class="flex items-center justify-between text-xs mt-1">
+            <span class="text-muted-foreground">Écart</span>
+            <Badge :variant="flight.statistics.passengers_ecart > 0 ? 'destructive' : 'default'" class="text-xs">
+              {{ flight.statistics.passengers_ecart > 0 ? '+' : '' }}{{ flight.statistics.passengers_ecart }}
+            </Badge>
+          </div>
         </div>
       </div>
-
-      <!-- Opérateur & Aéronef -->
-      <div class="text-sm">
-        <div class="font-medium">{{ flight.operator?.name || 'N/A' }}</div>
-        <div class="text-muted-foreground">{{ flight.aircraft || 'N/A' }}</div>
-      </div>
-
-      <!-- Passagers -->
-      <div v-if="flight.statistics" class="text-sm">
-        <div class="font-medium">{{ flight.statistics.passengers_count }} pax</div>
-        <div v-if="flight.statistics.passengers_ecart !== 0" class="flex items-center gap-1">
-          <span class="text-xs text-muted-foreground">Écart:</span>
-          <Badge 
-            :variant="flight.statistics.passengers_ecart > 0 ? 'destructive' : 'default'" 
-            class="text-xs h-5"
-          >
-            {{ flight.statistics.passengers_ecart > 0 ? '+' : '' }}{{ flight.statistics.passengers_ecart }}
-          </Badge>
-        </div>
-      </div>
-    </div>
-
-    <!-- Badge statut -->
-    <Badge :variant="getStatusVariant(flight.status)">
-      {{ formatStatus(flight.status) }}
-    </Badge>
-
-    <ChevronRight class="h-4 w-4 text-muted-foreground" />
-  </div>
+    </CardContent>
+  </Card>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { ChevronRight } from 'lucide-vue-next'
-import type { Flight, FlightStatus } from '~/types/api'
+import { Eye, Pencil, Trash2, MoreVertical, ArrowRight, Building2, Plane } from 'lucide-vue-next'
+import type { Flight, FlightStatus, FlightRegime } from '~/types/api'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 
-const props = defineProps<{
+defineProps<{
   flight: Flight
 }>()
 
 defineEmits<{
   view: [flight: Flight]
+  edit: [flight: Flight]
+  delete: [flight: Flight]
 }>()
-
-const departureTime = computed(() => {
-  return new Date(props.flight.departure_time).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-})
-
-const arrivalTime = computed(() => {
-  return new Date(props.flight.arrival_time).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-})
-
-const formatLocation = (location: any[]) => {
-  return location?.[0] || '???'
-}
 
 const formatStatus = (status: FlightStatus) => {
   const statusMap: Record<FlightStatus, string> = {
@@ -100,5 +130,22 @@ const getStatusVariant = (status: FlightStatus) => {
   if (status === 'annule') return 'destructive'
   if (status === 'detourne') return 'secondary'
   return 'outline'
+}
+
+const formatRegime = (regime: FlightRegime) => {
+  return regime === 'domestic' ? 'Domestique' : 'International'
+}
+
+const formatLocation = (location: any[]) => {
+  return location?.[0] || '???'
+}
+
+const formatDateTime = (dateTime: string) => {
+  return new Date(dateTime).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>

@@ -23,7 +23,7 @@
                 </Button>
               </PopoverTrigger>
               <PopoverContent class="w-auto p-0">
-                <CalendarComponent v-model="selectedDate" />
+                <CalendarComponent v-model="calendarValue" @update:model-value="handleCalendarChange" />
               </PopoverContent>
             </Popover>
             <Separator orientation="vertical" class="h-6" />
@@ -89,6 +89,7 @@
 import { ref, computed, watch } from 'vue'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Printer } from 'lucide-vue-next'
 import type { Flight } from '~/types/api'
+import { type DateValue, CalendarDate, today, getLocalTimeZone } from '@internationalized/date'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -103,7 +104,24 @@ const props = defineProps<{
 
 const flightsStore = useFlightsStore()
 
+// Convertir Date en CalendarDate pour le composant Calendar
+const dateToCalendarDate = (date: Date): CalendarDate => {
+  return new CalendarDate(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    date.getDate()
+  )
+}
+
+const calendarDateToDate = (calendarDate: DateValue): Date => {
+  if ('year' in calendarDate && 'month' in calendarDate && 'day' in calendarDate) {
+    return new Date(calendarDate.year, calendarDate.month - 1, calendarDate.day)
+  }
+  return new Date()
+}
+
 const selectedDate = ref(props.initialDate || new Date())
+const calendarValue = ref<DateValue>(dateToCalendarDate(selectedDate.value))
 const flights = ref<Flight[]>([])
 const loading = ref(false)
 
@@ -141,16 +159,23 @@ const previousDay = () => {
   const newDate = new Date(selectedDate.value)
   newDate.setDate(newDate.getDate() - 1)
   selectedDate.value = newDate
+  calendarValue.value = dateToCalendarDate(newDate)
 }
 
 const nextDay = () => {
   const newDate = new Date(selectedDate.value)
   newDate.setDate(newDate.getDate() + 1)
   selectedDate.value = newDate
+  calendarValue.value = dateToCalendarDate(newDate)
 }
 
 const goToToday = () => {
   selectedDate.value = new Date()
+  calendarValue.value = dateToCalendarDate(selectedDate.value)
+}
+
+const handleCalendarChange = (date: DateValue) => {
+  selectedDate.value = calendarDateToDate(date)
 }
 
 const printTable = () => {

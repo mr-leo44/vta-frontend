@@ -115,12 +115,12 @@
       <slot />
     </main>
     
-    <Toaster position="top-right" richColors />
+    <Toaster position="top-right" richColors closeButton />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Toaster } from 'vue-sonner'
+import { Toaster } from '@/components/ui/sonner'
 import { User, LogOut, Settings, ChevronDown, Layers, Plane } from 'lucide-vue-next'
 import {
   DropdownMenu,

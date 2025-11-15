@@ -137,7 +137,7 @@ const formatRegime = (regime: FlightRegime) => {
 }
 
 const formatLocation = (location: any[]) => {
-  return location?.[0] || '???'
+  return location?.name + ' (' + location?.iata + ')' || '???'
 }
 
 const formatDateTime = (dateTime: string) => {

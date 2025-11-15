@@ -20,9 +20,15 @@ const handleApiError = (error: any): string => {
 }
 
 export const useAircraftsStore = defineStore('aircrafts', () => {
+  // Liste paginée (pour les pages avec pagination)
   const aircrafts = ref<Aircraft[]>([])
+  
+  // Liste complète (pour les selects, autocomplete, etc.)
+  const allAircrafts = ref<Aircraft[]>([])
+  
   const currentAircraft = ref<Aircraft | null>(null)
   const loading = ref(false)
+  const loadingAll = ref(false)
   const error = ref<string | null>(null)
   
   // Pagination
@@ -33,9 +39,34 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
   const hasMorePages = computed(() => currentPage.value < lastPage.value)
 
   const aircraftsList = computed(() => aircrafts.value)
+  const allAircraftsList = computed(() => allAircrafts.value)
+
+  /**
+   * Récupère TOUS les aéronefs (sans pagination)
+   * Utilise GET /aircrafts/all
+   * Utile pour: selects, autocomplete, dropdowns
+   */
+  const fetchAllAircrafts = async () => {
+    loadingAll.value = true
+    error.value = null
+    const { apiFetch } = useApi()
+    
+    try {
+      const response = await apiFetch<ApiResponse<Aircraft[]>>('/aircrafts/all')
+      allAircrafts.value = response.data
+      
+      return { success: true, data: response.data }
+    } catch (err: any) {
+      error.value = handleApiError(err)
+      return { success: false, message: error.value }
+    } finally {
+      loadingAll.value = false
+    }
+  }
 
   /**
    * Récupère les aéronefs avec pagination
+   * Utilise GET /aircrafts?page=X
    */
   const fetchAircrafts = async (page: number = 1, append: boolean = false) => {
     loading.value = true
@@ -115,8 +146,6 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
 
   /**
    * Récupère les KPIs d'un aéronef
-   * Note: L'API ne fournit pas encore d'endpoint dédié pour les KPIs
-   * Suggestion API: GET /aircrafts/{id}/kpis
    */
   const fetchAircraftKPIs = async (id: number): Promise<AircraftKPIs> => {
     const { apiFetch } = useApi()
@@ -144,7 +173,6 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
         average_flights_per_month: Math.round(currentYearFlights.length / currentMonth),
         is_active: aircraft.data.in_activity,
         pmad: aircraft.data.pmad,
-        // Données génériques car l'API ne les fournit pas encore
         total_flight_hours: 0,
         average_flight_duration: 0,
         utilization_rate: 0,
@@ -180,7 +208,9 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
         body: data
       })
       
+      // Ajoute aux deux listes
       aircrafts.value.unshift(response.data)
+      allAircrafts.value.unshift(response.data)
       total.value += 1
       
       return { success: true, data: response.data }
@@ -210,9 +240,16 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
         body: data
       })
       
+      // Met à jour dans la liste paginée
       const index = aircrafts.value.findIndex(a => a.id === id)
       if (index !== -1) {
         aircrafts.value[index] = response.data
+      }
+      
+      // Met à jour dans la liste complète
+      const allIndex = allAircrafts.value.findIndex(a => a.id === id)
+      if (allIndex !== -1) {
+        allAircrafts.value[allIndex] = response.data
       }
       
       if (currentAircraft.value?.id === id) {
@@ -243,7 +280,9 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
     try {
       await apiFetch(`/aircrafts/${id}`, { method: 'DELETE' })
       
+      // Supprime des deux listes
       aircrafts.value = aircrafts.value.filter(a => a.id !== id)
+      allAircrafts.value = allAircrafts.value.filter(a => a.id !== id)
       total.value -= 1
       
       if (currentAircraft.value?.id === id) {
@@ -274,17 +313,30 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
     total.value = 0
   }
 
+  const clearAll = () => {
+    allAircrafts.value = []
+  }
+
   return {
+    // States
     aircrafts,
+    allAircrafts,
     currentAircraft,
     loading,
+    loadingAll,
     error,
     currentPage,
     lastPage,
     perPage,
     total,
     hasMorePages,
+    
+    // Computed
     aircraftsList,
+    allAircraftsList,
+    
+    // Actions
+    fetchAllAircrafts,      // Nouveau: charge tout
     fetchAircrafts,
     loadNextPage,
     fetchAircraft,
@@ -295,6 +347,7 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
     deleteAircraft,
     clearError,
     clearCurrentAircraft,
-    resetPagination
+    resetPagination,
+    clearAll                // Nouveau: nettoie allAircrafts
   }
 })

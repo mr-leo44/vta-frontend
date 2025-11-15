@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Operator, ApiResponse, OperatorFormData, PaginatedResponse, OperatorKPIs } from '~/types/api'
 
-// Helper local pour gérer les erreurs
 const handleApiError = (error: any): string => {
   console.error('API Error:', error)
   
@@ -21,9 +20,15 @@ const handleApiError = (error: any): string => {
 }
 
 export const useOperatorsStore = defineStore('operators', () => {
+  // Liste paginée (pour les pages avec pagination)
   const operators = ref<Operator[]>([])
+  
+  // Liste complète (pour les selects, autocomplete, etc.)
+  const allOperators = ref<Operator[]>([])
+  
   const currentOperator = ref<Operator | null>(null)
   const loading = ref(false)
+  const loadingAll = ref(false)
   const error = ref<string | null>(null)
   
   // Pagination
@@ -34,9 +39,35 @@ export const useOperatorsStore = defineStore('operators', () => {
   const hasMorePages = computed(() => currentPage.value < lastPage.value)
 
   const operatorsList = computed(() => operators.value)
+  const allOperatorsList = computed(() => allOperators.value)
+
+  /**
+   * Récupère TOUS les opérateurs (sans pagination)
+   * Utilise GET /operators/all
+   * Utile pour: selects, autocomplete, dropdowns
+   */
+  const fetchAllOperators = async () => {
+    loadingAll.value = true
+    error.value = null
+    const { apiFetch } = useApi()
+    
+    try {
+      const response = await apiFetch<ApiResponse<Operator[]>>('/operators/all')
+      allOperators.value = response.data
+      
+      return { success: true, data: response.data }
+    } catch (err: any) {
+      error.value = handleApiError(err)
+      return { success: false, message: error.value }
+    } finally {
+      loadingAll.value = false
+    }
+  }
 
   /**
    * Récupère les opérateurs avec pagination
+   * Utilise GET /operators?page=X
+   * Utile pour: listes avec pagination, infinite scroll
    */
   const fetchOperators = async (page: number = 1, append: boolean = false) => {
     loading.value = true
@@ -121,11 +152,6 @@ export const useOperatorsStore = defineStore('operators', () => {
     const { apiFetch } = useApi()
     
     try {
-      // Si l'API a un endpoint dédié pour les KPIs
-      // const response = await apiFetch<OperatorKPIs>(`/operators/${id}/kpis`)
-      // return response
-      
-      // Sinon, calculer à partir des données de l'opérateur
       const operator = await fetchOperator(id)
       if (!operator.success || !operator.data) {
         throw new Error('Operator not found')
@@ -184,7 +210,9 @@ export const useOperatorsStore = defineStore('operators', () => {
         body: data
       })
       
+      // Ajoute aux deux listes
       operators.value.unshift(response.data)
+      allOperators.value.unshift(response.data)
       total.value += 1
       
       return { success: true, data: response.data }
@@ -214,9 +242,16 @@ export const useOperatorsStore = defineStore('operators', () => {
         body: data
       })
       
+      // Met à jour dans la liste paginée
       const index = operators.value.findIndex(o => o.id === id)
       if (index !== -1) {
         operators.value[index] = response.data
+      }
+      
+      // Met à jour dans la liste complète
+      const allIndex = allOperators.value.findIndex(o => o.id === id)
+      if (allIndex !== -1) {
+        allOperators.value[allIndex] = response.data
       }
       
       if (currentOperator.value?.id === id) {
@@ -247,7 +282,9 @@ export const useOperatorsStore = defineStore('operators', () => {
     try {
       await apiFetch(`/operators/${id}`, { method: 'DELETE' })
       
+      // Supprime des deux listes
       operators.value = operators.value.filter(o => o.id !== id)
+      allOperators.value = allOperators.value.filter(o => o.id !== id)
       total.value -= 1
       
       if (currentOperator.value?.id === id) {
@@ -278,17 +315,30 @@ export const useOperatorsStore = defineStore('operators', () => {
     total.value = 0
   }
 
+  const clearAll = () => {
+    allOperators.value = []
+  }
+
   return {
+    // States
     operators,
+    allOperators,
     currentOperator,
     loading,
+    loadingAll,
     error,
     currentPage,
     lastPage,
     perPage,
     total,
     hasMorePages,
+    
+    // Computed
     operatorsList,
+    allOperatorsList,
+    
+    // Actions
+    fetchAllOperators,
     fetchOperators,
     loadNextPage,
     fetchOperator,
@@ -299,6 +349,7 @@ export const useOperatorsStore = defineStore('operators', () => {
     deleteOperator,
     clearError,
     clearCurrentOperator,
-    resetPagination
+    resetPagination,
+    clearAll
   }
 })

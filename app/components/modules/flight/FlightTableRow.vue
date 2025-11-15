@@ -127,7 +127,7 @@ const getStatusColor = (status: FlightStatus) => {
 }
 
 const formatLocation = (location: any[]) => {
-  return location?.[0] || '???'
+  return location?.name + ' (' + location?.iata + ')' || '???'
 }
 
 const formatTime = (dateTime: string) => {

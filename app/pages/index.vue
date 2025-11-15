@@ -49,8 +49,6 @@
         <CardContent>
           <div class="text-2xl font-bold">{{ stats.operators.total }}</div>
           <p class="text-xs text-muted-foreground">
-            <!-- ⚠️ DONNÉES MANQUANTES: L'API ne fournit pas de stats temporelles pour les exploitants -->
-            <!-- Suggestion API: GET /operators/stats?period=month -->
             <span class="text-yellow-600">+{{ stats.operators.newThisMonth }} ce mois-ci</span>
           </p>
         </CardContent>
@@ -64,8 +62,6 @@
         <CardContent>
           <div class="text-2xl font-bold">{{ stats.aircrafts.total }}</div>
           <p class="text-xs text-muted-foreground">
-            <!-- ⚠️ DONNÉES MANQUANTES: L'API ne fournit pas de stats temporelles pour les aéronefs -->
-            <!-- Suggestion API: GET /aircrafts/stats?period=month -->
             <span class="text-yellow-600">+{{ stats.aircrafts.newThisMonth }} ce mois-ci</span>
           </p>
         </CardContent>
@@ -208,7 +204,9 @@ const loading = ref(true)
 const stats = computed(() => {
   const now = new Date()
   const currentMonth = now.getMonth()
+  const lastMonth = currentMonth - 1
   const currentYear = now.getFullYear()
+  
 
   // Calcul des vols du mois
   const monthlyFlights = flightsStore.flights.filter(f => {
@@ -216,6 +214,11 @@ const stats = computed(() => {
     return flightDate.getMonth() === currentMonth && flightDate.getFullYear() === currentYear
   }).length
 
+  const lastMonthFlights = flightsStore.flights.filter(f => {
+    const flightDate = new Date(f.departure_time)
+    return flightDate.getMonth() === lastMonth && flightDate.getFullYear() === currentYear
+  }).length
+  
   // Calcul des operateurs du mois
   const newOperatorsThisMonth = operatorsStore.allOperators.filter(o => {
     const operatorDate = new Date(o.created_at)
@@ -227,7 +230,7 @@ const stats = computed(() => {
     const aircraftDate = new Date(a.created_at)
     return aircraftDate.getMonth() === currentMonth && aircraftDate.getFullYear() === currentYear
   }).length
-
+  
   return {
     operators: {
       total: operatorsStore.allOperators.length || 0, 
@@ -240,7 +243,7 @@ const stats = computed(() => {
     flights: {
       total: flightsStore.total || 0,
       monthlyFlights,
-      trend: 0 // ⚠️ DONNÉE MANQUANTE - Nécessite comparaison avec mois précédent
+      trend: monthlyFlights - lastMonthFlights
     },
     users: {
       active: 0 // ⚠️ DONNÉE MANQUANTE - Pas d'endpoint users/agents
@@ -250,6 +253,7 @@ const stats = computed(() => {
     }
   }
 })
+
 
 // Activités récentes basées sur les vraies données
 const recentActivities = computed(() => {

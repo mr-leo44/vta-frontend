@@ -56,6 +56,30 @@ export interface AircraftType {
   created_at: string | null
   updated_at: string | null
 }
+
+export interface AircraftTypeKPIs {
+  total_aircrafts: number              // Nombre total d'aéronefs de ce type
+  active_aircrafts: number             // Nombre d'aéronefs actifs
+  inactive_aircrafts: number           // Nombre d'aéronefs inactifs
+  total_operators: number              // Nombre d'opérateurs utilisant ce type
+  total_flights: number                // Nombre total de vols (tous temps)
+  total_flights_current_year: number   // Nombre de vols cette année
+  average_pmad: number                 // PMAD moyen des aéronefs de ce type
+  flights_per_aircraft: number         // Vols par aéronef actif (cette année)
+  utilization_rate: number             // Taux d'utilisation (% actifs)
+}
+
+export interface OperatorWithAircraftCount {
+  id: number
+  name: string
+  sigle: string
+  iata_code: string | null
+  icao_code: string | null
+  country: string | null
+  aircrafts_count: number              // Nombre d'aéronefs de ce type
+  active_aircrafts_count: number       // Nombre d'aéronefs actifs de ce type
+}
+
 // ==================== AIRCRAFTS ====================
 export interface Aircraft {
   id: number

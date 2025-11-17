@@ -7,9 +7,6 @@
           <TrendingUp class="h-4 w-4" />
           Activité mensuelle ({{ currentYear }})
         </CardTitle>
-        <CardDescription class="text-xs text-amber-600">
-          Note: Données mensuelles calculées à partir des vols. L'API devrait fournir des statistiques mensuelles agrégées.
-        </CardDescription>
       </CardHeader>
       <CardContent>
         <div class="h-64">
@@ -55,11 +52,6 @@
               <span class="text-sm text-muted-foreground">Ce mois-ci</span>
               <span class="text-2xl font-bold">{{ kpis.total_flights_current_month }}</span>
             </div>
-            <Separator />
-            <div class="bg-muted/30 p-3 rounded-lg">
-              <div class="text-xs text-muted-foreground mb-1">Heures de vol (API)</div>
-              <div class="text-lg font-bold text-muted-foreground">— h</div>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -83,8 +75,7 @@ import {
   Filler
 } from 'chart.js'
 import { TrendingUp, PieChart, BarChart3 } from 'lucide-vue-next'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { AircraftKPIs } from '~/types/api'
 
 ChartJS.register(

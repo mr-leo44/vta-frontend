@@ -64,7 +64,7 @@
               Statistiques des vols ({{ currentYear }})
             </CardTitle>
             <CardDescription class="text-xs text-amber-600">
-              Note: Certaines données sont génériques. L'API devrait fournir un endpoint GET /aircrafts/{id}/kpis pour des statistiques complètes.
+              Ces données proviennent des livres de trafic et enregistré par les VTA.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -92,23 +92,6 @@
                 <div class="text-lg font-bold">
                   {{ kpis.last_flight_date ? formatDate(kpis.last_flight_date) : 'Aucun vol' }}
                 </div>
-              </div>
-              
-              <!-- Données génériques (à implémenter dans l'API) -->
-              <div class="p-4 border rounded-lg bg-muted/30">
-                <div class="text-sm text-muted-foreground">Heures de vol totales</div>
-                <div class="text-2xl font-bold text-muted-foreground">—</div>
-                <div class="text-xs text-muted-foreground mt-1">API à implémenter</div>
-              </div>
-              <div class="p-4 border rounded-lg bg-muted/30">
-                <div class="text-sm text-muted-foreground">Taux d'utilisation</div>
-                <div class="text-2xl font-bold text-muted-foreground">—</div>
-                <div class="text-xs text-muted-foreground mt-1">API à implémenter</div>
-              </div>
-              <div class="p-4 border rounded-lg bg-muted/30">
-                <div class="text-sm text-muted-foreground">Durée moyenne vol</div>
-                <div class="text-2xl font-bold text-muted-foreground">—</div>
-                <div class="text-xs text-muted-foreground mt-1">API à implémenter</div>
               </div>
             </div>
           </CardContent>
@@ -218,12 +201,14 @@ const props = defineProps<{
   open: boolean
 }>()
 
+const aircraftsStore = useAircraftsStore()
+
+
 const emit = defineEmits<{
   'update:open': [value: boolean]
   edit: [aircraft: Aircraft]
 }>()
 
-const aircraftsStore = useAircraftsStore()
 
 const isOpen = computed({
   get: () => props.open,
@@ -254,8 +239,8 @@ const formatDate = (date: string | null) => {
 }
 
 const formatFlightRoute = (departure: any[], arrival: any[]) => {
-  const dep = departure?.[0] || '???'
-  const arr = arrival?.[0] || '???'
+  const dep = departure?.name + ' (' + departure.iata + ')' || '???'
+  const arr = arrival?.name + ' (' + arrival.iata + ')' || '???'
   return `${dep} → ${arr}`
 }
 

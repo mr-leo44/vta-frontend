@@ -2,7 +2,7 @@
   <div class="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
     <!-- Status indicator -->
     <div :class="[
-      'h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0',
+      'h-10 w-10 rounded-full flex items-center justify-center shrink-0',
       aircraft.in_activity ? 'bg-green-100' : 'bg-gray-100'
     ]">
       <Plane :class="[
@@ -10,7 +10,6 @@
         aircraft.in_activity ? 'text-green-600' : 'text-gray-400'
       ]" />
     </div>
-    
     <!-- Informations principales -->
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
@@ -30,7 +29,7 @@
     </div>
     
     <!-- Statistiques -->
-    <div v-if="aircraft.flights" class="hidden lg:block text-center flex-shrink-0">
+    <div v-if="aircraft.flights" class="hidden lg:block text-center shrink-0">
       <div class="text-lg font-semibold">{{ aircraft.flights.length }}</div>
       <div class="text-xs text-muted-foreground">Vol{{ aircraft.flights.length > 1 ? 's' : '' }}</div>
     </div>

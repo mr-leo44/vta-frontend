@@ -166,9 +166,9 @@ const loadFormData = async () => {
   try {
     const [typesRes, operatorsRes] = await Promise.all([
       apiFetch<{ data: AircraftType[] }>('/aircraft-types'),
-      apiFetch<{ data: Operator[] }>('/operators')
+      apiFetch<{ data: Operator[] }>('/operators/all')
     ])
-    aircraftTypes.value = typesRes.data || []
+    aircraftTypes.value = typesRes || []
     operators.value = operatorsRes.data || []
   } catch (error) {
     showError('Erreur lors du chargement des données')

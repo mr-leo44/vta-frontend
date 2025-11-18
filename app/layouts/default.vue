@@ -115,7 +115,7 @@
       <slot />
     </main>
     
-    <Toaster position="top-right" rich-colors />
+    <Toaster position="top-right" richColors />
   </div>
 </template>
 

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Operator, ApiResponse, OperatorFormData, PaginatedResponse, OperatorKPIs } from '~/types/api'
 
+// Helper local pour gérer les erreurs
 const handleApiError = (error: any): string => {
   console.error('API Error:', error)
   
@@ -44,7 +45,6 @@ export const useOperatorsStore = defineStore('operators', () => {
   /**
    * Récupère TOUS les opérateurs (sans pagination)
    * Utilise GET /operators/all
-   * Utile pour: selects, autocomplete, dropdowns
    */
   const fetchAllOperators = async () => {
     loadingAll.value = true
@@ -66,8 +66,6 @@ export const useOperatorsStore = defineStore('operators', () => {
 
   /**
    * Récupère les opérateurs avec pagination
-   * Utilise GET /operators?page=X
-   * Utile pour: listes avec pagination, infinite scroll
    */
   const fetchOperators = async (page: number = 1, append: boolean = false) => {
     loading.value = true
@@ -127,7 +125,7 @@ export const useOperatorsStore = defineStore('operators', () => {
   }
 
   /**
-   * Recherche des opérateurs (retourne un tableau)
+   * Recherche des opérateurs
    */
   const searchOperators = async (term: string) => {
     loading.value = true
@@ -149,8 +147,6 @@ export const useOperatorsStore = defineStore('operators', () => {
    * Récupère les KPIs d'un opérateur
    */
   const fetchOperatorKPIs = async (id: number): Promise<OperatorKPIs> => {
-    const { apiFetch } = useApi()
-    
     try {
       const operator = await fetchOperator(id)
       if (!operator.success || !operator.data) {

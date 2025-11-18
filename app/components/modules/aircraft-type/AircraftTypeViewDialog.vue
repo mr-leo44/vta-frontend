@@ -1,11 +1,17 @@
 <template>
   <Dialog v-model:open="isOpen">
-    <DialogContent class="max-w-4xl md:max-w-6xl max-h-[90vh] overflow-y-auto">
+    <DialogContent class="max-w-5xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle class="flex items-center gap-2">
-          <Layers class="h-5 w-5" />
-          {{ aircraftType?.name }}
-          <Badge variant="secondary" class="font-mono">{{ aircraftType?.sigle }}</Badge>
+        <DialogTitle class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <Layers class="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              {{ aircraftType?.name }}
+              <Badge variant="secondary" class="font-mono">{{ aircraftType?.sigle }}</Badge>
+            </div>
+          </div>
         </DialogTitle>
         <DialogDescription>
           Informations détaillées et statistiques du type d'aéronef
@@ -13,179 +19,170 @@
       </DialogHeader>
 
       <div v-if="aircraftType" class="space-y-6">
-        <!-- Informations principales -->
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-base flex items-center gap-2">
-              <Info class="h-4 w-4" />
-              Informations générales
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div class="grid gap-4 md:grid-cols-3">
-              <div class="space-y-1">
-                <label class="text-xs font-medium text-muted-foreground">Nom complet</label>
-                <p class="text-sm font-semibold">{{ aircraftType.name }}</p>
-              </div>
-              <div class="space-y-1">
-                <label class="text-xs font-medium text-muted-foreground">Code ICAO</label>
-                <p class="text-sm font-mono font-semibold">{{ aircraftType.sigle }}</p>
-              </div>
-              <div class="space-y-1">
-                <label class="text-xs font-medium text-muted-foreground">Enregistré le</label>
-                <p class="text-sm">{{ formatDate(aircraftType.created_at) }}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <!-- KPIs -->
+        <!-- KPIs Principaux -->
         <Card>
           <CardHeader>
             <CardTitle class="text-base flex items-center gap-2">
               <BarChart3 class="h-4 w-4" />
-              Statistiques ({{ currentYear }})
+              Indicateurs clés ({{ currentYear }})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div v-if="loadingKPIs" class="space-y-3">
-              <div class="grid gap-4 md:grid-cols-4">
-                <Skeleton class="h-24 w-full" />
-                <Skeleton class="h-24 w-full" />
-                <Skeleton class="h-24 w-full" />
-                <Skeleton class="h-24 w-full" />
-              </div>
+            <div v-if="loadingKPIs" class="grid gap-4 md:grid-cols-4">
+              <Skeleton v-for="i in 4" :key="i" class="h-28 w-full" />
             </div>
-            <div v-else-if="kpis" class="space-y-4">
-              <!-- KPIs principaux -->
-              <div class="grid gap-4 md:grid-cols-4">
-                <div class="p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="text-xs font-medium text-muted-foreground">Aéronefs</div>
-                    <Plane class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                  <div class="text-2xl font-bold">{{ kpis.total_aircrafts }}</div>
-                  <div class="text-xs mt-1 flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1">
-                      <div class="h-2 w-2 rounded-full bg-green-500"></div>
-                      {{ kpis.active_aircrafts }}
-                    </span>
-                    <span class="text-muted-foreground">•</span>
-                    <span class="inline-flex items-center gap-1 text-muted-foreground">
-                      <div class="h-2 w-2 rounded-full bg-gray-400"></div>
-                      {{ kpis.inactive_aircrafts }}
-                    </span>
+            <div v-else-if="kpis" class="grid gap-4 md:grid-cols-4">
+              <!-- Total Aéronefs -->
+              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Flotte</div>
+                  <div class="h-10 w-10 rounded-lg bg-blue-500 dark:bg-blue-600 flex items-center justify-center shadow-md">
+                    <Plane class="h-5 w-5 text-white" />
                   </div>
                 </div>
-
-                <div class="p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="text-xs font-medium text-muted-foreground">Exploitants</div>
-                    <Building2 class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                  <div class="text-2xl font-bold">{{ kpis.total_operators }}</div>
-                  <div class="text-xs text-muted-foreground mt-1">compagnies</div>
-                </div>
-
-                <div class="p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="text-xs font-medium text-muted-foreground">Vols {{ currentYear }}</div>
-                    <PlaneTakeoff class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                  <div class="text-2xl font-bold">{{ kpis.total_flights_current_year }}</div>
-                  <div class="text-xs text-muted-foreground mt-1">
-                    {{ kpis.total_flights }} total
-                  </div>
-                </div>
-
-                <div class="p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
-                  <div class="flex items-center justify-between mb-2">
-                    <div class="text-xs font-medium text-muted-foreground">Taux d'activité</div>
-                    <Activity class="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                  <div class="text-2xl font-bold">{{ kpis.utilization_rate }}%</div>
-                  <div class="text-xs text-muted-foreground mt-1">
-                    {{ kpis.active_aircrafts }}/{{ kpis.total_aircrafts }} actifs
-                  </div>
+                <div class="text-3xl font-bold text-blue-900 dark:text-blue-100">{{ kpis.total_aircrafts }}</div>
+                <div class="text-xs mt-2 flex items-center gap-2">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                    <div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+                    {{ kpis.active_aircrafts }}
+                  </span>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                    <div class="h-1.5 w-1.5 rounded-full bg-gray-400"></div>
+                    {{ kpis.inactive_aircrafts }}
+                  </span>
                 </div>
               </div>
 
-              <!-- Métriques secondaires -->
-              <div class="grid gap-4 md:grid-cols-3">
-                <div class="p-3 border rounded-lg bg-muted/30">
-                  <div class="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                    <Weight class="h-3 w-3" />
-                    PMAD moyen
-                  </div>
-                  <div class="text-lg font-semibold">
-                    {{ formatWeight(kpis.average_pmad) }}
+              <!-- Exploitants -->
+              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 border-purple-200 dark:border-purple-800">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">Exploitants</div>
+                  <div class="h-10 w-10 rounded-lg bg-purple-500 dark:bg-purple-600 flex items-center justify-center shadow-md">
+                    <Building2 class="h-5 w-5 text-white" />
                   </div>
                 </div>
-                <div class="p-3 border rounded-lg bg-muted/30">
-                  <div class="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                    <Target class="h-3 w-3" />
-                    Vols/aéronef
+                <div class="text-3xl font-bold text-purple-900 dark:text-purple-100">{{ kpis.total_operators }}</div>
+                <div class="text-xs text-purple-600 dark:text-purple-400 mt-2">compagnies</div>
+              </div>
+
+              <!-- Vols -->
+              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 border-green-200 dark:border-green-800">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">Vols {{ currentYear }}</div>
+                  <div class="h-10 w-10 rounded-lg bg-green-500 dark:bg-green-600 flex items-center justify-center shadow-md">
+                    <PlaneTakeoff class="h-5 w-5 text-white" />
                   </div>
-                  <div class="text-lg font-semibold">
-                    {{ kpis.flights_per_aircraft }}
-                  </div>
-                  <div class="text-xs text-muted-foreground">par aéronef actif</div>
                 </div>
-                <div class="p-3 border rounded-lg bg-muted/30">
-                  <div class="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                    <TrendingUp class="h-3 w-3" />
-                    Performance
+                <div class="text-3xl font-bold text-green-900 dark:text-green-100">{{ kpis.total_flights_current_year.toLocaleString() }}</div>
+                <div class="text-xs text-green-600 dark:text-green-400 mt-2">
+                  {{ kpis.total_flights.toLocaleString() }} au total
+                </div>
+              </div>
+
+              <!-- Taux d'activité -->
+              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 border-orange-200 dark:border-orange-800">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wide">Utilisation</div>
+                  <div class="h-10 w-10 rounded-lg bg-orange-500 dark:bg-orange-600 flex items-center justify-center shadow-md">
+                    <Activity class="h-5 w-5 text-white" />
                   </div>
-                  <div class="text-lg font-semibold">
-                    {{ getPerformanceLabel(kpis.flights_per_aircraft) }}
-                  </div>
+                </div>
+                <div class="text-3xl font-bold text-orange-900 dark:text-orange-100">{{ kpis.utilization_rate }}%</div>
+                <div class="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                  {{ kpis.active_aircrafts }}/{{ kpis.total_aircrafts }} actifs
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <!-- Exploitants utilisant ce type -->
+        <!-- Métriques secondaires -->
+        <div class="grid gap-4 md:grid-cols-3">
+          <Card class="border-2">
+            <CardContent class="p-5">
+              <div class="flex items-center gap-3">
+                <div class="h-12 w-12 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <Weight class="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div class="flex-1">
+                  <div class="text-xs text-muted-foreground font-medium">PMAD moyen</div>
+                  <div class="text-xl font-bold">{{ formatWeight(kpis?.average_pmad || 0) }}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card class="border-2">
+            <CardContent class="p-5">
+              <div class="flex items-center gap-3">
+                <div class="h-12 w-12 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
+                  <Target class="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <div class="flex-1">
+                  <div class="text-xs text-muted-foreground font-medium">Vols par aéronef</div>
+                  <div class="text-xl font-bold">{{ kpis?.flights_per_aircraft || 0 }}</div>
+                  <div class="text-xs text-muted-foreground">moyenne annuelle</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card class="border-2">
+            <CardContent class="p-5">
+              <div class="flex items-center gap-3">
+                <div class="h-12 w-12 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
+                  <TrendingUp class="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                </div>
+                <div class="flex-1">
+                  <div class="text-xs text-muted-foreground font-medium">Performance</div>
+                  <div class="text-xl font-bold">{{ getPerformanceLabel(kpis?.flights_per_aircraft || 0) }}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Exploitants -->
         <Card>
           <CardHeader>
             <div class="flex items-center justify-between">
               <CardTitle class="text-base flex items-center gap-2">
                 <Building2 class="h-4 w-4" />
-                Exploitants ({{ operators.length }})
+                Exploitants utilisant ce type ({{ operators.length }})
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <div v-if="loadingOperators" class="space-y-2">
-              <Skeleton v-for="i in 5" :key="i" class="h-16 w-full" />
+              <Skeleton v-for="i in 5" :key="i" class="h-20 w-full" />
             </div>
-            <div v-else-if="operators.length === 0" class="text-center py-8 text-muted-foreground">
-              <Building2 class="h-12 w-12 mx-auto mb-2 opacity-20" />
-              <p class="text-sm">Aucun exploitant n'utilise ce type</p>
+            <div v-else-if="operators.length === 0" class="text-center py-12">
+              <Building2 class="h-16 w-16 mx-auto mb-3 text-muted-foreground opacity-20" />
+              <p class="text-sm text-muted-foreground">Aucun exploitant n'utilise ce type</p>
             </div>
-            <div v-else class="space-y-2 max-h-80 overflow-y-auto">
+            <div v-else class="grid gap-3 md:grid-cols-2">
               <div
                 v-for="operator in operators"
                 :key="operator.id"
-                class="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                class="flex items-center gap-3 p-4 border-2 rounded-xl hover:bg-muted/50 hover:border-primary/50 transition-all cursor-pointer group"
               >
-                <div class="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                  <Building2 class="h-5 w-5" />
+                <div class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform">
+                  <Building2 class="h-6 w-6 text-white" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="font-medium text-sm">{{ operator.name }}</div>
-                  <div class="text-xs text-muted-foreground flex items-center gap-1">
+                  <div class="font-semibold text-sm truncate">{{ operator.name }}</div>
+                  <div class="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                     <span class="font-mono">{{ operator.sigle }}</span>
                     <span v-if="operator.country">• {{ operator.country }}</span>
                   </div>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <Badge variant="outline" class="gap-1">
+                <div class="flex flex-col gap-1 shrink-0">
+                  <Badge variant="outline" class="gap-1 justify-center">
                     <Plane class="h-3 w-3" />
                     {{ operator.aircrafts_count }}
                   </Badge>
-                  <Badge variant="default" class="gap-1">
-                    <div class="h-2 w-2 rounded-full bg-green-500"></div>
+                  <Badge variant="default" class="gap-1 justify-center text-xs">
+                    <div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
                     {{ operator.active_aircrafts_count }}
                   </Badge>
                 </div>
@@ -194,58 +191,61 @@
           </CardContent>
         </Card>
 
-        <!-- Liste des aéronefs -->
+        <!-- Flotte -->
         <Card>
           <CardHeader>
             <div class="flex items-center justify-between">
               <CardTitle class="text-base flex items-center gap-2">
                 <Plane class="h-4 w-4" />
-                Flotte ({{ aircrafts.length }})
+                Flotte complète ({{ aircrafts.length }})
               </CardTitle>
-              <div class="flex gap-1">
-                <Badge variant="outline" class="gap-1 text-xs">
+              <div class="flex gap-2">
+                <Badge variant="outline" class="gap-1">
                   <div class="h-2 w-2 rounded-full bg-green-500"></div>
-                  {{ activeAircraftsCount }}
+                  {{ activeAircraftsCount }} actifs
                 </Badge>
-                <Badge variant="outline" class="gap-1 text-xs">
+                <Badge variant="outline" class="gap-1">
                   <div class="h-2 w-2 rounded-full bg-gray-400"></div>
-                  {{ inactiveAircraftsCount }}
+                  {{ inactiveAircraftsCount }} inactifs
                 </Badge>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div v-if="loadingAircrafts" class="space-y-2">
-              <Skeleton v-for="i in 5" :key="i" class="h-16 w-full" />
+              <Skeleton v-for="i in 5" :key="i" class="h-20 w-full" />
             </div>
-            <div v-else-if="aircrafts.length === 0" class="text-center py-8 text-muted-foreground">
-              <Plane class="h-12 w-12 mx-auto mb-2 opacity-20" />
-              <p class="text-sm">Aucun aéronef enregistré</p>
+            <div v-else-if="aircrafts.length === 0" class="text-center py-12">
+              <Plane class="h-16 w-16 mx-auto mb-3 text-muted-foreground opacity-20" />
+              <p class="text-sm text-muted-foreground">Aucun aéronef enregistré</p>
             </div>
-            <div v-else class="space-y-2 max-h-80 overflow-y-auto">
+            <div v-else class="space-y-2 max-h-96 overflow-y-auto pr-2">
               <div
                 v-for="aircraft in aircrafts"
                 :key="aircraft.id"
-                class="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                class="flex items-center gap-3 p-4 border-2 rounded-xl hover:bg-muted/50 transition-all"
+                :class="aircraft.in_activity ? 'border-green-200 dark:border-green-900' : 'border-gray-200 dark:border-gray-800'"
               >
-                <div :class="[
-                  'h-10 w-10 rounded-full flex items-center justify-center shrink-0 transition-all',
-                  aircraft.in_activity 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-gray-100 text-gray-500'
-                ]">
-                  <Plane class="h-5 w-5" />
+                <div 
+                  :class="[
+                    'h-12 w-12 rounded-full flex items-center justify-center shrink-0 shadow-md',
+                    aircraft.in_activity 
+                      ? 'bg-gradient-to-br from-green-500 to-green-600' 
+                      : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                  ]"
+                >
+                  <Plane class="h-6 w-6 text-white" />
                 </div>
                 <div class="flex-1 min-w-0">
-                  <div class="font-medium text-sm font-mono">{{ aircraft.immatriculation }}</div>
-                  <div class="text-xs text-muted-foreground">
-                    {{ aircraft.operator?.name || 'Opérateur inconnu' }}
-                    <span v-if="aircraft.pmad"> • PMAD: {{ formatWeight(aircraft.pmad) }}</span>
+                  <div class="font-bold text-base font-mono">{{ aircraft.immatriculation }}</div>
+                  <div class="text-sm text-muted-foreground flex items-center gap-2 mt-0.5">
+                    <span>{{ aircraft.operator?.name || 'Opérateur inconnu' }}</span>
+                    <span v-if="aircraft.pmad">• PMAD: {{ formatWeight(aircraft.pmad) }}</span>
                   </div>
                 </div>
                 <Badge 
                   :variant="aircraft.in_activity ? 'default' : 'secondary'"
-                  class="shrink-0 text-xs"
+                  class="shrink-0"
                 >
                   {{ aircraft.in_activity ? 'Actif' : 'Inactif' }}
                 </Badge>
@@ -257,25 +257,33 @@
         <Separator />
 
         <!-- Métadonnées -->
-        <div class="grid gap-4 md:grid-cols-2 text-xs">
-          <div class="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
-            <CalendarPlus class="h-4 w-4 text-muted-foreground mt-0.5" />
-            <div>
-              <label class="font-medium text-muted-foreground">Créé le</label>
-              <p class="mt-1 text-foreground">{{ formatDate(aircraftType.created_at) }}</p>
-            </div>
-          </div>
-          <div class="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
-            <CalendarClock class="h-4 w-4 text-muted-foreground mt-0.5" />
-            <div>
-              <label class="font-medium text-muted-foreground">Modifié le</label>
-              <p class="mt-1 text-foreground">{{ formatDate(aircraftType.updated_at) }}</p>
-            </div>
-          </div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardContent class="p-4 flex items-center gap-3">
+              <div class="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                <CalendarPlus class="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div class="flex-1">
+                <div class="text-xs text-muted-foreground font-medium">Date de création</div>
+                <div class="font-semibold">{{ formatDate(aircraftType.created_at) }}</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent class="p-4 flex items-center gap-3">
+              <div class="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                <CalendarClock class="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div class="flex-1">
+                <div class="text-xs text-muted-foreground font-medium">Dernière modification</div>
+                <div class="font-semibold">{{ formatDate(aircraftType.updated_at) }}</div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      <DialogFooter>
+      <DialogFooter class="gap-2">
         <Button variant="outline" @click="isOpen = false">
           <X class="mr-2 h-4 w-4" />
           Fermer
@@ -300,7 +308,6 @@ import {
   CalendarPlus,
   CalendarClock,
   X,
-  Info,
   BarChart3,
   Activity,
   Weight,
@@ -381,7 +388,9 @@ const formatDate = (date: string | null) => {
   return new Date(date).toLocaleDateString('fr-FR', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   })
 }
 

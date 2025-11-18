@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { AircraftType, ApiResponse, AircraftTypeKPIs } from '~/types/api'
+import type { 
+  AircraftTypeFormData, 
+  AircraftType, 
+  ApiResponse, 
+  AircraftTypeKPIs,
+  OperatorWithAircraftCount 
+} from '~/types/api'
 
 const handleApiError = (error: any): string => {
   console.error('API Error:', error)
@@ -19,16 +25,13 @@ const handleApiError = (error: any): string => {
   return 'Une erreur est survenue'
 }
 
-export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
-  // Liste complète (pas de pagination pour les types d'aéronefs)
+export const useAircraftTypesStore = defineStore('aircraft-types', () => {
   const aircraftTypes = ref<AircraftType[]>([])
-  
-  const currentAircraftType = ref<AircraftType | null>(null)
+  const currentType = ref<AircraftType | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const aircraftTypesList = computed(() => aircraftTypes.value)
-  const total = computed(() => aircraftTypes.value.length)
+  const typesList = computed(() => aircraftTypes.value)
 
   /**
    * Récupère tous les types d'aéronefs
@@ -41,9 +44,12 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
     
     try {
       const response = await apiFetch<ApiResponse<AircraftType[]>>('/aircraft-types')
-      aircraftTypes.value = response.data || []
       
-      return { success: true, data: response.data }
+      // Gérer le cas où l'API retourne directement un tableau
+      const data = Array.isArray(response) ? response : (response.data || [])
+      aircraftTypes.value = data
+      
+      return { success: true, data }
     } catch (err: any) {
       error.value = handleApiError(err)
       return { success: false, message: error.value }
@@ -53,55 +59,20 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
   }
 
   /**
-   * Récupère un type d'aéronef par ID
-   * Note: L'API n'a pas de route /aircraft-types/{id}
-   * On récupère depuis la liste complète
-   */
-  const fetchAircraftType = async (id: number) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      // Si la liste est vide, on la charge
-      if (aircraftTypes.value.length === 0) {
-        await fetchAircraftTypes()
-      }
-      
-      const aircraftType = aircraftTypes.value.find(t => t.id === id)
-      
-      if (!aircraftType) {
-        throw new Error('Type d\'aéronef non trouvé')
-      }
-      
-      currentAircraftType.value = aircraftType
-      return { success: true, data: aircraftType }
-    } catch (err: any) {
-      error.value = handleApiError(err)
-      return { success: false, message: error.value }
-    } finally {
-      loading.value = false
-    }
-  }
-
-  /**
-   * Recherche des types d'aéronefs par nom ou sigle
+   * Recherche un type d'aéronef par nom ou sigle
    * Utilise GET /aircraft-types/find/{query}
    */
-  const searchAircraftTypes = async (query: string) => {
+  const findAircraftType = async (query: string) => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
     
     try {
-      const response = await apiFetch<AircraftType>(`/aircraft-types/find/${encodeURIComponent(query)}`)
-      
-      // L'API retourne un seul type ou null, on le met dans un tableau
-      const results = response ? [response] : []
-      
-      return { success: true, data: results }
+      const response = await apiFetch<AircraftType | null>(`/aircraft-types/find/${encodeURIComponent(query)}`)
+      return { success: true, data: response }
     } catch (err: any) {
       error.value = handleApiError(err)
-      return { success: false, message: error.value, data: [] }
+      return { success: false, message: error.value, data: null }
     } finally {
       loading.value = false
     }
@@ -109,52 +80,69 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
 
   /**
    * Récupère les KPIs d'un type d'aéronef
-   * Calcule à partir des aéronefs de ce type
    */
   const fetchAircraftTypeKPIs = async (id: number): Promise<AircraftTypeKPIs> => {
+    const aircraftsStore = useAircraftsStore()
+    const operatorsStore = useOperatorsStore()
+    
     try {
-      // Charger tous les aéronefs pour calculer les KPIs
-      const { apiFetch } = useApi()
-      const aircraftsResponse = await apiFetch<ApiResponse<any[]>>('/aircrafts/all')
-      const allAircrafts = aircraftsResponse.data || []
+      // Récupérer tous les aéronefs de ce type
+      const allAircrafts = aircraftsStore.allAircrafts.filter(a => a.type?.id === id)
       
-      // Filtrer les aéronefs de ce type
-      const typeAircrafts = allAircrafts.filter(a => a.aircraft_type_id === id)
+      if (allAircrafts.length === 0) {
+        return {
+          total_aircrafts: 0,
+          active_aircrafts: 0,
+          inactive_aircrafts: 0,
+          total_operators: 0,
+          total_flights: 0,
+          total_flights_current_year: 0,
+          average_pmad: 0,
+          flights_per_aircraft: 0,
+          utilization_rate: 0
+        }
+      }
       
-      // Calculer les opérateurs uniques utilisant ce type
-      const uniqueOperators = new Set(typeAircrafts.map(a => a.operator_id))
-      
-      // Calculer les aéronefs actifs/inactifs
-      const activeAircrafts = typeAircrafts.filter(a => a.in_activity)
-      const inactiveAircrafts = typeAircrafts.filter(a => !a.in_activity)
-      
-      // Calculer les vols totaux
-      const totalFlights = typeAircrafts.reduce((sum, a) => {
-        return sum + (a.flights?.length || 0)
-      }, 0)
-      
-      // Calculer les vols de l'année en cours
       const currentYear = new Date().getFullYear()
-      const currentYearFlights = typeAircrafts.reduce((sum, a) => {
-        const yearFlights = a.flights?.filter((f: any) => 
-          new Date(f.departure_time).getFullYear() === currentYear
-        ) || []
-        return sum + yearFlights.length
-      }, 0)
       
-      // Calculer le PMAD moyen
-      const aircraftsWithPmad = typeAircrafts.filter(a => a.pmad)
-      const averagePmad = aircraftsWithPmad.length > 0
-        ? Math.round(aircraftsWithPmad.reduce((sum, a) => sum + (a.pmad || 0), 0) / aircraftsWithPmad.length)
+      // Statistiques de base
+      const activeAircrafts = allAircrafts.filter(a => a.in_activity)
+      const inactiveAircrafts = allAircrafts.filter(a => !a.in_activity)
+      
+      // Opérateurs uniques
+      const uniqueOperators = new Set(allAircrafts.map(a => a.operator?.id).filter(Boolean))
+      
+      // PMAD moyen
+      const pmadValues = allAircrafts.map(a => a.pmad).filter(Boolean) as number[]
+      const averagePmad = pmadValues.length > 0 
+        ? Math.round(pmadValues.reduce((sum, val) => sum + val, 0) / pmadValues.length)
         : 0
       
-      // Calculer les vols par aéronef actif
+      // Vols
+      let totalFlights = 0
+      let currentYearFlights = 0
+      
+      allAircrafts.forEach(aircraft => {
+        if (aircraft.flights) {
+          totalFlights += aircraft.flights.length
+          currentYearFlights += aircraft.flights.filter(f => 
+            new Date(f.departure_time).getFullYear() === currentYear
+          ).length
+        }
+      })
+      
+      // Vols par aéronef actif
       const flightsPerAircraft = activeAircrafts.length > 0
         ? Math.round(currentYearFlights / activeAircrafts.length)
         : 0
       
+      // Taux d'utilisation
+      const utilizationRate = allAircrafts.length > 0
+        ? Math.round((activeAircrafts.length / allAircrafts.length) * 100)
+        : 0
+      
       return {
-        total_aircrafts: typeAircrafts.length,
+        total_aircrafts: allAircrafts.length,
         active_aircrafts: activeAircrafts.length,
         inactive_aircrafts: inactiveAircrafts.length,
         total_operators: uniqueOperators.size,
@@ -162,12 +150,10 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
         total_flights_current_year: currentYearFlights,
         average_pmad: averagePmad,
         flights_per_aircraft: flightsPerAircraft,
-        utilization_rate: typeAircrafts.length > 0 
-          ? Math.round((activeAircrafts.length / typeAircrafts.length) * 100) 
-          : 0
+        utilization_rate: utilizationRate
       }
     } catch (err) {
-      console.error('Failed to fetch KPIs:', err)
+      console.error('Failed to fetch aircraft type KPIs:', err)
       return {
         total_aircrafts: 0,
         active_aircrafts: 0,
@@ -183,41 +169,46 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
   }
 
   /**
-   * Récupère les opérateurs utilisant ce type d'aéronef
+   * Récupère les opérateurs utilisant ce type
    */
-  const fetchOperatorsByType = async (typeId: number) => {
+  const fetchOperatorsByType = async (typeId: number): Promise<OperatorWithAircraftCount[]> => {
+    const aircraftsStore = useAircraftsStore()
+    const operatorsStore = useOperatorsStore()
+    
     try {
-      const { apiFetch } = useApi()
+      // Récupérer tous les aéronefs de ce type
+      const typeAircrafts = aircraftsStore.allAircrafts.filter(a => a.type?.id === typeId)
       
-      // Charger tous les aéronefs
-      const aircraftsResponse = await apiFetch<ApiResponse<any[]>>('/aircrafts/all')
-      const allAircrafts = aircraftsResponse.data || []
-      
-      // Filtrer les aéronefs de ce type
-      const typeAircrafts = allAircrafts.filter(a => a.aircraft_type_id === typeId)
-      
-      // Extraire les opérateurs uniques avec leurs infos complètes
-      const operatorsMap = new Map()
+      // Grouper par opérateur
+      const operatorMap = new Map<number, OperatorWithAircraftCount>()
       
       typeAircrafts.forEach(aircraft => {
-        if (aircraft.operator && !operatorsMap.has(aircraft.operator.id)) {
-          operatorsMap.set(aircraft.operator.id, {
-            ...aircraft.operator,
+        if (!aircraft.operator) return
+        
+        const operatorId = aircraft.operator.id
+        
+        if (!operatorMap.has(operatorId)) {
+          operatorMap.set(operatorId, {
+            id: aircraft.operator.id,
+            name: aircraft.operator.name,
+            sigle: aircraft.operator.sigle,
+            iata_code: aircraft.operator.iata_code,
+            icao_code: aircraft.operator.icao_code,
+            country: aircraft.operator.country,
             aircrafts_count: 0,
             active_aircrafts_count: 0
           })
         }
         
-        if (aircraft.operator) {
-          const op = operatorsMap.get(aircraft.operator.id)
-          op.aircrafts_count++
-          if (aircraft.in_activity) {
-            op.active_aircrafts_count++
-          }
+        const operator = operatorMap.get(operatorId)!
+        operator.aircrafts_count++
+        if (aircraft.in_activity) {
+          operator.active_aircrafts_count++
         }
       })
       
-      return Array.from(operatorsMap.values())
+      return Array.from(operatorMap.values())
+        .sort((a, b) => b.aircrafts_count - a.aircrafts_count)
     } catch (err) {
       console.error('Failed to fetch operators by type:', err)
       return []
@@ -225,24 +216,20 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
   }
 
   /**
-   * Récupère les aéronefs d'un type spécifique
+   * Récupère les aéronefs d'un type
    */
   const fetchAircraftsByType = async (typeId: number) => {
+    const aircraftsStore = useAircraftsStore()
+    
     try {
-      const { apiFetch } = useApi()
-      
-      // Charger tous les aéronefs
-      const aircraftsResponse = await apiFetch<ApiResponse<any[]>>('/aircrafts/all')
-      const allAircrafts = aircraftsResponse.data || []
-      
-      // Filtrer et trier par statut puis immatriculation
-      return allAircrafts
-        .filter(a => a.aircraft_type_id === typeId)
+      return aircraftsStore.allAircrafts
+        .filter(a => a.type?.id === typeId)
         .sort((a, b) => {
-          if (a.in_activity === b.in_activity) {
-            return a.immatriculation.localeCompare(b.immatriculation)
+          // Trier par statut (actifs d'abord) puis par immatriculation
+          if (a.in_activity !== b.in_activity) {
+            return a.in_activity ? -1 : 1
           }
-          return a.in_activity ? -1 : 1
+          return a.immatriculation.localeCompare(b.immatriculation)
         })
     } catch (err) {
       console.error('Failed to fetch aircrafts by type:', err)
@@ -252,22 +239,44 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
 
   /**
    * Crée un nouveau type d'aéronef
+   * Utilise POST /aircraft-types
    */
-  const createAircraftType = async (data: { name: string; sigle: string }) => {
+  const createAircraftType = async (data: AircraftTypeFormData) => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
     
     try {
-      const response = await apiFetch<AircraftType>('/aircraft-types', {
+      const response = await apiFetch<any>('/aircraft-types', {
         method: 'POST',
         body: data
       })
       
-      aircraftTypes.value.push(response)
+      console.log('API Response:', response) 
       
-      return { success: true, data: response }
+      // L'API peut retourner soit { data: {...} } soit directement {...}
+      let aircraftType: AircraftType
+      
+      if (response && typeof response === 'object') {
+        // Si la réponse a une propriété 'data', on l'utilise, sinon on utilise la réponse directement
+        if ('data' in response && response.data) {
+          aircraftType = response.data
+        } else if ('id' in response && 'name' in response && 'sigle' in response) {
+          // La réponse contient directement les propriétés de l'aircraft type
+          aircraftType = response as AircraftType
+        } else {
+          console.error('Unexpected response format:', response)
+          throw new Error('Format de réponse invalide')
+        }
+      } else {
+        throw new Error('Format de réponse invalide')
+      }
+      
+      aircraftTypes.value.unshift(aircraftType)
+      
+      return { success: true, data: aircraftType }
     } catch (err: any) {
+      console.error('Create aircraft type error:', err)
       error.value = handleApiError(err)
       return { 
         success: false, 
@@ -281,28 +290,38 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
 
   /**
    * Met à jour un type d'aéronef
+   * Utilise PUT /aircraft-types/{aircraftType}
    */
-  const updateAircraftType = async (id: number, data: { name?: string; sigle?: string }) => {
+  const updateAircraftType = async (id: number, data: AircraftTypeFormData) => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
     
     try {
-      const response = await apiFetch<AircraftType>(`/aircraft-types/${id}`, {
+      const response = await apiFetch<any>(`/aircraft-types/${id}`, {
         method: 'PUT',
         body: data
       })
       
+      // L'API peut retourner soit { data: {...} } soit directement {...}
+      let aircraftType: AircraftType
+      
+      if (response && typeof response === 'object') {
+        aircraftType = response.data || response
+      } else {
+        throw new Error('Format de réponse invalide')
+      }
+      
       const index = aircraftTypes.value.findIndex(t => t.id === id)
       if (index !== -1) {
-        aircraftTypes.value[index] = response
+        aircraftTypes.value[index] = aircraftType
       }
       
-      if (currentAircraftType.value?.id === id) {
-        currentAircraftType.value = response
+      if (currentType.value?.id === id) {
+        currentType.value = aircraftType
       }
       
-      return { success: true, data: response }
+      return { success: true, data: aircraftType }
     } catch (err: any) {
       error.value = handleApiError(err)
       return { 
@@ -317,6 +336,7 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
 
   /**
    * Supprime un type d'aéronef
+   * Utilise DELETE /aircraft-types/{aircraftType}
    */
   const deleteAircraftType = async (id: number) => {
     loading.value = true
@@ -328,8 +348,8 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
       
       aircraftTypes.value = aircraftTypes.value.filter(t => t.id !== id)
       
-      if (currentAircraftType.value?.id === id) {
-        currentAircraftType.value = null
+      if (currentType.value?.id === id) {
+        currentType.value = null
       }
       
       return { success: true }
@@ -345,25 +365,23 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
     error.value = null
   }
 
-  const clearCurrentAircraftType = () => {
-    currentAircraftType.value = null
+  const clearCurrentType = () => {
+    currentType.value = null
   }
 
   return {
     // States
     aircraftTypes,
-    currentAircraftType,
+    currentType,
     loading,
     error,
-    total,
     
     // Computed
-    aircraftTypesList,
+    typesList,
     
     // Actions
     fetchAircraftTypes,
-    fetchAircraftType,
-    searchAircraftTypes,
+    findAircraftType,
     fetchAircraftTypeKPIs,
     fetchOperatorsByType,
     fetchAircraftsByType,
@@ -371,6 +389,6 @@ export const useAircraftTypesStore = defineStore('aircraftTypes', () => {
     updateAircraftType,
     deleteAircraftType,
     clearError,
-    clearCurrentAircraftType
+    clearCurrentType
   }
 })

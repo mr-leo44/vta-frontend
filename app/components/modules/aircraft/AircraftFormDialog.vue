@@ -13,16 +13,10 @@
           <!-- Immatriculation -->
           <div class="col-span-2">
             <Label for="immatriculation">Immatriculation <span class="text-destructive">*</span></Label>
-            <Input
-              id="immatriculation"
-              v-model="formData.immatriculation"
-              placeholder="Ex: F-HREV"
-              class="font-mono"
-              :class="{ 'border-destructive': errors.immatriculation }"
-            />
+            <Input id="immatriculation" v-model="formData.immatriculation" placeholder="Ex: F-HREV" class="font-mono"
+              :class="{ 'border-destructive': errors.immatriculation }" />
             <p v-if="errors.immatriculation" class="text-sm text-destructive mt-1">{{ errors.immatriculation }}</p>
           </div>
-
           <!-- Type d'aéronef -->
           <div class="col-span-2">
             <Label for="aircraft_type_id">Type d'aéronef <span class="text-destructive">*</span></Label>
@@ -31,7 +25,7 @@
                 <SelectValue placeholder="Sélectionner un type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="type in aircraftTypes" :key="type.id" :value="type.id.toString()">
+                <SelectItem v-for="type in aircraftTypes.data" :key="type.id" :value="type.id.toString()">
                   {{ type.name }} ({{ type.sigle }})
                 </SelectItem>
               </SelectContent>
@@ -58,13 +52,8 @@
           <!-- PMAD -->
           <div>
             <Label for="pmad">PMAD (kg)</Label>
-            <Input
-              id="pmad"
-              v-model.number="formData.pmad"
-              type="number"
-              placeholder="Ex: 79000"
-              :class="{ 'border-destructive': errors.pmad }"
-            />
+            <Input id="pmad" v-model.number="formData.pmad" type="number" placeholder="Ex: 79000"
+              :class="{ 'border-destructive': errors.pmad }" />
             <p v-if="errors.pmad" class="text-sm text-destructive mt-1">{{ errors.pmad }}</p>
           </div>
 
@@ -165,7 +154,7 @@ const loadFormData = async () => {
   loadingData.value = true
   try {
     const [typesRes, operatorsRes] = await Promise.all([
-      apiFetch<{ data: AircraftType[] }>('/aircraft-types'),
+      apiFetch<{ data: AircraftType[] }>('/aircraft-types/all'),
       apiFetch<{ data: Operator[] }>('/operators/all')
     ])
     aircraftTypes.value = typesRes || []
@@ -218,7 +207,7 @@ const handleCancel = () => {
 
 const handleSubmit = async () => {
   errors.value = {}
-  
+
   // Convert string values to proper types
   const dataToValidate = {
     ...formData.value,
@@ -226,10 +215,10 @@ const handleSubmit = async () => {
     operator_id: parseInt(formData.value.operator_id as any) || 0,
     in_activity: formData.value.in_activity === true || formData.value.in_activity === 'true'
   }
-  
+
   // Validation avec Zod
   const validation = aircraftFormSchema.safeParse(dataToValidate)
-  
+
   if (!validation.success) {
     validation.error.errors.forEach(err => {
       if (err.path[0]) {

@@ -80,6 +80,11 @@ export interface OperatorWithAircraftCount {
   active_aircrafts_count: number       // Nombre d'aéronefs actifs de ce type
 }
 
+export interface AircraftTypeFormData {
+  name: string
+  sigle: string
+}
+
 // ==================== AIRCRAFTS ====================
 export interface Aircraft {
   id: number

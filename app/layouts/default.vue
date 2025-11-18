@@ -115,12 +115,13 @@
       <slot />
     </main>
     
-    <Toaster position="top-right" richColors closeButton />
+    <Toaster position="top-right" richColors />
   </div>
 </template>
 
 <script setup lang="ts">
 import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'vue-sonner'
 import { User, LogOut, Settings, ChevronDown, Layers, Plane } from 'lucide-vue-next'
 import {
   DropdownMenu,
@@ -133,10 +134,17 @@ import {
 import { Button } from '@/components/ui/button'
 
 const authStore = useAuthStore()
-const { success: showSuccess } = useToast()
 
 const handleLogout = async () => {
-  await authStore.logout()
-  showSuccess('Déconnexion réussie')
+  try {
+    await authStore.logout()
+    toast.success('Déconnexion réussie', {
+      description: 'Vous avez été déconnecté avec succès'
+    })
+  } catch (error) {
+    toast.error('Erreur', {
+      description: 'Une erreur est survenue lors de la déconnexion'
+    })
+  }
 }
 </script>

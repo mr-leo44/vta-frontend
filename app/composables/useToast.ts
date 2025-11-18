@@ -1,26 +1,69 @@
-import { toast } from 'vue-sonner'
+// composables/useToast.ts
+import { toast as sonnerToast } from 'vue-sonner'
 
+/**
+ * Composable pour utiliser les toasts de manière cohérente dans l'application
+ * Utilise vue-sonner sous le capot
+ * 
+ * @example
+ * const { success, error } = useToast()
+ * success('Opération réussie', 'Les données ont été sauvegardées')
+ * error('Erreur', 'Une erreur est survenue')
+ */
 export const useToast = () => {
-  const success = (message: string) => {
-    toast.success(message)
+  const success = (title: string, description?: string) => {
+    sonnerToast.success(title, {
+      description
+    })
   }
 
-  const error = (message: string) => {
-    toast.error(message)
+  const error = (title: string, description?: string) => {
+    sonnerToast.error(title, {
+      description
+    })
   }
 
-  const info = (message: string) => {
-    toast.info(message)
+  const info = (title: string, description?: string) => {
+    sonnerToast.info(title, {
+      description
+    })
   }
 
-  const warning = (message: string) => {
-    toast.warning(message)
+  const warning = (title: string, description?: string) => {
+    sonnerToast.warning(title, {
+      description
+    })
+  }
+
+  const loading = (title: string, description?: string) => {
+    return sonnerToast.loading(title, {
+      description
+    })
+  }
+
+  const promise = <T>(
+    promise: Promise<T>,
+    options: {
+      loading: string
+      success: string | ((data: T) => string)
+      error: string | ((error: any) => string)
+    }
+  ) => {
+    return sonnerToast.promise(promise, options)
+  }
+
+  const dismiss = (toastId?: string | number) => {
+    sonnerToast.dismiss(toastId)
   }
 
   return {
     success,
     error,
     info,
-    warning
+    warning,
+    loading,
+    promise,
+    dismiss,
+    toast: sonnerToast
   }
 }

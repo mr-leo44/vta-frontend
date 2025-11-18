@@ -1,9 +1,9 @@
 <template>
   <Dialog v-model:open="isOpen">
-    <DialogContent class="max-w-5xl max-h-[90vh] overflow-y-auto">
+    <DialogContent class="max-w-4xl md:max-w-6xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+          <div class="h-10 w-10 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center">
             <Layers class="h-5 w-5 text-white" />
           </div>
           <div>
@@ -33,7 +33,7 @@
             </div>
             <div v-else-if="kpis" class="grid gap-4 md:grid-cols-4">
               <!-- Total Aéronefs -->
-              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
+              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-linear-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
                 <div class="flex items-center justify-between mb-3">
                   <div class="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Flotte</div>
                   <div class="h-10 w-10 rounded-lg bg-blue-500 dark:bg-blue-600 flex items-center justify-center shadow-md">
@@ -54,7 +54,7 @@
               </div>
 
               <!-- Exploitants -->
-              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 border-purple-200 dark:border-purple-800">
+              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-linear-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 border-purple-200 dark:border-purple-800">
                 <div class="flex items-center justify-between mb-3">
                   <div class="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wide">Exploitants</div>
                   <div class="h-10 w-10 rounded-lg bg-purple-500 dark:bg-purple-600 flex items-center justify-center shadow-md">
@@ -66,7 +66,7 @@
               </div>
 
               <!-- Vols -->
-              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 border-green-200 dark:border-green-800">
+              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-linear-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 border-green-200 dark:border-green-800">
                 <div class="flex items-center justify-between mb-3">
                   <div class="text-xs font-semibold text-green-700 dark:text-green-300 uppercase tracking-wide">Vols {{ currentYear }}</div>
                   <div class="h-10 w-10 rounded-lg bg-green-500 dark:bg-green-600 flex items-center justify-center shadow-md">
@@ -80,7 +80,7 @@
               </div>
 
               <!-- Taux d'activité -->
-              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 border-orange-200 dark:border-orange-800">
+              <div class="relative p-5 border rounded-xl hover:shadow-md transition-all group bg-linear-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 border-orange-200 dark:border-orange-800">
                 <div class="flex items-center justify-between mb-3">
                   <div class="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wide">Utilisation</div>
                   <div class="h-10 w-10 rounded-lg bg-orange-500 dark:bg-orange-600 flex items-center justify-center shadow-md">
@@ -166,7 +166,7 @@
                 :key="operator.id"
                 class="flex items-center gap-3 p-4 border-2 rounded-xl hover:bg-muted/50 hover:border-primary/50 transition-all cursor-pointer group"
               >
-                <div class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform">
+                <div class="h-12 w-12 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md group-hover:scale-110 transition-transform">
                   <Building2 class="h-6 w-6 text-white" />
                 </div>
                 <div class="flex-1 min-w-0">
@@ -230,8 +230,8 @@
                   :class="[
                     'h-12 w-12 rounded-full flex items-center justify-center shrink-0 shadow-md',
                     aircraft.in_activity 
-                      ? 'bg-gradient-to-br from-green-500 to-green-600' 
-                      : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                      ? 'bg-linear-to-br from-green-500 to-green-600' 
+                      : 'bg-linear-to-br from-gray-400 to-gray-500'
                   ]"
                 >
                   <Plane class="h-6 w-6 text-white" />

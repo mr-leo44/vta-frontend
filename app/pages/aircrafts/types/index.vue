@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <div class="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+          <div class="h-10 w-10 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center">
             <Layers class="h-6 w-6 text-white" />
           </div>
           Types d'aéronefs
@@ -34,7 +34,7 @@
 
       <template v-else>
         <!-- Total types -->
-        <Card class="border-2 hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
+        <Card class="border-2 hover:shadow-lg transition-shadow bg-linear-to-br from-blue-50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle class="text-sm font-semibold text-blue-900 dark:text-blue-100">Total types</CardTitle>
             <div class="h-10 w-10 rounded-lg bg-blue-500 dark:bg-blue-600 flex items-center justify-center shadow-md">
@@ -51,7 +51,7 @@
         </Card>
 
         <!-- Aéronefs associés -->
-        <Card class="border-2 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-green-100/30 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
+        <Card class="border-2 hover:shadow-lg transition-shadow bg-linear-to-br from-green-50 to-green-100/30 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle class="text-sm font-semibold text-green-900 dark:text-green-100">Flotte totale</CardTitle>
             <div class="h-10 w-10 rounded-lg bg-green-500 dark:bg-green-600 flex items-center justify-center shadow-md">
@@ -74,7 +74,7 @@
         </Card>
 
         <!-- Type le plus utilisé -->
-        <Card class="border-2 hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-purple-100/30 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
+        <Card class="border-2 hover:shadow-lg transition-shadow bg-linear-to-br from-purple-50 to-purple-100/30 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle class="text-sm font-semibold text-purple-900 dark:text-purple-100">Type populaire</CardTitle>
             <div class="h-10 w-10 rounded-lg bg-purple-500 dark:bg-purple-600 flex items-center justify-center shadow-md">
@@ -93,7 +93,7 @@
         </Card>
 
         <!-- Exploitants -->
-        <Card class="border-2 hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border-orange-200 dark:border-orange-800">
+        <Card class="border-2 hover:shadow-lg transition-shadow bg-linear-to-br from-orange-50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border-orange-200 dark:border-orange-800">
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle class="text-sm font-semibold text-orange-900 dark:text-orange-100">Exploitants</CardTitle>
             <div class="h-10 w-10 rounded-lg bg-orange-500 dark:bg-orange-600 flex items-center justify-center shadow-md">
@@ -123,7 +123,7 @@
             v-if="hasActiveFilters" 
             variant="ghost" 
             size="sm" 
-            @click="clearFilters"
+            @click="clearSearch"
             class="gap-2"
           >
             <X class="h-4 w-4" />
@@ -145,7 +145,7 @@
             </div>
           </div>
           <Select v-model="sortBy">
-            <SelectTrigger class="w-full sm:w-[240px]">
+            <SelectTrigger class="w-full sm:w-60">
               <SelectValue placeholder="Trier par..." />
             </SelectTrigger>
             <SelectContent>
@@ -170,7 +170,7 @@
           <div>
             <CardTitle class="flex items-center gap-2">
               <Layers class="h-5 w-5" />
-              Types d'aéronefs ({{ filteredAndSortedTypes.length }})
+              Types d'aéronefs ({{ displayedTypes.length }})
             </CardTitle>
             <CardDescription class="mt-1">
               Liste complète des types disponibles
@@ -209,7 +209,7 @@
 
         <!-- Empty State -->
         <div 
-          v-else-if="filteredAndSortedTypes.length === 0" 
+          v-else-if="displayedTypes.length === 0" 
           class="text-center py-16"
         >
           <div class="h-20 w-20 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
@@ -228,7 +228,7 @@
         <!-- Grid View -->
         <div v-else-if="viewMode === 'grid'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card
-            v-for="type in filteredAndSortedTypes"
+            v-for="type in displayedTypes"
             :key="type.id"
             class="hover:shadow-lg transition-all cursor-pointer group border-2"
             @click="openViewDialog(type)"
@@ -237,7 +237,7 @@
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
-                    <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                    <div class="h-8 w-8 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                       <Plane class="h-4 w-4 text-white" />
                     </div>
                   </div>
@@ -301,7 +301,7 @@
         <!-- List View -->
         <div v-else class="space-y-2">
           <Card
-            v-for="type in filteredAndSortedTypes"
+            v-for="type in displayedTypes"
             :key="type.id"
             class="hover:bg-muted/50 transition-all cursor-pointer border-2"
             @click="openViewDialog(type)"
@@ -309,7 +309,7 @@
             <CardContent class="p-4">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4 flex-1">
-                  <div class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md">
+                  <div class="h-12 w-12 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md">
                     <Layers class="h-6 w-6 text-white" />
                   </div>
                   <div class="flex-1 min-w-0">
@@ -360,6 +360,23 @@
       </CardContent>
     </Card>
 
+    <!-- Load More Trigger -->
+    <div v-if="hasMorePages && !aircraftTypesStore.loading" ref="loadMoreTrigger" class="flex justify-center py-8">
+      <Button variant="outline" @click="loadMore" :disabled="aircraftTypesStore.loading">
+        Charger plus de types
+      </Button>
+    </div>
+
+    <!-- Loading More -->
+    <div v-if="aircraftTypesStore.loading && displayedTypes.length > 0" class="py-4">
+      <div v-if="viewMode === 'grid'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <AircraftTypeCardSkeleton v-for="i in 3" :key="i" />
+      </div>
+      <div v-else class="space-y-2">
+        <AircraftTypeRowSkeleton v-for="i in 3" :key="i" />
+      </div>
+    </div>
+
     <!-- Dialogs -->
     <AircraftTypeFormDialog
       v-model:open="dialogOpen"
@@ -404,7 +421,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { 
   Plus, 
   Search, 
@@ -468,7 +485,6 @@ const aircraftTypesStore = useAircraftTypesStore()
 const operatorsStore = useOperatorsStore()
 const { success: showSuccess, error: showError } = useToast()
 
-const loading = ref(false)
 const searchQuery = ref('')
 const sortBy = ref('all')
 const viewMode = ref<'grid' | 'list'>('grid')
@@ -495,7 +511,7 @@ const kpis = computed(() => {
   const uniqueOperators = new Set(aircrafts.map(a => a.operator?.id).filter(Boolean))
   
   return {
-    totalTypes: types.length,
+    totalTypes: aircraftTypesStore.total,
     totalAircrafts: aircrafts.length,
     activeAircrafts,
     inactiveAircrafts,
@@ -506,51 +522,67 @@ const kpis = computed(() => {
 
 const hasActiveFilters = computed(() => searchQuery.value || sortBy.value !== 'all')
 
-const filteredAndSortedTypes = computed(() => {
-  let result = [...aircraftTypesStore.aircraftTypes]
-  
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(type => 
-      type.name.toLowerCase().includes(query) ||
-      type.sigle.toLowerCase().includes(query)
-    )
+// Computed
+const loading = computed(() => aircraftTypesStore.loading)
+const displayedTypes = computed(() => aircraftTypesStore.aircraftTypes)
+const hasMorePages = computed(() => aircraftTypesStore.hasMorePages)
+const total = computed(() => aircraftTypesStore.total)
+
+// Intersection Observer
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+let searchTimeout: NodeJS.Timeout
+
+// Fetch initial types
+const fetchAircraftTypes = async () => {
+  aircraftTypesStore.resetPagination()
+  const result = await aircraftTypesStore.fetchAircraftTypesPage(1)
+
+  if (!result.success) {
+    showError(result.message || 'Erreur lors du chargement des types')
   }
-  
-  switch (sortBy.value) {
-    case 'name_asc':
-      result.sort((a, b) => a.name.localeCompare(b.name))
-      break
-    case 'name_desc':
-      result.sort((a, b) => b.name.localeCompare(a.name))
-      break
-    case 'sigle_asc':
-      result.sort((a, b) => a.sigle.localeCompare(b.sigle))
-      break
-    case 'sigle_desc':
-      result.sort((a, b) => b.sigle.localeCompare(a.sigle))
-      break
-    case 'created_desc':
-      result.sort((a, b) => {
-        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
-        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
-        return dateB - dateA
-      })
-      break
-    case 'created_asc':
-      result.sort((a, b) => {
-        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
-        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
-        return dateA - dateB
-      })
-      break
-    case 'usage_desc':
-      result.sort((a, b) => getAircraftCount(b.id) - getAircraftCount(a.id))
-      break
-  }
-  
-  return result
-})
+}
+
+// Load more for infinite scroll
+const loadMore = async () => {
+  if (!hasMorePages.value || loading.value) return
+  await aircraftTypesStore.loadNextPage()
+}
+
+// Search with debounce
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(async () => {
+    if (searchQuery.value.trim()) {
+      // TODO: implémenter la recherche via l'API si nécessaire
+      // Pour l'instant on peut garder le filtrage côté client ou appeler une API
+    } else {
+      await fetchAircraftTypes()
+    }
+  }, 300)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  sortBy.value = 'all'
+  fetchAircraftTypes()
+}
+
+// Setup Intersection Observer for infinite scroll
+const setupIntersectionObserver = () => {
+  if (!loadMoreTrigger.value) return
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMorePages.value && !loading.value) {
+        loadMore()
+      }
+    },
+    { threshold: 0.5, rootMargin: '100px' }
+  )
+
+  observer.observe(loadMoreTrigger.value)
+}
 
 const getAircraftCount = (typeId: number) => {
   return aircraftsStore.allAircrafts.filter(a => a.type?.id === typeId).length
@@ -563,17 +595,6 @@ const formatDate = (date: string | null) => {
     month: 'short',
     year: 'numeric'
   })
-}
-
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
-const debouncedSearch = () => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {}, 300)
-}
-
-const clearFilters = () => {
-  searchQuery.value = ''
-  sortBy.value = 'all'
 }
 
 const openCreateDialog = () => {
@@ -605,41 +626,46 @@ const confirmDelete = (type: AircraftType) => {
 const handleDelete = async () => {
   if (!typeToDelete.value) return
   
-  loading.value = true
   try {
     const result = await aircraftTypesStore.deleteAircraftType(typeToDelete.value.id)
     
     if (result.success) {
       showSuccess('Type supprimé', `Le type ${typeToDelete.value.name} a été supprimé avec succès.`)
+      await fetchAircraftTypes()
     } else {
       throw new Error(result.message)
     }
   } catch (error: any) {
     showError('Erreur', error?.message || 'Impossible de supprimer ce type.')
   } finally {
-    loading.value = false
     deleteDialogOpen.value = false
     typeToDelete.value = null
   }
 }
 
 const handleSuccess = async () => {
-  await aircraftTypesStore.fetchAircraftTypes()
+  await fetchAircraftTypes()
   dialogOpen.value = false
 }
 
+// Lifecycle
 onMounted(async () => {
-  loading.value = true
-  try {
-    await Promise.all([
-      aircraftTypesStore.fetchAircraftTypes(),
-      aircraftsStore.fetchAllAircrafts(),
-      operatorsStore.fetchAllOperators()
-    ])
-  } catch (error: any) {
-    showError('Erreur', error?.message || 'Impossible de charger les données.')
-  } finally {
-    loading.value = false
+  await Promise.all([
+    fetchAircraftTypes(),
+    aircraftsStore.fetchAllAircrafts(),
+    operatorsStore.fetchAllOperators()
+  ])
+
+  // Setup observer after a short delay to ensure DOM is ready
+  setTimeout(() => {
+    setupIntersectionObserver()
+  }, 100)
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
   }
+  clearTimeout(searchTimeout)
 })
 </script>

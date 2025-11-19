@@ -30,11 +30,96 @@ export const useAircraftTypesStore = defineStore('aircraft-types', () => {
   const currentType = ref<AircraftType | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  
+  // Pagination
+  const currentPage = ref(1)
+  const lastPage = ref(1)
+  const perPage = ref(6)
+  const total = ref(0)
+  const hasMorePages = computed(() => currentPage.value < lastPage.value)
 
   const typesList = computed(() => aircraftTypes.value)
 
   /**
-   * Récupère tous les types d'aéronefs
+   * Réinitialise la pagination
+   */
+  const resetPagination = () => {
+    currentPage.value = 1
+    lastPage.value = 1
+    aircraftTypes.value = []
+  }
+
+  /**
+   * Récupère les types d'aéronefs avec pagination
+   * Utilise GET /aircraft-types?page={page}&per_page={perPage}
+   */
+  const fetchAircraftTypesPage = async (page: number = 1, append: boolean = false) => {
+    loading.value = true
+    error.value = null
+    const { apiFetch } = useApi()
+    
+    try {
+      const response = await apiFetch<any>(`/aircraft-types?page=${page}&per_page=${perPage.value}`)
+      
+      // Gérer différents formats de réponse API
+      let data: AircraftType[] = []
+      let meta = { current_page: page, last_page: 1, per_page: perPage.value, total: 0 }
+      
+      if (response && typeof response === 'object') {
+        // Format: { data: [...], meta: {...} }
+        if ('data' in response && Array.isArray(response.data)) {
+          data = response.data
+          if ('meta' in response && response.meta) {
+            meta = response.meta
+          }
+        }
+        // Format: { current_page: ..., last_page: ..., data: [...] }
+        else if ('current_page' in response && 'data' in response) {
+          data = response.data
+          meta = {
+            current_page: response.current_page,
+            last_page: response.last_page,
+            per_page: response.per_page || perPage.value,
+            total: response.total || 0
+          }
+        }
+        // Format: direct array (fallback)
+        else if (Array.isArray(response)) {
+          data = response
+        }
+      }
+      
+      if (append) {
+        aircraftTypes.value = [...aircraftTypes.value, ...data]
+      } else {
+        aircraftTypes.value = data
+      }
+      
+      currentPage.value = meta.current_page
+      lastPage.value = meta.last_page
+      perPage.value = meta.per_page
+      total.value = meta.total
+      
+      return { success: true, data }
+    } catch (err: any) {
+      error.value = handleApiError(err)
+      return { success: false, message: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Charge la page suivante (infinite scroll)
+   */
+  const loadNextPage = async () => {
+    if (!hasMorePages.value || loading.value) return
+    
+    await fetchAircraftTypesPage(currentPage.value + 1, true)
+  }
+
+  /**
+   * Récupère tous les types d'aéronefs (sans pagination)
    * Utilise GET /aircraft-types
    */
   const fetchAircraftTypes = async () => {
@@ -48,6 +133,7 @@ export const useAircraftTypesStore = defineStore('aircraft-types', () => {
       // Gérer le cas où l'API retourne directement un tableau
       const data = Array.isArray(response) ? response : (response.data || [])
       aircraftTypes.value = data
+      total.value = data.length
       
       return { success: true, data }
     } catch (err: any) {
@@ -375,11 +461,19 @@ export const useAircraftTypesStore = defineStore('aircraft-types', () => {
     currentType,
     loading,
     error,
+    currentPage,
+    lastPage,
+    perPage,
+    total,
     
     // Computed
     typesList,
+    hasMorePages,
     
     // Actions
+    resetPagination,
+    fetchAircraftTypesPage,
+    loadNextPage,
     fetchAircraftTypes,
     findAircraftType,
     fetchAircraftTypeKPIs,

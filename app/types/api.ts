@@ -246,7 +246,10 @@ export interface Flight {
     name: string
     sigle: string
   } | null
-  aircraft: string
+  aircraft: {
+    immatriculation: String
+    type: String
+  }
   flight_regime: FlightRegime
   flight_type: FlightType
   flight_nature: FlightNature
@@ -257,6 +260,96 @@ export interface Flight {
   arrival_time: string
   remarks: string | null
   statistics?: FlightStatistic
+}
+
+// types/api.ts - Ajout des types manquants
+
+// ==================== FLIGHT FORM DATA ====================
+export interface FlightFormData {
+  flight_number: string
+  operator_id: number
+  aircraft_id: number
+  departure: string[]
+  arrival: string[]
+  departure_time: string
+  arrival_time: string
+  flight_regime?: FlightRegime
+  flight_type?: FlightType
+  flight_nature?: FlightNature
+  status?: FlightStatus
+  remarks?: string | null
+  statistics?: FlightStatisticsFormData
+}
+
+export interface FlightStatisticsFormData {
+  passengers_count: number
+  pax_bus: number
+  go_pass_count: number
+  fret_count?: any[]
+  excedents?: any[]
+  has_justification: boolean
+  justification?: FlightJustification[]
+}
+
+// ==================== FLIGHT FILTERS ====================
+export interface FlightFilters {
+  operator_id?: number | null
+  aircraft_id?: number | null
+  status?: FlightStatus | null
+  regime?: FlightRegime | null
+  type?: FlightType | null
+  nature?: FlightNature | null
+  date_from?: string | null
+  date_to?: string | null
+  search?: string | null
+}
+
+// ==================== FLIGHT KPIs ====================
+export interface FlightKPIs {
+  total_flights: number
+  total_today: number
+  total_this_week: number
+  total_this_month: number
+  by_status: Record<FlightStatus, number>
+  by_regime: Record<FlightRegime, number>
+  by_type: Record<FlightType, number>
+  by_nature: Record<FlightNature, number>
+  total_passengers: number
+  average_passengers: number
+  top_operators: Array<{ id: number; name: string; count: number }>
+  top_routes: Array<{ route: string; count: number }>
+}
+
+// ==================== FLIGHT STATUS LABELS ====================
+export const FLIGHT_STATUS_LABELS: Record<FlightStatus, string> = {
+  qrf: 'QRF',
+  prevu: 'Prévu',
+  atteri: 'Atterri',
+  annule: 'Annulé',
+  detourne: 'Détourné'
+}
+
+export const FLIGHT_STATUS_COLORS: Record<FlightStatus, string> = {
+  qrf: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  prevu: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+  atteri: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  annule: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+  detourne: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+}
+
+export const FLIGHT_REGIME_LABELS: Record<FlightRegime, string> = {
+  domestic: 'Domestique',
+  international: 'International'
+}
+
+export const FLIGHT_TYPE_LABELS: Record<FlightType, string> = {
+  regular: 'Régulier',
+  non_regular: 'Non régulier'
+}
+
+export const FLIGHT_NATURE_LABELS: Record<FlightNature, string> = {
+  commercial: 'Commercial',
+  non_commercial: 'Non commercial'
 }
 
 // ==================== FLIGHT JUSTIFICATIONS ====================

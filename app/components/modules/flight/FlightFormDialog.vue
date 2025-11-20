@@ -1,57 +1,178 @@
 <template>
   <Dialog v-model:open="isOpen">
-    <DialogContent class="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+    <DialogContent class="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>{{ isEdit ? 'Modifier le vol' : 'Nouveau vol' }}</DialogTitle>
+        <DialogTitle class="flex items-center gap-2">
+          <PlaneTakeoff class="h-5 w-5" />
+          {{ isEditing ? 'Modifier le vol' : 'Nouveau vol' }}
+        </DialogTitle>
         <DialogDescription>
-          {{ isEdit ? 'Modifier les informations du vol' : 'Remplissez les informations du vol à créer' }}
+          {{ isEditing ? 'Modifiez les informations du vol' : 'Enregistrez un nouveau vol avec ses statistiques' }}
         </DialogDescription>
       </DialogHeader>
 
       <form @submit.prevent="handleSubmit" class="space-y-6">
-        <!-- Informations de base -->
+        <!-- Informations principales -->
         <div class="space-y-4">
-          <h3 class="text-sm font-medium">Informations de base</h3>
+          <h3 class="text-sm font-semibold flex items-center gap-2">
+            <Info class="h-4 w-4" />
+            Informations du vol
+          </h3>
+          
           <div class="grid grid-cols-2 gap-4">
-            <div class="col-span-2">
-              <Label for="flight_number">Numéro de vol <span class="text-destructive">*</span></Label>
+            <!-- Numéro de vol -->
+            <div class="space-y-2">
+              <Label for="flight_number">
+                Numéro de vol <span class="text-destructive">*</span>
+              </Label>
               <Input
                 id="flight_number"
                 v-model="formData.flight_number"
-                placeholder="Ex: AF1234"
-                :class="{ 'border-destructive': errors.flight_number }"
+                placeholder="Ex: AA123"
+                required
+                :disabled="loading"
               />
-              <p v-if="errors.flight_number" class="text-sm text-destructive mt-1">{{ errors.flight_number }}</p>
             </div>
 
-            <div class="col-span-2">
-              <Label for="operator_id">Exploitant <span class="text-destructive">*</span></Label>
-              <Select v-model="formData.operator_id">
-                <SelectTrigger :class="{ 'border-destructive': errors.operator_id }">
-                  <SelectValue placeholder="Sélectionner" />
+            <!-- Statut -->
+            <div class="space-y-2">
+              <Label for="status">Statut</Label>
+              <Select v-model="formData.status">
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner le statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem v-for="operator in operators" :key="operator.id" :value="operator.id.toString()">
-                    {{ operator.name }} ({{ operator.sigle }})
-                  </SelectItem>
+                  <SelectItem value="qrf">QRF</SelectItem>
+                  <SelectItem value="prevu">Prévu</SelectItem>
+                  <SelectItem value="atteri">Atterri</SelectItem>
+                  <SelectItem value="annule">Annulé</SelectItem>
+                  <SelectItem value="detourne">Détourné</SelectItem>
                 </SelectContent>
               </Select>
-              <p v-if="errors.operator_id" class="text-sm text-destructive mt-1">{{ errors.operator_id }}</p>
+            </div>
+          </div>
+
+          <!-- Opérateur (Autocomplete) -->
+          <div class="space-y-2">
+            <Label for="operator">
+              Opérateur <span class="text-destructive">*</span>
+            </Label>
+            <Popover v-model:open="operatorOpen">
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  :aria-expanded="operatorOpen"
+                  class="w-full justify-between"
+                  :disabled="loading"
+                >
+                  {{ selectedOperator?.name || "Sélectionner un opérateur..." }}
+                  <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Rechercher un opérateur..." />
+                  <CommandEmpty>Aucun opérateur trouvé.</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      v-for="operator in operatorsStore.allOperators"
+                      :key="operator.id"
+                      :value="operator.id"
+                      @select="selectOperator(operator)"
+                    >
+                      <Check
+                        class="mr-2 h-4 w-4"
+                        :class="formData.operator_id === operator.id ? 'opacity-100' : 'opacity-0'"
+                      />
+                      {{ operator.name }} ({{ operator.sigle }})
+                    </CommandItem>
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <!-- Aéronef (Autocomplete) -->
+          <div class="space-y-2">
+            <Label for="aircraft">
+              Aéronef <span class="text-destructive">*</span>
+            </Label>
+            <Popover v-model:open="aircraftOpen">
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  :aria-expanded="aircraftOpen"
+                  class="w-full justify-between"
+                  :disabled="loading"
+                >
+                  {{ selectedAircraft?.immatriculation || "Sélectionner un aéronef..." }}
+                  <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Rechercher un aéronef..." />
+                  <CommandEmpty>Aucun aéronef trouvé.</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      v-for="aircraft in aircraftsStore.allAircrafts"
+                      :key="aircraft.id"
+                      :value="aircraft.id"
+                      @select="selectAircraft(aircraft)"
+                    >
+                      <Check
+                        class="mr-2 h-4 w-4"
+                        :class="formData.aircraft_id === aircraft.id ? 'opacity-100' : 'opacity-0'"
+                      />
+                      {{ aircraft.immatriculation }} - {{ aircraft.type?.name }}
+                    </CommandItem>
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <!-- Classification -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="space-y-2">
+              <Label>Régime</Label>
+              <Select v-model="formData.flight_regime">
+                <SelectTrigger>
+                  <SelectValue placeholder="Régime" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="domestic">Domestique</SelectItem>
+                  <SelectItem value="international">International</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div class="col-span-2">
-              <Label for="aircraft_id">Aéronef <span class="text-destructive">*</span></Label>
-              <Select v-model="formData.aircraft_id">
-                <SelectTrigger :class="{ 'border-destructive': errors.aircraft_id }">
-                  <SelectValue placeholder="Sélectionner" />
+            <div class="space-y-2">
+              <Label>Type</Label>
+              <Select v-model="formData.flight_type">
+                <SelectTrigger>
+                  <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem v-for="aircraft in aircrafts" :key="aircraft.id" :value="aircraft.id.toString()">
-                    {{ aircraft.immatriculation }} ({{ aircraft.type?.name }})
-                  </SelectItem>
+                  <SelectItem value="regular">Régulier</SelectItem>
+                  <SelectItem value="non_regular">Non régulier</SelectItem>
                 </SelectContent>
               </Select>
-              <p v-if="errors.aircraft_id" class="text-sm text-destructive mt-1">{{ errors.aircraft_id }}</p>
+            </div>
+
+            <div class="space-y-2">
+              <Label>Nature</Label>
+              <Select v-model="formData.flight_nature">
+                <SelectTrigger>
+                  <SelectValue placeholder="Nature" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="commercial">Commercial</SelectItem>
+                  <SelectItem value="non_commercial">Non commercial</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -60,181 +181,300 @@
 
         <!-- Itinéraire -->
         <div class="space-y-4">
-          <h3 class="text-sm font-medium">Itinéraire</h3>
+          <h3 class="text-sm font-semibold flex items-center gap-2">
+            <MapPin class="h-4 w-4" />
+            Itinéraire
+          </h3>
+
           <div class="grid grid-cols-2 gap-4">
-            <div>
-              <Label for="departure">Départ <span class="text-destructive">*</span></Label>
+            <!-- Départ -->
+            <div class="space-y-2">
+              <Label>Aéroport de départ <span class="text-destructive">*</span></Label>
               <Input
-                id="departure"
-                v-model="formData.departure"
-                placeholder="Ex: CDG"
-                :class="{ 'border-destructive': errors.departure }"
+                v-model="departureInput"
+                placeholder="Ex: FIH, NBO, JNB"
+                @keydown.enter.prevent="addDeparture"
               />
-              <p v-if="errors.departure" class="text-sm text-destructive mt-1">{{ errors.departure }}</p>
+              <div v-if="formData.departure.length > 0" class="flex flex-wrap gap-2 mt-2">
+                <Badge
+                  v-for="(dep, index) in formData.departure"
+                  :key="index"
+                  variant="secondary"
+                  class="gap-1"
+                >
+                  {{ dep }}
+                  <button
+                    type="button"
+                    @click="removeDeparture(index)"
+                    class="ml-1 hover:text-destructive"
+                  >
+                    <X class="h-3 w-3" />
+                  </button>
+                </Badge>
+              </div>
             </div>
 
-            <div>
-              <Label for="arrival">Arrivée <span class="text-destructive">*</span></Label>
+            <!-- Arrivée -->
+            <div class="space-y-2">
+              <Label>Aéroport d'arrivée <span class="text-destructive">*</span></Label>
               <Input
-                id="arrival"
-                v-model="formData.arrival"
-                placeholder="Ex: JFK"
-                :class="{ 'border-destructive': errors.arrival }"
+                v-model="arrivalInput"
+                placeholder="Ex: FIH, NBO, JNB"
+                @keydown.enter.prevent="addArrival"
               />
-              <p v-if="errors.arrival" class="text-sm text-destructive mt-1">{{ errors.arrival }}</p>
+              <div v-if="formData.arrival.length > 0" class="flex flex-wrap gap-2 mt-2">
+                <Badge
+                  v-for="(arr, index) in formData.arrival"
+                  :key="index"
+                  variant="secondary"
+                  class="gap-1"
+                >
+                  {{ arr }}
+                  <button
+                    type="button"
+                    @click="removeArrival(index)"
+                    class="ml-1 hover:text-destructive"
+                  >
+                    <X class="h-3 w-3" />
+                  </button>
+                </Badge>
+              </div>
             </div>
+          </div>
 
-            <div>
-              <Label for="departure_time">Heure de départ <span class="text-destructive">*</span></Label>
+          <!-- Horaires -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Heure de départ <span class="text-destructive">*</span></Label>
               <Input
-                id="departure_time"
+                type="datetime-local"
                 v-model="formData.departure_time"
-                type="datetime-local"
-                :class="{ 'border-destructive': errors.departure_time }"
+                required
               />
-              <p v-if="errors.departure_time" class="text-sm text-destructive mt-1">{{ errors.departure_time }}</p>
             </div>
 
-            <div>
-              <Label for="arrival_time">Heure d'arrivée <span class="text-destructive">*</span></Label>
+            <div class="space-y-2">
+              <Label>Heure d'arrivée <span class="text-destructive">*</span></Label>
               <Input
-                id="arrival_time"
-                v-model="formData.arrival_time"
                 type="datetime-local"
-                :class="{ 'border-destructive': errors.arrival_time }"
+                v-model="formData.arrival_time"
+                required
               />
-              <p v-if="errors.arrival_time" class="text-sm text-destructive mt-1">{{ errors.arrival_time }}</p>
             </div>
           </div>
         </div>
 
         <Separator />
 
-        <!-- Statistiques passagers -->
+        <!-- Statistiques -->
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-medium">Statistiques passagers</h3>
-            <Switch v-model:checked="includeStatistics" />
+            <h3 class="text-sm font-semibold flex items-center gap-2">
+              <Users class="h-4 w-4" />
+              Statistiques du vol
+            </h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              @click="showStatistics = !showStatistics"
+            >
+              {{ showStatistics ? 'Masquer' : 'Afficher' }}
+              <ChevronDown :class="showStatistics ? 'rotate-180' : ''" class="ml-2 h-4 w-4 transition-transform" />
+            </Button>
           </div>
-          
-          <div v-if="includeStatistics" class="grid grid-cols-3 gap-4">
-            <div>
-              <Label for="passengers_count">Nombre de passagers</Label>
-              <Input
-                id="passengers_count"
-                v-model.number="formData.statistics.passengers_count"
-                type="number"
-                placeholder="0"
-                min="0"
-              />
-            </div>
 
-            <div>
-              <Label for="pax_bus">Passagers business</Label>
-              <Input
-                id="pax_bus"
-                v-model.number="formData.statistics.pax_bus"
-                type="number"
-                placeholder="0"
-                min="0"
-              />
-            </div>
-
-            <div>
-              <Label for="go_pass_count">Go pass</Label>
-              <Input
-                id="go_pass_count"
-                v-model.number="formData.statistics.go_pass_count"
-                type="number"
-                placeholder="0"
-                min="0"
-              />
-            </div>
-
-            <div class="col-span-3">
-              <Label for="passengers_ecart">Écart passagers</Label>
-              <Input
-                id="passengers_ecart"
-                v-model.number="formData.statistics.passengers_ecart"
-                type="number"
-                placeholder="0"
-              />
-              <p class="text-xs text-muted-foreground mt-1">
-                Positif = surréservation, Négatif = sous-occupation
-              </p>
-            </div>
-
-            <!-- Justification si écart -->
-            <div v-if="formData.statistics.passengers_ecart !== 0" class="col-span-3 p-4 border rounded-lg bg-amber-50">
-              <div class="flex items-start gap-2 mb-3">
-                <AlertCircle class="h-4 w-4 text-amber-600 mt-0.5" />
-                <div class="flex-1">
-                  <Label class="text-amber-900">Justification requise</Label>
-                  <p class="text-xs text-amber-700 mt-1">Un écart passagers nécessite une justification</p>
-                </div>
-                <Switch v-model:checked="formData.statistics.has_justification" />
+          <div v-if="showStatistics" class="space-y-4 p-4 border rounded-lg">
+            <div class="grid grid-cols-3 gap-4">
+              <div class="space-y-2">
+                <Label>Passagers</Label>
+                <Input
+                  type="number"
+                  v-model.number="formData.statistics.passengers_count"
+                  min="0"
+                  placeholder="0"
+                />
               </div>
 
-              <div v-if="formData.statistics.has_justification" class="space-y-3">
-                <div>
-                  <Label for="justification_id">Type de justification</Label>
-                  <Select v-model="formData.statistics.justification_id">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner une justification" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem v-for="just in justifications" :key="just.id" :value="just.id.toString()">
-                        {{ just.name }}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div class="space-y-2">
+                <Label>Pax Business</Label>
+                <Input
+                  type="number"
+                  v-model.number="formData.statistics.pax_bus"
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <Label>Go Pass</Label>
+                <Input
+                  type="number"
+                  v-model.number="formData.statistics.go_pass_count"
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <!-- Justification -->
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <Checkbox
+                  id="has_justification"
+                  :checked="formData.statistics.has_justification"
+                  @update:checked="formData.statistics.has_justification = $event"
+                />
+                <Label for="has_justification">Ce vol nécessite une justification</Label>
+              </div>
+
+              <div v-if="formData.statistics.has_justification" class="space-y-2">
+                <div class="flex gap-2">
+                  <Popover v-model:open="justificationOpen">
+                    <PopoverTrigger as-child>
+                      <Button
+                        variant="outline"
+                        class="flex-1 justify-between"
+                      >
+                        Sélectionner une justification
+                        <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Rechercher..." />
+                        <CommandEmpty>
+                          <div class="p-4 text-center space-y-2">
+                            <p class="text-sm text-muted-foreground">Aucune justification trouvée</p>
+                            <Button
+                              size="sm"
+                              @click="showNewJustification = true; justificationOpen = false"
+                            >
+                              <Plus class="mr-2 h-4 w-4" />
+                              Créer une justification
+                            </Button>
+                          </div>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            v-for="justif in justificationsStore.justifications"
+                            :key="justif.id"
+                            @select="addJustification(justif)"
+                          >
+                            {{ justif.name }}
+                          </CommandItem>
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    @click="showNewJustification = true"
+                  >
+                    <Plus class="h-4 w-4" />
+                  </Button>
                 </div>
 
-                <div>
-                  <Label for="justification_comment">Commentaire (optionnel)</Label>
-                  <Textarea
-                    id="justification_comment"
-                    v-model="formData.statistics.justification_comment"
-                    placeholder="Détails supplémentaires..."
-                    rows="2"
-                  />
+                <!-- Justifications sélectionnées -->
+                <div v-if="selectedJustifications.length > 0" class="flex flex-wrap gap-2 mt-2">
+                  <Badge
+                    v-for="(justif, index) in selectedJustifications"
+                    :key="index"
+                    variant="default"
+                    class="gap-1"
+                  >
+                    {{ justif.name }}
+                    <button
+                      type="button"
+                      @click="removeJustification(index)"
+                      class="ml-1 hover:text-destructive"
+                    >
+                      <X class="h-3 w-3" />
+                    </button>
+                  </Badge>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <Separator />
-
         <!-- Remarques -->
-        <div>
-          <Label for="remarks">Remarques</Label>
+        <div class="space-y-2">
+          <Label>Remarques</Label>
           <Textarea
-            id="remarks"
             v-model="formData.remarks"
-            placeholder="Remarques optionnelles..."
+            placeholder="Notes additionnelles..."
             rows="3"
           />
         </div>
 
-        <DialogFooter>
-          <Button type="button" variant="outline" @click="handleCancel" :disabled="loading">
+        <DialogFooter class="gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            @click="handleCancel"
+            :disabled="loading"
+          >
             Annuler
           </Button>
-          <Button type="submit" :disabled="loading || loadingData">
-            <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
-            {{ isEdit ? 'Modifier' : 'Créer' }}
+          <Button type="submit" :disabled="loading || !isFormValid">
+            <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
+            <Check v-else class="mr-2 h-4 w-4" />
+            {{ isEditing ? 'Mettre à jour' : 'Créer le vol' }}
           </Button>
         </DialogFooter>
       </form>
     </DialogContent>
   </Dialog>
+
+  <!-- Dialog pour créer une nouvelle justification -->
+  <Dialog v-model:open="showNewJustification">
+    <DialogContent class="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Nouvelle justification</DialogTitle>
+      </DialogHeader>
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <Label for="justif_name">Nom de la justification</Label>
+          <Input
+            id="justif_name"
+            v-model="newJustificationName"
+            placeholder="Ex: Problème technique"
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          variant="outline"
+          @click="showNewJustification = false"
+        >
+          Annuler
+        </Button>
+        <Button @click="createNewJustification" :disabled="!newJustificationName.trim()">
+          Créer
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { Loader2, AlertCircle } from 'lucide-vue-next'
-import type { Flight } from '~/types/api'
+import { ref, computed, watch } from 'vue'
+import {
+  PlaneTakeoff,
+  Info,
+  MapPin,
+  Users,
+  Check,
+  Loader2,
+  X,
+  ChevronDown,
+  ChevronsUpDown,
+  Plus
+} from 'lucide-vue-next'
 import {
   Dialog,
   DialogContent,
@@ -243,12 +483,6 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -256,236 +490,236 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem
+} from '@/components/ui/command'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Separator } from '@/components/ui/separator'
+import type { Flight, FlightFormData } from '~/types/api'
 
 const props = defineProps<{
-  flight?: Flight | null
   open: boolean
+  flight?: Flight | null
 }>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  success: []
+  success: [flight: Flight]
 }>()
 
 const flightsStore = useFlightsStore()
+const operatorsStore = useOperatorsStore()
+const aircraftsStore = useAircraftsStore()
+const justificationsStore = useFlightJustificationsStore()
 const { success: showSuccess, error: showError } = useToast()
-const dropdownData = useSharedDropdownData()
+
+const loading = ref(false)
+const showStatistics = ref(true)
+const operatorOpen = ref(false)
+const aircraftOpen = ref(false)
+const justificationOpen = ref(false)
+const showNewJustification = ref(false)
+const newJustificationName = ref('')
+
+const departureInput = ref('')
+const arrivalInput = ref('')
+const selectedJustifications = ref<any[]>([])
+
+const formData = ref<FlightFormData>({
+  flight_number: '',
+  operator_id: 0,
+  aircraft_id: 0,
+  departure: [],
+  arrival: [],
+  departure_time: '',
+  arrival_time: '',
+  flight_regime: 'domestic',
+  flight_type: 'regular',
+  flight_nature: 'commercial',
+  status: 'prevu',
+  remarks: null,
+  statistics: {
+    passengers_count: 0,
+    pax_bus: 0,
+    go_pass_count: 0,
+    has_justification: false,
+    justification: []
+  }
+})
 
 const isOpen = computed({
   get: () => props.open,
   set: (value) => emit('update:open', value)
 })
 
-const isEdit = computed(() => !!props.flight)
+const isEditing = computed(() => !!props.flight)
 
-const loading = ref(false)
-const loadingData = computed(() => dropdownData.loading.value)
-const errors = ref<Record<string, string>>({})
+const selectedOperator = computed(() =>
+  operatorsStore.allOperators.find(o => o.id === formData.value.operator_id)
+)
 
-const operators = computed(() => dropdownData.operators.value)
-const aircrafts = computed(() => dropdownData.aircrafts.value)
-const justifications = computed(() => dropdownData.justifications.value)
+const selectedAircraft = computed(() =>
+  aircraftsStore.allAircrafts.find(a => a.id === formData.value.aircraft_id)
+)
 
-const includeStatistics = ref(false)
-
-const formData = ref({
-  flight_number: '',
-  operator_id: '',
-  aircraft_id: '',
-  departure: '',
-  arrival: '',
-  departure_time: '',
-  arrival_time: '',
-  remarks: '',
-  statistics: {
-    passengers_count: 0,
-    pax_bus: 0,
-    go_pass_count: 0,
-    passengers_ecart: 0,
-    has_justification: false,
-    justification_id: '',
-    justification_comment: ''
-  }
+const isFormValid = computed(() => {
+  return formData.value.flight_number.trim().length > 0 &&
+         formData.value.operator_id > 0 &&
+         formData.value.aircraft_id > 0 &&
+         formData.value.departure.length > 0 &&
+         formData.value.arrival.length > 0 &&
+         formData.value.departure_time &&
+         formData.value.arrival_time
 })
 
-watch(() => props.flight, (flight) => {
-  if (flight) {
-    formData.value = {
-      flight_number: flight.flight_number,
-      operator_id: flight.operator?.id?.toString() || '',
-      aircraft_id: flight.aircraft_id?.toString() || '',
-      departure: flight.departure?.[0] || '',
-      arrival: flight.arrival?.[0] || '',
-      departure_time: formatDateTimeForInput(flight.departure_time),
-      arrival_time: formatDateTimeForInput(flight.arrival_time),
-      remarks: flight.remarks || '',
-      statistics: {
-        passengers_count: flight.statistics?.passengers_count || 0,
-        pax_bus: flight.statistics?.pax_bus || 0,
-        go_pass_count: flight.statistics?.go_pass_count || 0,
-        passengers_ecart: flight.statistics?.passengers_ecart || 0,
-        has_justification: flight.statistics?.has_justification || false,
-        justification_id: '',
-        justification_comment: ''
-      }
-    }
-    includeStatistics.value = !!flight.statistics
-  }
-}, { immediate: true })
-
-watch(isOpen, async (open) => {
+watch(() => props.open, async (open) => {
   if (open) {
     await Promise.all([
-      dropdownData.loadOperators(),
-      dropdownData.loadAircrafts(),
-      dropdownData.loadJustifications()
+      operatorsStore.fetchAllOperators(),
+      aircraftsStore.fetchAllAircrafts(),
+      justificationsStore.fetchJustifications()
     ])
-  } else if (!props.flight) {
-    resetForm()
+    
+    if (props.flight) {
+      // TODO: Load flight data
+    } else {
+      resetForm()
+    }
   }
 })
 
-const formatDateTimeForInput = (dateTime: string) => {
-  const date = new Date(dateTime)
-  return date.toISOString().slice(0, 16)
+const selectOperator = (operator: any) => {
+  formData.value.operator_id = operator.id
+  operatorOpen.value = false
+}
+
+const selectAircraft = (aircraft: any) => {
+  formData.value.aircraft_id = aircraft.id
+  aircraftOpen.value = false
+}
+
+const addDeparture = () => {
+  if (departureInput.value.trim()) {
+    formData.value.departure.push(departureInput.value.trim().toUpperCase())
+    departureInput.value = ''
+  }
+}
+
+const removeDeparture = (index: number) => {
+  formData.value.departure.splice(index, 1)
+}
+
+const addArrival = () => {
+  if (arrivalInput.value.trim()) {
+    formData.value.arrival.push(arrivalInput.value.trim().toUpperCase())
+    arrivalInput.value = ''
+  }
+}
+
+const removeArrival = (index: number) => {
+  formData.value.arrival.splice(index, 1)
+}
+
+const addJustification = (justification: any) => {
+  if (!selectedJustifications.value.find(j => j.id === justification.id)) {
+    selectedJustifications.value.push(justification)
+    formData.value.statistics.justification = selectedJustifications.value
+  }
+  justificationOpen.value = false
+}
+
+const removeJustification = (index: number) => {
+  selectedJustifications.value.splice(index, 1)
+  formData.value.statistics.justification = selectedJustifications.value
+}
+
+const createNewJustification = async () => {
+  if (!newJustificationName.value.trim()) return
+  
+  const result = await justificationsStore.createJustification(newJustificationName.value)
+  if (result.success && result.data) {
+    addJustification(result.data)
+    showSuccess('Justification créée', 'La nouvelle justification a été ajoutée')
+    newJustificationName.value = ''
+    showNewJustification.value = false
+  } else {
+    showError('Erreur', result.message || 'Impossible de créer la justification')
+  }
+}
+
+const handleSubmit = async () => {
+  if (!isFormValid.value) return
+
+  loading.value = true
+  try {
+    const result = isEditing.value
+      ? await flightsStore.updateFlight(props.flight!.id, formData.value)
+      : await flightsStore.createFlight(formData.value)
+
+    if (result.success && result.data) {
+      showSuccess(
+        isEditing.value ? 'Vol modifié' : 'Vol créé',
+        `Le vol ${result.data.flight_number} a été ${isEditing.value ? 'modifié' : 'créé'} avec succès.`
+      )
+
+      emit('success', result.data)
+      resetForm()
+      isOpen.value = false
+    } else {
+      throw new Error(result.message || 'Erreur inconnue')
+    }
+  } catch (error: any) {
+    showError('Erreur', error?.message || 'Une erreur est survenue')
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleCancel = () => {
+  if (!loading.value) {
+    resetForm()
+    isOpen.value = false
+  }
 }
 
 const resetForm = () => {
   formData.value = {
     flight_number: '',
-    operator_id: '',
-    aircraft_id: '',
-    departure: '',
-    arrival: '',
+    operator_id: 0,
+    aircraft_id: 0,
+    departure: [],
+    arrival: [],
     departure_time: '',
     arrival_time: '',
-    remarks: '',
+    flight_regime: 'domestic',
+    flight_type: 'regular',
+    flight_nature: 'commercial',
+    status: 'prevu',
+    remarks: null,
     statistics: {
       passengers_count: 0,
       pax_bus: 0,
       go_pass_count: 0,
-      passengers_ecart: 0,
       has_justification: false,
-      justification_id: '',
-      justification_comment: ''
+      justification: []
     }
   }
-  includeStatistics.value = false
-  errors.value = {}
+  departureInput.value = ''
+  arrivalInput.value = ''
+  selectedJustifications.value = []
 }
-
-const handleCancel = () => {
-  isOpen.value = false
-  if (!isEdit.value) {
-    resetForm()
-  }
-}
-
-const validateForm = () => {
-  errors.value = {}
-  
-  if (!formData.value.flight_number) {
-    errors.value.flight_number = 'Le numéro de vol est requis'
-  }
-  if (!formData.value.operator_id) {
-    errors.value.operator_id = 'L\'exploitant est requis'
-  }
-  if (!formData.value.aircraft_id) {
-    errors.value.aircraft_id = 'L\'aéronef est requis'
-  }
-  if (!formData.value.departure) {
-    errors.value.departure = 'L\'aéroport de départ est requis'
-  }
-  if (!formData.value.arrival) {
-    errors.value.arrival = 'L\'aéroport d\'arrivée est requis'
-  }
-  if (!formData.value.departure_time) {
-    errors.value.departure_time = 'L\'heure de départ est requise'
-  }
-  if (!formData.value.arrival_time) {
-    errors.value.arrival_time = 'L\'heure d\'arrivée est requise'
-  }
-  
-  // Validation des statistiques
-  if (includeStatistics.value && formData.value.statistics.passengers_ecart !== 0) {
-    if (formData.value.statistics.has_justification && !formData.value.statistics.justification_id) {
-      errors.value.justification_id = 'Veuillez sélectionner une justification'
-    }
-  }
-  
-  return Object.keys(errors.value).length === 0
-}
-
-const handleSubmit = async () => {
-  if (!validateForm()) {
-    showError('Veuillez corriger les erreurs dans le formulaire')
-    return
-  }
-
-  loading.value = true
-
-  const payload: any = {
-    flight_number: formData.value.flight_number,
-    operator_id: parseInt(formData.value.operator_id),
-    aircraft_id: parseInt(formData.value.aircraft_id),
-    departure: [formData.value.departure],
-    arrival: [formData.value.arrival],
-    departure_time: new Date(formData.value.departure_time).toISOString(),
-    arrival_time: new Date(formData.value.arrival_time).toISOString(),
-    remarks: formData.value.remarks || null
-  }
-
-  // Ajouter les statistiques si activées
-  if (includeStatistics.value) {
-    payload.statistics = {
-      passengers_count: formData.value.statistics.passengers_count,
-      pax_bus: formData.value.statistics.pax_bus,
-      go_pass_count: formData.value.statistics.go_pass_count,
-      passengers_ecart: formData.value.statistics.passengers_ecart,
-      has_justification: formData.value.statistics.has_justification
-    }
-
-    // Ajouter la justification si nécessaire
-    if (formData.value.statistics.has_justification && formData.value.statistics.justification_id) {
-      payload.statistics.justification_id = parseInt(formData.value.statistics.justification_id)
-      payload.statistics.justification_comment = formData.value.statistics.justification_comment || null
-    }
-  }
-
-  let result
-  if (isEdit.value && props.flight) {
-    result = await flightsStore.updateFlight(props.flight.id, payload)
-  } else {
-    result = await flightsStore.createFlight(payload)
-  }
-
-  loading.value = false
-
-  if (result.success) {
-    showSuccess(isEdit.value ? 'Vol modifié avec succès' : 'Vol créé avec succès')
-    isOpen.value = false
-    resetForm()
-    emit('success')
-  } else {
-    if (result.errors) {
-      errors.value = {}
-      Object.entries(result.errors).forEach(([key, messages]) => {
-        if (Array.isArray(messages) && messages.length > 0) {
-          errors.value[key] = messages[0]
-        }
-      })
-    }
-    showError(result.message || 'Une erreur est survenue')
-  }
-}
-
-onMounted(async () => {
-  if (isOpen.value) {
-    await Promise.all([
-      dropdownData.loadOperators(),
-      dropdownData.loadAircrafts(),
-      dropdownData.loadJustifications()
-    ])
-  }
-})
 </script>

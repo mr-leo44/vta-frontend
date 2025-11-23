@@ -67,3 +67,5 @@ export const useToast = () => {
     toast: sonnerToast
   }
 }
+
+export type { ExternalToast } from 'vue-sonner'

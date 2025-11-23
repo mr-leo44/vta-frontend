@@ -3,240 +3,369 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold">Vols</h1>
-        <p class="text-muted-foreground">
-          {{ total ?? 0 }} vol{{ total > 1 ? 's' : '' }} enregistré{{ total > 1 ? 's' : '' }}
+        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
+          <div class="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <PlaneTakeoff class="h-6 w-6 text-white" />
+          </div>
+          Vols
+        </h1>
+        <p class="text-muted-foreground mt-2">
+          Gérer et suivre tous les vols en temps réel
         </p>
       </div>
-      <div class="flex items-center gap-2">
-        <Button variant="outline" @click="toggleView">
-          <Calendar class="mr-2 h-4 w-4" />
-          {{ showDailyView ? 'Vue liste' : 'Vue par jour' }}
+      <div class="flex gap-2">
+        <Button @click="openTodayDialog" variant="outline" size="lg" class="gap-2">
+          <CalendarDays class="h-4 w-4" />
+          Vols du jour
         </Button>
-        <Button @click="openCreateDialog">
-          <Plus class="mr-2 h-4 w-4" />
+        <Button @click="openCreateDialog" size="lg" class="gap-2">
+          <Plus class="h-4 w-4" />
           Nouveau vol
         </Button>
       </div>
     </div>
 
-    <!-- Vue par jour avec tableaux détaillés -->
-    <FlightsDailyTableView 
-      v-if="showDailyView" 
-    />
-
-    <!-- Vue liste (existante) -->
-    <template v-else>
-      <!-- ... (garder tout le code existant de la vue liste) ... -->
-      <Card>
-        <CardContent class="pt-6">
-          <div class="flex flex-col md:flex-row items-center gap-4">
-            <div class="flex-1 w-full relative">
-              <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                v-model="searchTerm" 
-                placeholder="Rechercher par numéro de vol..." 
-                class="pl-10"
-                @input="debouncedSearch" 
-              />
-            </div>
-            <div class="flex items-center gap-2 w-full md:w-auto">
-              <Select v-model="filterStatus" class="w-full md:w-[180px]">
-                <SelectTrigger>
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="prevu">Prévus</SelectItem>
-                  <SelectItem value="atteri">Atterris</SelectItem>
-                  <SelectItem value="qrf">QRF</SelectItem>
-                  <SelectItem value="annule">Annulés</SelectItem>
-                  <SelectItem value="detourne">Détournés</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select v-model="filterRegime" class="w-full md:w-[180px]">
-                <SelectTrigger>
-                  <SelectValue placeholder="Régime" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les régimes</SelectItem>
-                  <SelectItem value="domestic">Domestique</SelectItem>
-                  <SelectItem value="international">International</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" @click="clearFilters" :disabled="!hasFilters">
-                <X class="h-4 w-4" />
-              </Button>
-              <div class="flex items-center border rounded-lg">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  :class="{ 'bg-muted': viewMode === 'cards' }" 
-                  @click="viewMode = 'cards'"
-                >
-                  <LayoutGrid class="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  :class="{ 'bg-muted': viewMode === 'table' }" 
-                  @click="viewMode = 'table'"
-                >
-                  <List class="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
+    <!-- KPIs -->
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card v-if="loadingKPIs" v-for="i in 4" :key="i">
+        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Skeleton class="h-4 w-24" />
+          <Skeleton class="h-10 w-10 rounded-lg" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton class="h-8 w-16 mb-2" />
+          <Skeleton class="h-3 w-32" />
         </CardContent>
       </Card>
 
-      <!-- Statistics Cards -->
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
+      <template v-else>
+        <!-- Total vols -->
+        <Card class="border-2 hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium">Total vols</CardTitle>
-            <PlaneTakeoff class="h-4 w-4 text-muted-foreground" />
+            <CardTitle class="text-sm font-semibold text-blue-900 dark:text-blue-100">Total vols</CardTitle>
+            <div class="h-10 w-10 rounded-lg bg-blue-500 dark:bg-blue-600 flex items-center justify-center shadow-md">
+              <PlaneTakeoff class="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div class="text-2xl font-bold">{{ stats.total }}</div>
+            <div class="text-3xl font-bold text-blue-900 dark:text-blue-100">{{ kpis.total_flights }}</div>
+            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
+              <TrendingUp class="h-3 w-3" />
+              {{ kpis.total_this_month }} ce mois
+            </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium">Atterris</CardTitle>
-            <div class="h-2 w-2 rounded-full bg-green-500"></div>
-          </CardHeader>
-          <CardContent>
-            <div class="text-2xl font-bold">{{ stats.landed }}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium">Prévus</CardTitle>
-            <div class="h-2 w-2 rounded-full bg-blue-500"></div>
-          </CardHeader>
-          <CardContent>
-            <div class="text-2xl font-bold">{{ stats.scheduled }}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium">QRF</CardTitle>
-            <div class="h-2 w-2 rounded-full bg-gray-500"></div>
-          </CardHeader>
-          <CardContent>
-            <div class="text-2xl font-bold">{{ stats.qrf }}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-medium">Annulés</CardTitle>
-            <div class="h-2 w-2 rounded-full bg-red-500"></div>
-          </CardHeader>
-          <CardContent>
-            <div class="text-2xl font-bold">{{ stats.cancelled }}</div>
-          </CardContent>
-        </Card>
-      </div>
 
-      <!-- Loading Initial -->
-      <div v-if="loading && flights.length === 0">
-        <FlightTableSkeleton v-if="viewMode === 'table'" :count="6" />
-        <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <FlightSkeleton v-for="i in 6" :key="i" />
+        <!-- Aujourd'hui -->
+        <Card class="border-2 hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-green-100/30 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-semibold text-green-900 dark:text-green-100">Aujourd'hui</CardTitle>
+            <div class="h-10 w-10 rounded-lg bg-green-500 dark:bg-green-600 flex items-center justify-center shadow-md">
+              <CalendarDays class="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div class="text-3xl font-bold text-green-900 dark:text-green-100">{{ kpis.total_today }}</div>
+            <p class="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+              <Activity class="h-3 w-3" />
+              {{ kpis.total_this_week }} cette semaine
+            </p>
+          </CardContent>
+        </Card>
+
+        <!-- Passagers -->
+        <Card class="border-2 hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-purple-100/30 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-semibold text-purple-900 dark:text-purple-100">Passagers</CardTitle>
+            <div class="h-10 w-10 rounded-lg bg-purple-500 dark:bg-purple-600 flex items-center justify-center shadow-md">
+              <Users class="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div class="text-3xl font-bold text-purple-900 dark:text-purple-100">{{ kpis.total_passengers.toLocaleString() }}</div>
+            <p class="text-xs text-purple-600 dark:text-purple-400 mt-1 flex items-center gap-1">
+              <Users class="h-3 w-3" />
+              {{ kpis.average_passengers }} en moyenne
+            </p>
+          </CardContent>
+        </Card>
+
+        <!-- Status -->
+        <Card class="border-2 hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border-orange-200 dark:border-orange-800">
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle class="text-sm font-semibold text-orange-900 dark:text-orange-100">Atterris</CardTitle>
+            <div class="h-10 w-10 rounded-lg bg-orange-500 dark:bg-orange-600 flex items-center justify-center shadow-md">
+              <CheckCircle class="h-5 w-5 text-white" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div class="text-3xl font-bold text-orange-900 dark:text-orange-100">{{ kpis.by_status.atteri }}</div>
+            <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+              {{ kpis.by_status.prevu }} prévus
+            </p>
+          </CardContent>
+        </Card>
+      </template>
+    </div>
+
+    <!-- Filtres -->
+    <Card>
+      <CardHeader>
+        <div class="flex items-center justify-between">
+          <CardTitle class="flex items-center gap-2">
+            <Filter class="h-4 w-4" />
+            Recherche et filtres
+          </CardTitle>
+          <Button 
+            v-if="hasActiveFilters" 
+            variant="ghost" 
+            size="sm" 
+            @click="clearAllFilters"
+            class="gap-2"
+          >
+            <X class="h-4 w-4" />
+            Réinitialiser
+          </Button>
         </div>
-      </div>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-4">
+          <!-- Recherche -->
+          <div class="relative">
+            <Search class="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              v-model="searchQuery"
+              placeholder="Rechercher par numéro de vol, opérateur ou aéroport..."
+              class="pl-10"
+              @input="debouncedSearch"
+            />
+          </div>
 
-      <!-- Flights List -->
-      <div v-else-if="filteredFlights.length > 0" class="space-y-4">
-        <div v-if="viewMode === 'cards'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <FlightCard 
-            v-for="flight in filteredFlights" 
-            :key="flight.id" 
-            :flight="flight" 
-            @view="openViewDialog"
-            @edit="openEditDialog" 
-            @delete="confirmDelete" 
-          />
+          <!-- Filtres avancés -->
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <!-- Opérateur -->
+            <Select v-model="filters.operator_id" @update:model-value="applyFilters">
+              <SelectTrigger>
+                <SelectValue placeholder="Opérateur" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Tous les opérateurs</SelectItem>
+                <SelectItem 
+                  v-for="op in operatorsStore.allOperators" 
+                  :key="op.id" 
+                  :value="op.id"
+                >
+                  {{ op.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <!-- Statut -->
+            <Select v-model="filters.status" @update:model-value="applyFilters">
+              <SelectTrigger>
+                <SelectValue placeholder="Statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Tous les statuts</SelectItem>
+                <SelectItem value="qrf">QRF</SelectItem>
+                <SelectItem value="prevu">Prévu</SelectItem>
+                <SelectItem value="atteri">Atterri</SelectItem>
+                <SelectItem value="annule">Annulé</SelectItem>
+                <SelectItem value="detourne">Détourné</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <!-- Régime -->
+            <Select v-model="filters.regime" @update:model-value="applyFilters">
+              <SelectTrigger>
+                <SelectValue placeholder="Régime" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Tous les régimes</SelectItem>
+                <SelectItem value="domestic">Domestique</SelectItem>
+                <SelectItem value="international">International</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <!-- Type -->
+            <Select v-model="filters.type" @update:model-value="applyFilters">
+              <SelectTrigger>
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="null">Tous les types</SelectItem>
+                <SelectItem value="regular">Régulier</SelectItem>
+                <SelectItem value="non_regular">Non régulier</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <!-- Date de début -->
+            <Input
+              type="date"
+              v-model="filters.date_from"
+              @change="applyFilters"
+              placeholder="Date début"
+            />
+
+            <!-- Date de fin -->
+            <Input
+              type="date"
+              v-model="filters.date_to"
+              @change="applyFilters"
+              placeholder="Date fin"
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Liste des vols -->
+    <Card>
+      <CardHeader>
+        <div class="flex items-center justify-between">
+          <div>
+            <CardTitle class="flex items-center gap-2">
+              <PlaneTakeoff class="h-5 w-5" />
+              Vols ({{ flightsStore.total }})
+            </CardTitle>
+            <CardDescription class="mt-1">
+              Liste complète des vols enregistrés
+            </CardDescription>
+          </div>
+          <div class="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              @click="viewMode = 'grid'"
+              :class="viewMode === 'grid' ? 'bg-muted' : ''"
+            >
+              <LayoutGrid class="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              @click="viewMode = 'list'"
+              :class="viewMode === 'list' ? 'bg-muted' : ''"
+            >
+              <List class="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <!-- Loading initial -->
+        <div v-if="flightsStore.loading && flightsStore.flights.length === 0" class="space-y-3">
+          <div v-if="viewMode === 'grid'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Skeleton v-for="i in 6" :key="i" class="h-48" />
+          </div>
+          <div v-else class="space-y-2">
+            <Skeleton v-for="i in 6" :key="i" class="h-20" />
+          </div>
         </div>
 
-        <div v-else class="space-y-3">
-          <FlightTableRow 
-            v-for="flight in filteredFlights" 
-            :key="flight.id" 
+        <!-- Empty State -->
+        <div 
+          v-else-if="flightsStore.flights.length === 0" 
+          class="text-center py-16"
+        >
+          <div class="h-20 w-20 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+            <PlaneTakeoff class="h-10 w-10 text-muted-foreground opacity-50" />
+          </div>
+          <h3 class="text-lg font-semibold mb-2">Aucun vol trouvé</h3>
+          <p class="text-muted-foreground mb-6">
+            {{ searchQuery || hasActiveFilters ? 'Aucun résultat pour cette recherche' : 'Commencez par enregistrer un vol' }}
+          </p>
+          <Button v-if="!searchQuery && !hasActiveFilters" @click="openCreateDialog" size="lg">
+            <Plus class="mr-2 h-4 w-4" />
+            Créer un vol
+          </Button>
+        </div>
+
+        <!-- Grid View -->
+        <div 
+          v-else-if="viewMode === 'grid'" 
+          v-infinite-scroll="loadMore"
+          :infinite-scroll-disabled="!flightsStore.hasMorePages || flightsStore.loading"
+          :infinite-scroll-distance="200"
+          class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+        >
+          <FlightCard
+            v-for="flight in flightsStore.flights"
+            :key="flight.id"
             :flight="flight"
             @view="openViewDialog"
-            @edit="openEditDialog" 
-            @delete="confirmDelete" 
+            @edit="openEditDialog"
+            @delete="confirmDelete"
           />
         </div>
 
-        <div v-if="hasMorePages && !loading" ref="loadMoreTrigger" class="flex justify-center py-8">
-          <Button variant="outline" @click="loadMore" :disabled="loading">
-            Charger plus de vols
-          </Button>
+        <!-- List View -->
+        <div 
+          v-else
+          v-infinite-scroll="loadMore"
+          :infinite-scroll-disabled="!flightsStore.hasMorePages || flightsStore.loading"
+          :infinite-scroll-distance="200"
+          class="space-y-2"
+        >
+          <FlightRow
+            v-for="flight in flightsStore.flights"
+            :key="flight.id"
+            :flight="flight"
+            @view="openViewDialog"
+            @edit="openEditDialog"
+            @delete="confirmDelete"
+          />
         </div>
 
-        <div v-if="loading && flights.length > 0" class="py-4">
-          <FlightTableSkeleton v-if="viewMode === 'table'" :count="3" />
-          <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <FlightSkeleton v-for="i in 3" :key="i" />
+        <!-- Loading more indicator -->
+        <div v-if="flightsStore.loading && flightsStore.flights.length > 0" class="flex justify-center py-8">
+          <div class="flex items-center gap-2 text-muted-foreground">
+            <Loader2 class="h-5 w-5 animate-spin" />
+            <span>Chargement...</span>
           </div>
         </div>
 
-        <div v-if="!hasMorePages && flights.length > 0" class="text-center py-4 text-muted-foreground text-sm">
+        <!-- End message -->
+        <div v-if="!flightsStore.hasMorePages && flightsStore.flights.length > 0" class="text-center py-8 text-muted-foreground text-sm">
           Tous les vols ont été chargés
         </div>
-      </div>
-
-      <Card v-else>
-        <CardContent class="flex flex-col items-center justify-center py-12">
-          <PlaneTakeoff class="h-12 w-12 text-muted-foreground mb-4" />
-          <p class="text-lg font-medium mb-2">
-            {{ searchTerm || hasFilters ? 'Aucun résultat trouvé' : 'Aucun vol enregistré' }}
-          </p>
-          <p class="text-muted-foreground mb-4">
-            {{ searchTerm || hasFilters ? 'Essayez de modifier vos critères de recherche' : 'Commencez par créer votre premier vol' }}
-          </p>
-          <Button v-if="!searchTerm && !hasFilters" @click="openCreateDialog">
-            <Plus class="mr-2 h-4 w-4" />
-            Créer le premier vol
-          </Button>
-          <Button v-else variant="outline" @click="clearFilters">
-            Effacer les filtres
-          </Button>
-        </CardContent>
-      </Card>
-    </template>
+      </CardContent>
+    </Card>
 
     <!-- Dialogs -->
-    <FlightViewDialog 
-      v-model:open="viewDialogOpen" 
-      :flight="selectedFlight" 
-      @edit="openEditDialog" 
+    <FlightFormDialog
+      v-model:open="formDialogOpen"
+      :flight="selectedFlight"
+      @success="handleSuccess"
     />
 
-    <FlightFormDialog 
-      v-model:open="formDialogOpen" 
-      :flight="flightToEdit" 
-      @success="handleFormSuccess" 
+    <TodayFlightsDialog
+      v-model:open="todayDialogOpen"
+      @view="openViewDialog"
     />
 
+    <!-- TODO: Add FlightViewDialog -->
+
+    <!-- Delete Confirmation -->
     <AlertDialog v-model:open="deleteDialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+          <AlertDialogTitle class="flex items-center gap-2">
+            <AlertTriangle class="h-5 w-5 text-destructive" />
+            Confirmer la suppression
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Êtes-vous sûr de vouloir supprimer le vol <strong>"{{ flightToDelete?.flight_number }}"</strong> ?
+            Êtes-vous sûr de vouloir supprimer le vol <strong class="text-foreground">{{ flightToDelete?.flight_number }}</strong> ?
             Cette action est irréversible.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction 
-            @click="deleteFlight"
-            class="bg-destructive text-white hover:bg-destructive/90"
+          <AlertDialogAction
+            @click="handleDelete"
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
+            <Trash2 class="mr-2 h-4 w-4" />
             Supprimer
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -246,20 +375,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { vInfiniteScroll } from '@vueuse/components'
 import {
   Plus,
   Search,
+  PlaneTakeoff,
+  CalendarDays,
+  Users,
+  CheckCircle,
+  TrendingUp,
+  Activity,
+  Filter,
   X,
   LayoutGrid,
   List,
-  PlaneTakeoff,
-  Calendar as CalendarIcon
+  Loader2,
+  AlertTriangle,
+  Trash2
 } from 'lucide-vue-next'
-import type { Flight } from '~/types/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -278,126 +416,104 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
 import FlightCard from '~/components/modules/flight/FlightCard.vue'
-import FlightTableRow from '~/components/modules/flight/FlightTableRow.vue'
-import FlightSkeleton from '~/components/modules/flight/FlightSkeleton.vue'
-import FlightTableSkeleton from '~/components/modules/flight/FlightTableSkeleton.vue'
-import FlightViewDialog from '@/components/modules/flight/FlightViewDialog.vue'
-import FlightFormDialog from '@/components/modules/flight/FlightFormDialog.vue'
-import FlightsDailyTableView from '~/components/modules/flight/FlightsDailyTableView.vue'
+import FlightRow from '~/components/modules/flight/FlightRow.vue'
+import FlightFormDialog from '~/components/modules/flight/FlightFormDialog.vue'
+import TodayFlightsDialog from '~/components/modules/flight/TodayFlightsDialog.vue'
+import type { Flight, FlightFilters } from '~/types/api'
 
 definePageMeta({
   middleware: 'auth'
 })
 
 const flightsStore = useFlightsStore()
+const operatorsStore = useOperatorsStore()
 const { success: showSuccess, error: showError } = useToast()
 
-const flights = computed(() => flightsStore.flights)
-const loading = computed(() => flightsStore.loading)
-const hasMorePages = computed(() => flightsStore.hasMorePages)
-const total = computed(() => flightsStore.total)
+const loadingKPIs = ref(false)
+const kpis = ref<any>({
+  total_flights: 0,
+  total_today: 0,
+  total_this_week: 0,
+  total_this_month: 0,
+  by_status: { qrf: 0, prevu: 0, atteri: 0, annule: 0, detourne: 0 },
+  total_passengers: 0,
+  average_passengers: 0
+})
 
-const searchTerm = ref('')
-const viewMode = ref<'cards' | 'table'>('cards')
-const showDailyView = ref(false)
-const filterStatus = ref('all')
-const filterRegime = ref('all')
+const searchQuery = ref('')
+const filters = ref<FlightFilters>({})
+const viewMode = ref<'grid' | 'list'>('grid')
 
-const viewDialogOpen = ref(false)
 const formDialogOpen = ref(false)
+const todayDialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
-
 const selectedFlight = ref<Flight | null>(null)
-const flightToEdit = ref<Flight | null>(null)
 const flightToDelete = ref<Flight | null>(null)
 
-const loadMoreTrigger = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
-let searchTimeout: NodeJS.Timeout
-
-const stats = computed(() => {
-  const allFlights = flights.value
-  return {
-    total: allFlights.length,
-    landed: allFlights.filter(f => f.status === 'atteri').length,
-    scheduled: allFlights.filter(f => f.status === 'prevu').length,
-    qrf: allFlights.filter(f => f.status === 'qrf').length,
-    cancelled: allFlights.filter(f => f.status === 'annule').length
-  }
+const hasActiveFilters = computed(() => {
+  return !!(
+    searchQuery.value ||
+    filters.value.operator_id ||
+    filters.value.status ||
+    filters.value.regime ||
+    filters.value.type ||
+    filters.value.date_from ||
+    filters.value.date_to
+  )
 })
 
-const filteredFlights = computed(() => {
-  let filtered = [...flights.value]
-  
-  if (filterStatus.value && filterStatus.value !== 'all') {
-    filtered = filtered.filter(f => f.status === filterStatus.value)
-  }
-  
-  if (filterRegime.value && filterRegime.value !== 'all') {
-    filtered = filtered.filter(f => f.flight_regime === filterRegime.value)
-  }
-  
-  if (searchTerm.value) {
-    const term = searchTerm.value.toLowerCase()
-    filtered = filtered.filter(f => 
-      f.flight_number.toLowerCase().includes(term)
-    )
-  }
-  
-  return filtered
-})
-
-const hasFilters = computed(() => {
-  return filterStatus.value !== 'all' || 
-         filterRegime.value !== 'all' || 
-         searchTerm.value !== ''
-})
-
-const toggleView = () => {
-  showDailyView.value = !showDailyView.value
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+const debouncedSearch = () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    filters.value.search = searchQuery.value
+    applyFilters()
+  }, 300)
 }
 
-const fetchFlights = async () => {
-  flightsStore.resetPagination()
-  const result = await flightsStore.fetchFlights(1)
-  if (!result.success) {
-    showError(result.message || 'Erreur lors du chargement des vols')
-  }
+const applyFilters = async () => {
+  await flightsStore.applyFilters(filters.value)
+  await loadKPIs()
+}
+
+const clearAllFilters = async () => {
+  searchQuery.value = ''
+  filters.value = {}
+  await flightsStore.clearFilters()
+  await loadKPIs()
 }
 
 const loadMore = async () => {
-  if (!hasMorePages.value || loading.value) return
+  if (!flightsStore.hasMorePages || flightsStore.loading) return
   await flightsStore.loadNextPage()
 }
 
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {}, 300)
-}
-
-const clearFilters = () => {
-  searchTerm.value = ''
-  filterStatus.value = 'all'
-  filterRegime.value = 'all'
-}
-
-const openViewDialog = async (flight: Flight) => {
-  const result = await flightsStore.fetchFlight(flight.id)
-  if (result.success && result.data) {
-    selectedFlight.value = result.data
-    viewDialogOpen.value = true
+const loadKPIs = async () => {
+  loadingKPIs.value = true
+  try {
+    kpis.value = await flightsStore.fetchFlightKPIs()
+  } finally {
+    loadingKPIs.value = false
   }
 }
 
 const openCreateDialog = () => {
-  flightToEdit.value = null
+  selectedFlight.value = null
   formDialogOpen.value = true
 }
 
 const openEditDialog = (flight: Flight) => {
-  flightToEdit.value = flight
-  viewDialogOpen.value = false
+  selectedFlight.value = flight
   formDialogOpen.value = true
+}
+
+const openViewDialog = (flight: Flight) => {
+  selectedFlight.value = flight
+  // TODO: Open view dialog
+}
+
+const openTodayDialog = () => {
+  todayDialogOpen.value = true
 }
 
 const confirmDelete = (flight: Flight) => {
@@ -405,61 +521,41 @@ const confirmDelete = (flight: Flight) => {
   deleteDialogOpen.value = true
 }
 
-const deleteFlight = async () => {
+const handleDelete = async () => {
   if (!flightToDelete.value) return
-  const result = await flightsStore.deleteFlight(flightToDelete.value.id)
-  if (result.success) {
-    showSuccess('Vol supprimé avec succès')
+  
+  try {
+    const result = await flightsStore.deleteFlight(flightToDelete.value.id)
+    
+    if (result.success) {
+      showSuccess('Vol supprimé', `Le vol ${flightToDelete.value.flight_number} a été supprimé avec succès.`)
+      await loadKPIs()
+    } else {
+      throw new Error(result.message)
+    }
+  } catch (error: any) {
+    showError('Erreur', error?.message || 'Impossible de supprimer ce vol.')
+  } finally {
     deleteDialogOpen.value = false
     flightToDelete.value = null
-  } else {
-    showError(result.message || 'Erreur lors de la suppression')
   }
 }
 
-const handleFormSuccess = async () => {
-  await fetchFlights()
-}
-
-const setupIntersectionObserver = () => {
-  if (!loadMoreTrigger.value) return
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting && hasMorePages.value && !loading.value) {
-        loadMore()
-      }
-    },
-    { threshold: 0.5, rootMargin: '100px' }
-  )
-  observer.observe(loadMoreTrigger.value)
+const handleSuccess = async () => {
+  await flightsStore.fetchFlights(1, false)
+  await loadKPIs()
+  formDialogOpen.value = false
 }
 
 onMounted(async () => {
-  await fetchFlights()
-  setTimeout(() => {
-    setupIntersectionObserver()
-  }, 100)
-})
-
-onUnmounted(() => {
-  if (observer) {
-    observer.disconnect()
-  }
-  clearTimeout(searchTimeout)
-})
-
-watch(viewMode, (mode) => {
-  if (import.meta.client) {
-    localStorage.setItem('flights-view-mode', mode)
-  }
-})
-
-onMounted(() => {
-  if (import.meta.client) {
-    const savedMode = localStorage.getItem('flights-view-mode')
-    if (savedMode === 'table' || savedMode === 'cards') {
-      viewMode.value = savedMode
-    }
+  try {
+    await Promise.all([
+      operatorsStore.fetchAllOperators(),
+      flightsStore.fetchFlights(1, false)
+    ])
+    await loadKPIs()
+  } catch (error: any) {
+    showError('Erreur', error?.message || 'Impossible de charger les données.')
   }
 })
 </script>

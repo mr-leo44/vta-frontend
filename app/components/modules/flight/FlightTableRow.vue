@@ -2,7 +2,7 @@
   <div class="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
     <!-- Status indicator -->
     <div :class="[
-      'h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0',
+      'h-10 w-10 rounded-full flex items-center justify-center shrink-0',
       getStatusColor(flight.status)
     ]">
       <PlaneTakeoff class="h-5 w-5" />
@@ -126,8 +126,24 @@ const getStatusColor = (status: FlightStatus) => {
   return 'bg-gray-100 text-gray-600'
 }
 
-const formatLocation = (location: any[]) => {
-  return location?.name + ' (' + location?.iata + ')' || '???'
+const formatLocation = (location: any): string => {
+  if (!location) return 'N/A'
+  
+  // Si c'est un objet avec iata et name
+  if (typeof location === 'object' && !Array.isArray(location) && location.iata && location.name) {
+    return `${location.iata} (${location.name})`
+  }
+  
+  // Si c'est un array
+  if (Array.isArray(location) && location.length > 0) {
+    const loc = location[0]
+    if (typeof loc === 'object' && loc.iata && loc.name) {
+      return `${loc.iata} (${loc.name})`
+    }
+    return loc
+  }
+  
+  return location
 }
 
 const formatTime = (dateTime: string) => {

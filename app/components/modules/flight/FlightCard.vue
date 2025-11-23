@@ -8,7 +8,7 @@
       <div class="flex items-start justify-between">
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-2">
-            <div class="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+            <div class="h-10 w-10 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
               <PlaneTakeoff class="h-5 w-5 text-white" />
             </div>
             <div>
@@ -60,11 +60,11 @@
         <MapPin class="h-4 w-4 text-muted-foreground shrink-0" />
         <div class="flex items-center gap-2 flex-1 min-w-0">
           <span class="font-mono font-semibold truncate">
-            {{ flight.departure[0] || 'N/A' }}
+            {{ formatLocation(flight.departure) }}
           </span>
           <ArrowRight class="h-4 w-4 text-muted-foreground shrink-0" />
           <span class="font-mono font-semibold truncate">
-            {{ flight.arrival[0] || 'N/A' }}
+            {{ formatLocation(flight.arrival) }}
           </span>
         </div>
       </div>
@@ -91,7 +91,7 @@
       <div class="flex items-center gap-2 text-xs">
         <Badge variant="outline" class="gap-1">
           <Plane class="h-3 w-3" />
-          {{ flight.aircraft }}
+          {{ flight.aircraft.immatriculation + ` (${flight.aircraft.type})` }}
         </Badge>
         <Badge variant="outline">
           {{ FLIGHT_REGIME_LABELS[flight.flight_regime] }}
@@ -163,5 +163,25 @@ const formatTime = (datetime: string) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+const formatLocation = (location: any): string => {
+  if (!location) return 'N/A'
+  
+  // Si c'est un objet avec iata et name
+  if (typeof location === 'object' && location.iata && location.name) {
+    return `${location.iata} (${location.name})`
+  }
+  
+  // Si c'est un array
+  if (Array.isArray(location) && location.length > 0) {
+    const loc = location[0]
+    if (typeof loc === 'object' && loc.iata && loc.name) {
+      return `${loc.iata} (${loc.name})`
+    }
+    return loc
+  }
+  
+  return location
 }
 </script>

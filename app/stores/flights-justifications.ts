@@ -23,6 +23,7 @@ export const useFlightJustificationsStore = defineStore('flight-justifications',
   const justifications = ref<FlightJustification[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const hasLoaded = ref(false)
 
   const justificationsList = computed(() => justifications.value)
 
@@ -30,6 +31,11 @@ export const useFlightJustificationsStore = defineStore('flight-justifications',
    * Récupère toutes les justifications
    */
   const fetchJustifications = async () => {
+    // Ne pas recharger si déjà chargées
+    if (hasLoaded.value) {
+      return { success: true, data: justifications.value }
+    }
+
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
@@ -37,6 +43,7 @@ export const useFlightJustificationsStore = defineStore('flight-justifications',
     try {
       const response = await apiFetch<ApiResponse<FlightJustification[]>>('/flight-justifications')
       justifications.value = response.data || []
+      hasLoaded.value = true
       
       return { success: true, data: response.data }
     } catch (err: any) {
@@ -157,6 +164,7 @@ export const useFlightJustificationsStore = defineStore('flight-justifications',
     justifications,
     loading,
     error,
+    hasLoaded,
     
     // Computed
     justificationsList,

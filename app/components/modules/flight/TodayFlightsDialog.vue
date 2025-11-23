@@ -1,6 +1,6 @@
 <template>
   <Dialog v-model:open="isOpen">
-    <DialogContent class="max-w-5xl max-h-[90vh]">
+    <DialogContent class="md:max-w-5xl max-h-[90vh]">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
           <CalendarDays class="h-5 w-5" />
@@ -101,7 +101,7 @@
                   <div class="text-sm text-muted-foreground flex items-center gap-2 mt-1">
                     <span class="truncate">{{ flight.operator?.name }}</span>
                     <span>•</span>
-                    <span class="font-mono">{{ flight.departure[0] }} → {{ flight.arrival[0] }}</span>
+                    <span class="font-mono">{{ formatLocation(flight.departure) }} → {{ formatLocation(flight.arrival) }}</span>
                   </div>
                 </div>
               </div>
@@ -207,12 +207,6 @@ const sortedFlights = computed(() => {
   })
 })
 
-watch(() => props.open, async (open) => {
-  if (open) {
-    await loadTodayFlights()
-  }
-})
-
 const loadTodayFlights = async () => {
   loading.value = true
   try {
@@ -224,6 +218,12 @@ const loadTodayFlights = async () => {
     loading.value = false
   }
 }
+
+watch(() => props.open, async (open) => {
+  if (open) {
+    await loadTodayFlights()
+  }
+})
 
 const handleRefresh = async () => {
   await loadTodayFlights()
@@ -249,6 +249,26 @@ const getStatusBackground = (status: string) => {
     detourne: 'bg-gradient-to-br from-orange-500 to-orange-600'
   }
   return colors[status] || 'bg-gradient-to-br from-gray-500 to-gray-600'
+}
+
+const formatLocation = (location: any): string => {
+  if (!location) return 'N/A'
+  
+  // Si c'est un objet avec iata et name
+  if (typeof location === 'object' && location.iata && location.name) {
+    return `${location.iata} (${location.name})`
+  }
+  
+  // Si c'est un array
+  if (Array.isArray(location) && location.length > 0) {
+    const loc = location[0]
+    if (typeof loc === 'object' && loc.iata && loc.name) {
+      return `${loc.iata} (${loc.name})`
+    }
+    return loc
+  }
+  
+  return location
 }
 
 const formatTime = (datetime: string) => {

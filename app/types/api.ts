@@ -224,19 +224,29 @@ export type FlightRegime = 'domestic' | 'international'
 export type FlightType = 'regular' | 'non_regular'
 export type FlightNature = 'commercial' | 'non_commercial'
 
+export interface LocationData {
+  iata: string
+  name: string
+}
+
+export interface FreightData {
+  departure: number
+  arrival: number
+}
+
 export interface FlightStatistic {
-  id: number
-  flight_id: number
+  id?: number
+  flight_id?: number
   passengers_count: number
   pax_bus: number
   go_pass_count: number
-  fret_count: any[] | null
-  excedents: any[] | null
-  passengers_ecart: number
+  fret_count: FreightData
+  excedents: FreightData
+  passengers_ecart?: number
   has_justification: boolean
-  justification: any[] | null
-  created_at: string | null
-  updated_at: string | null
+  justification: Record<string, any>
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface Flight {
@@ -245,17 +255,20 @@ export interface Flight {
   operator: {
     name: string
     sigle: string
+    id?: number
   } | null
   aircraft: {
     immatriculation: String
     type: String
+    id?: number
   }
+  aircraft_id?: number
   flight_regime: FlightRegime
   flight_type: FlightType
   flight_nature: FlightNature
   status: FlightStatus
-  departure: any[]
-  arrival: any[]
+  departure: LocationData
+  arrival: LocationData
   departure_time: string
   arrival_time: string
   remarks: string | null
@@ -269,8 +282,8 @@ export interface FlightFormData {
   flight_number: string
   operator_id: number
   aircraft_id: number
-  departure: string[]
-  arrival: string[]
+  departure: LocationData
+  arrival: LocationData
   departure_time: string
   arrival_time: string
   flight_regime?: FlightRegime
@@ -285,10 +298,16 @@ export interface FlightStatisticsFormData {
   passengers_count: number
   pax_bus: number
   go_pass_count: number
-  fret_count?: any[]
-  excedents?: any[]
+  fret_count: FreightData
+  excedents: FreightData
+  passengers_ecart?: number
   has_justification: boolean
-  justification?: FlightJustification[]
+  justification: Record<string, any>
+}
+
+export interface FlightJustification {
+  id: number
+  name: string
 }
 
 // ==================== FLIGHT FILTERS ====================

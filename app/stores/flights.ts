@@ -1,65 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { 
-  Flight, 
-  ApiResponse, 
-  PaginatedResponse,
-  FlightStatus,
-  FlightRegime,
-  FlightType,
-  FlightNature
-} from '~/types/api'
-
-export interface FlightFormData {
-  flight_number: string
-  operator_id: number
-  aircraft_id: number
-  departure: string[]
-  arrival: string[]
-  departure_time: string
-  arrival_time: string
-  flight_regime?: FlightRegime
-  flight_type?: FlightType
-  flight_nature?: FlightNature
-  status?: FlightStatus
-  remarks?: string | null
-  statistics?: {
-    passengers_count: number
-    pax_bus: number
-    go_pass_count: number
-    fret_count?: any[]
-    excedents?: any[]
-    has_justification: boolean
-    justification?: any[]
-  }
-}
-
-export interface FlightFilters {
-  operator_id?: number | null
-  aircraft_id?: number | null
-  status?: FlightStatus | null
-  regime?: FlightRegime | null
-  type?: FlightType | null
-  nature?: FlightNature | null
-  date_from?: string | null
-  date_to?: string | null
-  search?: string | null
-}
-
-export interface FlightKPIs {
-  total_flights: number
-  total_today: number
-  total_this_week: number
-  total_this_month: number
-  by_status: Record<FlightStatus, number>
-  by_regime: Record<FlightRegime, number>
-  by_type: Record<FlightType, number>
-  by_nature: Record<FlightNature, number>
-  total_passengers: number
-  average_passengers: number
-  top_operators: Array<{ id: number; name: string; count: number }>
-  top_routes: Array<{ route: string; count: number }>
-}
+import type { Flight, FlightJustification, ApiResponse, PaginatedResponse } from '~/types/api'
 
 const handleApiError = (error: any): string => {
   console.error('API Error:', error)
@@ -78,24 +19,50 @@ const handleApiError = (error: any): string => {
   return 'Une erreur est survenue'
 }
 
+/**
+ * Nettoie les données de vol pour l'API
+ */
+const cleanFlightData = (data: any) => {
+  return {
+    flight_number: data.flight_number,
+    operator_id: data.operator_id,
+    aircraft_id: data.aircraft_id,
+    departure: data.departure,
+    arrival: data.arrival,
+    departure_time: data.departure_time,
+    arrival_time: data.arrival_time,
+    flight_regime: data.flight_regime,
+    flight_type: data.flight_type,
+    flight_nature: data.flight_nature,
+    status: data.status,
+    remarks: data.remarks || null,
+    statistics: data.statistics ? {
+      passengers_count: data.statistics.passengers_count,
+      pax_bus: data.statistics.pax_bus,
+      go_pass_count: data.statistics.go_pass_count,
+      fret_count: data.statistics.fret_count,
+      excedents: data.statistics.excedents,
+      passengers_ecart: data.statistics.passengers_ecart,
+      has_justification: data.statistics.has_justification,
+      justification: data.statistics.justification
+    } : undefined
+  }
+}
+
 export const useFlightsStore = defineStore('flights', () => {
-  // State
   const flights = ref<Flight[]>([])
   const currentFlight = ref<Flight | null>(null)
+  const justifications = ref<FlightJustification[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   
   // Pagination
   const currentPage = ref(1)
   const lastPage = ref(1)
-  const perPage = ref(20)
+  const perPage = ref(10)
   const total = ref(0)
   const hasMorePages = computed(() => currentPage.value < lastPage.value)
-  
-  // Filters
-  const filters = ref<FlightFilters>({})
 
-  // Computed
   const flightsList = computed(() => flights.value)
 
   /**
@@ -107,41 +74,7 @@ export const useFlightsStore = defineStore('flights', () => {
     const { apiFetch } = useApi()
     
     try {
-      // Construire les query params
-      const queryParams = new URLSearchParams()
-      queryParams.append('page', page.toString())
-      
-      if (filters.value.operator_id) {
-        queryParams.append('operator_id', filters.value.operator_id.toString())
-      }
-      if (filters.value.aircraft_id) {
-        queryParams.append('aircraft_id', filters.value.aircraft_id.toString())
-      }
-      if (filters.value.status) {
-        queryParams.append('status', filters.value.status)
-      }
-      if (filters.value.regime) {
-        queryParams.append('regime', filters.value.regime)
-      }
-      if (filters.value.type) {
-        queryParams.append('type', filters.value.type)
-      }
-      if (filters.value.nature) {
-        queryParams.append('nature', filters.value.nature)
-      }
-      if (filters.value.date_from) {
-        queryParams.append('date_from', filters.value.date_from)
-      }
-      if (filters.value.date_to) {
-        queryParams.append('date_to', filters.value.date_to)
-      }
-      if (filters.value.search) {
-        queryParams.append('search', filters.value.search)
-      }
-      
-      const response = await apiFetch<PaginatedResponse<Flight>>(
-        `/flights?${queryParams.toString()}`
-      )
+      const response = await apiFetch<PaginatedResponse<Flight>>(`/flights?page=${page}`)
       
       if (append) {
         flights.value = [...flights.value, ...response.data]
@@ -164,7 +97,7 @@ export const useFlightsStore = defineStore('flights', () => {
   }
 
   /**
-   * Charge la page suivante (infinite scroll)
+   * Charge la page suivante
    */
   const loadNextPage = async () => {
     if (!hasMorePages.value || loading.value) return
@@ -192,19 +125,19 @@ export const useFlightsStore = defineStore('flights', () => {
   }
 
   /**
-   * Récupère les vols d'aujourd'hui
+   * Récupère les vols d'une date spécifique
    */
-  const fetchTodayFlights = async () => {
+  const fetchFlightsByDate = async (date: string) => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
     
     try {
-      const today = new Date().toISOString().split('T')[0]
-      const response = await apiFetch<ApiResponse<Flight[]>>(
-        `/flights?date_from=${today}&date_to=${today}`
-      )
-      return { success: true, data: response.data }
+      // Format: YYYY-MM-DD
+      const flights = (await fetchFlights()).data.filter(flight => {
+        return flight.departure_time.startsWith(date)
+      })
+      return { success: true, data: flights }
     } catch (err: any) {
       error.value = handleApiError(err)
       return { success: false, message: error.value, data: [] }
@@ -213,172 +146,52 @@ export const useFlightsStore = defineStore('flights', () => {
     }
   }
 
+  const fetchTodayFlights = async () => {
+    const today = new Date().toISOString().split('T')[0]
+    return await fetchFlightsByDate(today)
+  }
+
   /**
-   * Calcule les KPIs des vols
+   * Récupère toutes les justifications
    */
-  const fetchFlightKPIs = async (): Promise<FlightKPIs> => {
+  const fetchJustifications = async () => {
+    loading.value = true
+    error.value = null
+    const { apiFetch } = useApi()
+    
     try {
-      const today = new Date()
-      const startOfWeek = new Date(today)
-      startOfWeek.setDate(today.getDate() - today.getDay())
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-      
-      // Compter par statut
-      const byStatus: Record<FlightStatus, number> = {
-        qrf: 0,
-        prevu: 0,
-        atteri: 0,
-        annule: 0,
-        detourne: 0
-      }
-      
-      // Compter par régime
-      const byRegime: Record<FlightRegime, number> = {
-        domestic: 0,
-        international: 0
-      }
-      
-      // Compter par type
-      const byType: Record<FlightType, number> = {
-        regular: 0,
-        non_regular: 0
-      }
-      
-      // Compter par nature
-      const byNature: Record<FlightNature, number> = {
-        commercial: 0,
-        non_commercial: 0
-      }
-      
-      let totalToday = 0
-      let totalThisWeek = 0
-      let totalThisMonth = 0
-      let totalPassengers = 0
-      let flightsWithPassengers = 0
-      
-      const operatorCounts = new Map<number, { name: string; count: number }>()
-      const routeCounts = new Map<string, number>()
-      
-      flights.value.forEach(flight => {
-        const flightDate = new Date(flight.departure_time)
-        
-        // Statistiques temporelles
-        if (flightDate.toDateString() === today.toDateString()) {
-          totalToday++
-        }
-        if (flightDate >= startOfWeek) {
-          totalThisWeek++
-        }
-        if (flightDate >= startOfMonth) {
-          totalThisMonth++
-        }
-        
-        // Compter par catégorie
-        byStatus[flight.status]++
-        byRegime[flight.flight_regime]++
-        byType[flight.flight_type]++
-        byNature[flight.flight_nature]++
-        
-        // Passagers
-        if (flight.statistics?.passengers_count) {
-          totalPassengers += flight.statistics.passengers_count
-          flightsWithPassengers++
-        }
-        
-        // Opérateurs
-        if (flight.operator) {
-          const current = operatorCounts.get(flight.operator.id) || { 
-            name: flight.operator.name, 
-            count: 0 
-          }
-          operatorCounts.set(flight.operator.id, {
-            ...current,
-            count: current.count + 1
-          })
-        }
-        
-        // Routes
-        if (flight.departure.length > 0 && flight.arrival.length > 0) {
-          const route = `${flight.departure[0]} → ${flight.arrival[0]}`
-          routeCounts.set(route, (routeCounts.get(route) || 0) + 1)
-        }
-      })
-      
-      // Top opérateurs
-      const topOperators = Array.from(operatorCounts.entries())
-        .map(([id, data]) => ({ id, name: data.name, count: data.count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5)
-      
-      // Top routes
-      const topRoutes = Array.from(routeCounts.entries())
-        .map(([route, count]) => ({ route, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5)
-      
-      return {
-        total_flights: flights.value.length,
-        total_today: totalToday,
-        total_this_week: totalThisWeek,
-        total_this_month: totalThisMonth,
-        by_status: byStatus,
-        by_regime: byRegime,
-        by_type: byType,
-        by_nature: byNature,
-        total_passengers: totalPassengers,
-        average_passengers: flightsWithPassengers > 0 
-          ? Math.round(totalPassengers / flightsWithPassengers) 
-          : 0,
-        top_operators: topOperators,
-        top_routes: topRoutes
-      }
-    } catch (err) {
-      console.error('Failed to fetch flight KPIs:', err)
-      return {
-        total_flights: 0,
-        total_today: 0,
-        total_this_week: 0,
-        total_this_month: 0,
-        by_status: { qrf: 0, prevu: 0, atteri: 0, annule: 0, detourne: 0 },
-        by_regime: { domestic: 0, international: 0 },
-        by_type: { regular: 0, non_regular: 0 },
-        by_nature: { commercial: 0, non_commercial: 0 },
-        total_passengers: 0,
-        average_passengers: 0,
-        top_operators: [],
-        top_routes: []
-      }
+      const response = await apiFetch<ApiResponse<FlightJustification[]>>('/flight-justifications')
+      justifications.value = response.data
+      return { success: true, data: response.data }
+    } catch (err: any) {
+      error.value = handleApiError(err)
+      return { success: false, message: error.value }
+    } finally {
+      loading.value = false
     }
   }
 
   /**
    * Crée un nouveau vol
    */
-  const createFlight = async (data: FlightFormData) => {
+  const createFlight = async (data: any) => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
     
     try {
-      const response = await apiFetch<any>('/flights', {
+      // Clean and prepare data for API
+      const payload = cleanFlightData(data)
+            
+      const response = await apiFetch<ApiResponse<Flight>>('/flights', {
         method: 'POST',
-        body: data
+        body: payload
       })
       
-      // Gérer différents formats de réponse
-      let flight: Flight
-      if ('data' in response && response.data) {
-        flight = response.data
-      } else if ('id' in response) {
-        flight = response as Flight
-      } else {
-        throw new Error('Format de réponse invalide')
-      }
-      
-      flights.value.unshift(flight)
+      flights.value.unshift(response.data)
       total.value += 1
       
-      return { success: true, data: flight }
+      return { success: true, data: response.data }
     } catch (err: any) {
       error.value = handleApiError(err)
       return { 
@@ -394,36 +207,30 @@ export const useFlightsStore = defineStore('flights', () => {
   /**
    * Met à jour un vol
    */
-  const updateFlight = async (id: number, data: Partial<FlightFormData>) => {
+  const updateFlight = async (id: number, data: any) => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
     
     try {
-      const response = await apiFetch<any>(`/flights/${id}`, {
+      // Clean and prepare data for API
+      const payload = cleanFlightData(data)
+          
+      const response = await apiFetch<ApiResponse<Flight>>(`/flights/${id}`, {
         method: 'PUT',
-        body: data
+        body: payload
       })
-      
-      let flight: Flight
-      if ('data' in response && response.data) {
-        flight = response.data
-      } else if ('id' in response) {
-        flight = response as Flight
-      } else {
-        throw new Error('Format de réponse invalide')
-      }
       
       const index = flights.value.findIndex(f => f.id === id)
       if (index !== -1) {
-        flights.value[index] = flight
+        flights.value[index] = response.data
       }
       
       if (currentFlight.value?.id === id) {
-        currentFlight.value = flight
+        currentFlight.value = response.data
       }
       
-      return { success: true, data: flight }
+      return { success: true, data: response.data }
     } catch (err: any) {
       error.value = handleApiError(err)
       return { 
@@ -463,24 +270,6 @@ export const useFlightsStore = defineStore('flights', () => {
     }
   }
 
-  /**
-   * Applique les filtres
-   */
-  const applyFilters = async (newFilters: FlightFilters) => {
-    filters.value = { ...newFilters }
-    currentPage.value = 1
-    await fetchFlights(1, false)
-  }
-
-  /**
-   * Réinitialise les filtres
-   */
-  const clearFilters = async () => {
-    filters.value = {}
-    currentPage.value = 1
-    await fetchFlights(1, false)
-  }
-
   const clearError = () => {
     error.value = null
   }
@@ -497,9 +286,9 @@ export const useFlightsStore = defineStore('flights', () => {
   }
 
   return {
-    // State
     flights,
     currentFlight,
+    justifications,
     loading,
     error,
     currentPage,
@@ -507,22 +296,16 @@ export const useFlightsStore = defineStore('flights', () => {
     perPage,
     total,
     hasMorePages,
-    filters,
-    
-    // Computed
     flightsList,
-    
-    // Actions
     fetchFlights,
     loadNextPage,
     fetchFlight,
+    fetchFlightsByDate,
     fetchTodayFlights,
-    fetchFlightKPIs,
+    fetchJustifications,
     createFlight,
     updateFlight,
     deleteFlight,
-    applyFilters,
-    clearFilters,
     clearError,
     clearCurrentFlight,
     resetPagination

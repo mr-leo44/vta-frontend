@@ -23,7 +23,7 @@ export function useSharedDropdownData() {
   const loadOperators = async () => {
     loading.value = true
     try {
-      const res = await $fetch<Operator[]>(`${baseUrl}/operators`)
+      const res = await $fetch<Operator[]>(`${baseUrl}/operators/all`)
       operators.value = res
     } catch (e) {
       console.error('Erreur lors du chargement des exploitants :', e)
@@ -38,7 +38,7 @@ export function useSharedDropdownData() {
   const loadAircrafts = async () => {
     loading.value = true
     try {
-      const res = await $fetch<Aircraft[]>(`${baseUrl}/aircrafts`)
+      const res = await $fetch<Aircraft[]>(`${baseUrl}/aircrafts/all`)
       aircrafts.value = res
     } catch (e) {
       console.error('Erreur lors du chargement des aéronefs :', e)

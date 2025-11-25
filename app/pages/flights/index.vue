@@ -348,13 +348,22 @@ const hasMorePages = computed(() => flightsStore.hasMorePages)
 const operators = computed(() => operatorsStore.operators)
 const aircrafts = computed(() => aircraftsStore.aircrafts)
 
+const paxOfMonth = computed(() => {
+  const totalFlights = flights.value.filter(f => isThisMonth(f.departure_time))
+  let paxCount = 0
+  totalFlights.forEach(flight => {
+    paxCount += flight.statistics?.passengers_count || 0
+  });
+  return paxCount
+})
+
 // KPIs Computed
 const kpis = computed(() => ({
   total_flights: flights.value.length,
   total_today: flights.value.filter(f => isToday(f.departure_time)).length,
   total_this_week: flights.value.filter(f => isThisWeek(f.departure_time)).length,
   total_this_month: flights.value.filter(f => isThisMonth(f.departure_time)).length,
-  total_passengers: flights.value.reduce((sum, f) => sum + (f.statistics?.passengers_count || 0), 0),
+  total_passengers: paxOfMonth.value,
   average_passengers: Math.round(
     flights.value.reduce((sum, f) => sum + (f.statistics?.passengers_count || 0), 0) /
     (flights.value.length || 1)
@@ -387,7 +396,7 @@ const kpiCards = computed(() => [
   },
   {
     id: 'passengers',
-    title: 'Passagers',
+    title: 'Passagers ce mois',
     value: kpis.value.total_passengers.toLocaleString('fr-FR'),
     subtitle: `${kpis.value.average_passengers} en moyenne`,
     icon: Users,

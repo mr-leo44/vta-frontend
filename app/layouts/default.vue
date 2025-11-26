@@ -161,12 +161,16 @@
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem class="cursor-pointer">
-                  <User class="mr-2 h-4 w-4" />
-                  Mon profil
+                  <NuxtLink to="/settings" class="cursor-pointer flex items-center">
+                    <User class="mr-2 h-4 w-4" />
+                    Mon profil
+                  </NuxtLink>
                 </DropdownMenuItem>
                 <DropdownMenuItem class="cursor-pointer">
-                  <Settings class="mr-2 h-4 w-4" />
-                  Préférences
+                  <NuxtLink to="/preferences" class="cursor-pointer flex items-center">
+                    <Settings class="mr-2 h-4 w-4" />
+                    Préférences
+                  </NuxtLink>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem @click="handleLogout" class="text-destructive cursor-pointer">

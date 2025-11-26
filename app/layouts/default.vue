@@ -166,12 +166,6 @@
                     Mon profil
                   </NuxtLink>
                 </DropdownMenuItem>
-                <DropdownMenuItem class="cursor-pointer">
-                  <NuxtLink to="/preferences" class="cursor-pointer flex items-center">
-                    <Settings class="mr-2 h-4 w-4" />
-                    Préférences
-                  </NuxtLink>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem @click="handleLogout" class="text-destructive cursor-pointer">
                   <LogOut class="mr-2 h-4 w-4" />

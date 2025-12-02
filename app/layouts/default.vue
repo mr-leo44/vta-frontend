@@ -282,7 +282,7 @@
             <div class="h-6 w-6 rounded-full bg-linear-to-br from-blue-600 to-purple-600 flex items-center justify-center">
               <span class="text-xs font-bold text-white">V</span>
             </div>
-            <span>© 2024 VTA System. Tous droits réservés.</span>
+            <span>© {{ new Date().getFullYear() }} VTA System. Tous droits réservés.</span>
           </div>
           <div class="flex items-center gap-4 text-sm text-muted-foreground">
             <a href="#" class="hover:text-primary transition-colors">Documentation</a>

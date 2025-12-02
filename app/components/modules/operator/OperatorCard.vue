@@ -1,7 +1,7 @@
 <template>
   <Card class="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 hover:border-primary/50 relative overflow-hidden">
-    <!-- Gradient overlay on hover -->
-    <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+    <!-- linear overlay on hover -->
+    <div class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
     
     <!-- Main clickable area for view -->
     <div @click="$emit('view', operator)" class="relative">
@@ -9,7 +9,7 @@
         <div class="flex items-start justify-between">
           <div class="flex-1">
             <!-- Company logo/icon with animation -->
-            <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
+            <div class="h-16 w-16 rounded-2xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
               <Building2 class="h-8 w-8 text-white" />
             </div>
             
@@ -92,28 +92,6 @@
           <span>Code OACI : <span class="font-mono font-semibold">{{ operator.icao_code }}</span></span>
         </div>
       </CardContent>
-    </div>
-
-    <!-- Quick action buttons at bottom -->
-    <div class="px-6 pb-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="flex-1 gap-2"
-        @click.stop="$emit('edit', operator)"
-      >
-        <Pencil class="h-3 w-3" />
-        Modifier
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="gap-2"
-        @click.stop="$emit('view', operator)"
-      >
-        <Eye class="h-3 w-3" />
-        Détails
-      </Button>
     </div>
   </Card>
 </template>

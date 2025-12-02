@@ -6,8 +6,8 @@
       aircraft.in_activity ? 'bg-green-500' : 'bg-gray-400'
     ]"></div>
     
-    <!-- Gradient overlay on hover -->
-    <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+    <!-- Linear overlay on hover -->
+    <div class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
     
     <!-- Main clickable area for view -->
     <div @click="$emit('view', aircraft)" class="relative">
@@ -19,8 +19,8 @@
               <div :class="[
                 'h-16 w-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg',
                 aircraft.in_activity 
-                  ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
-                  : 'bg-gradient-to-br from-gray-400 to-gray-600'
+                  ? 'bg-linear-to-br from-green-500 to-emerald-600' 
+                  : 'bg-linear-to-br from-gray-400 to-gray-600'
               ]">
                 <Plane class="h-8 w-8 text-white" />
               </div>
@@ -115,28 +115,6 @@
           </Badge>
         </div>
       </CardContent>
-    </div>
-
-    <!-- Quick action buttons at bottom -->
-    <div class="px-6 pb-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="flex-1 gap-2"
-        @click.stop="$emit('edit', aircraft)"
-      >
-        <Pencil class="h-3 w-3" />
-        Modifier
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="gap-2"
-        @click.stop="$emit('view', aircraft)"
-      >
-        <Eye class="h-3 w-3" />
-        Détails
-      </Button>
     </div>
   </Card>
 </template>

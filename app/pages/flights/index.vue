@@ -365,8 +365,9 @@ const kpis = computed(() => ({
   total_this_month: flights.value.filter(f => isThisMonth(f.departure_time)).length,
   total_passengers: paxOfMonth.value,
   average_passengers: Math.round(
-    flights.value.reduce((sum, f) => sum + (f.statistics?.passengers_count || 0), 0) /
-    (flights.value.length || 1)
+    paxOfMonth.value / flights.value.filter(f => isThisMonth(f.departure_time)).length
+    // flights.value.reduce((sum, f) => sum + (f.statistics?.passengers_count || 0), 0) /
+    // (flights.value.length || 1)
   ),
   by_status: {
     prevu: flights.value.filter(f => f.status === 'prevu').length,

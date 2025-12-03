@@ -955,11 +955,6 @@ const initializeForm = () => {
       }
     }
 
-    selectedOperatorLabel.value = props.flight.operator
-      ? `${props.flight.operator.name} (${props.flight.operator.sigle})`
-      : ''
-    selectedAircraftLabel.value = String(props.flight.aircraft?.immatriculation || '')
-
     // Load justifications from existing data
     if (props.flight.statistics?.has_justification && props.flight.statistics?.justification) {
       const justif = props.flight.statistics.justification
@@ -1000,6 +995,11 @@ const initializeForm = () => {
   } else {
     resetForm()
   }
+
+  selectedOperatorLabel.value = props.flight.operator
+      ? `${props.flight.operator.name} (${props.flight.operator.sigle})`
+      : ''
+    selectedAircraftLabel.value = String(props.flight.aircraft?.immatriculation || '')
 }
 
 watch(isOpen, async (newVal) => {

@@ -271,11 +271,9 @@ import {
   ChevronDown,
   List,
   LayoutGrid,
-  TrendingUp,
   Users,
   CheckCircle,
   Clock,
-  AlertTriangle
 } from 'lucide-vue-next'
 import type { Flight } from '~/types/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -337,7 +335,6 @@ const viewDialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
 const todayFlightsDialogOpen = ref(false)
 
-const flightToEdit = ref<Flight | null>(null)
 const selectedFlight = ref<Flight | null>(null)
 const flightToDelete = ref<Flight | null>(null)
 
@@ -365,8 +362,7 @@ const kpis = computed(() => ({
   total_this_month: flights.value.filter(f => isThisMonth(f.departure_time)).length,
   total_passengers: paxOfMonth.value,
   average_passengers: Math.round(
-    flights.value.reduce((sum, f) => sum + (f.statistics?.passengers_count || 0), 0) /
-    (flights.value.length || 1)
+    paxOfMonth.value / flights.value.filter(f => isThisMonth(f.departure_time)).length
   ),
   by_status: {
     prevu: flights.value.filter(f => f.status === 'prevu').length,
@@ -541,14 +537,17 @@ const openTodayFlightsDialog = async () => {
 }
 
 const openCreateDialog = () => {
-  flightToEdit.value = null
+  selectedFlight.value = null
   formDialogOpen.value = true
 }
 
-const openEditDialog = (flight: Flight) => {
-  flightToEdit.value = flight
-  viewDialogOpen.value = false
-  formDialogOpen.value = true
+const openEditDialog = async (flight: Flight) => {
+  const result = await flightsStore.fetchFlight(flight.id)
+
+  if (result.success && result.data) {
+    selectedFlight.value = result.data   // <-- le bon state !
+    formDialogOpen.value = true
+  }
 }
 
 const openViewDialog = async (flight: Flight) => {

@@ -141,28 +141,6 @@
         </div>
       </CardContent>
     </div>
-
-    <!-- Quick action buttons at bottom -->
-    <div class="px-6 pb-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="flex-1 gap-2"
-        @click.stop="$emit('edit', flight)"
-      >
-        <Pencil class="h-3 w-3" />
-        Modifier
-      </Button>
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="gap-2"
-        @click.stop="$emit('view', flight)"
-      >
-        <Eye class="h-3 w-3" />
-        Détails
-      </Button>
-    </div>
   </Card>
 </template>
 

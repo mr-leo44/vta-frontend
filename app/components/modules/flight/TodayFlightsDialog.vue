@@ -65,11 +65,11 @@
       <!-- Liste des vols -->
       <div class="space-y-2 max-h-96 overflow-y-auto">
         <div v-if="loading" class="space-y-2">
-          <Skeleton v-for="i in 5" :key="i" class="h-20 w-full" />
+          <Skeleton v-for="i in 5" :key="i" class="h-16 w-full" />
         </div>
 
         <div v-else-if="flights.length === 0" class="text-center py-12">
-          <PlaneTakeoff class="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-20" />
+          <PlaneTakeoff class="h-10 w-10 mx-auto mb-4 text-muted-foreground opacity-20" />
           <p class="text-muted-foreground">Aucun vol programmé aujourd'hui</p>
         </div>
 
@@ -81,7 +81,7 @@
           :class="getStatusBorderColor(flight.status)"
           @click="$emit('view', flight)"
         >
-          <CardContent class="p-4">
+          <CardContent class="px-4">
             <div class="flex items-center justify-between gap-4">
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div 

@@ -5,8 +5,8 @@
       <div class="flex-1 min-w-[250px]">
         <div class="flex items-center gap-3 mb-2">
           <div
-            class="h-12 w-12 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-            <Plane class="h-6 w-6 text-white" />
+            class="h-16 w-16 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <Plane class="h-8 w-8 text-white" />
           </div>
           <div>
             <h1 class="text-4xl font-bold tracking-tight">Vols</h1>

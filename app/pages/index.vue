@@ -55,7 +55,7 @@
     </div>
 
     <!-- Statistiques principales avec design moderne -->
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card
         class="group hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 relative overflow-hidden">
         <div
@@ -156,32 +156,6 @@
         <CardContent>
           <div class="text-3xl font-bold bg-linear-to-br from-green-600 to-green-800 bg-clip-text text-transparent">
             {{ stats.users.active }}
-          </div>
-          <p class="text-xs text-muted-foreground mt-2">
-            <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
-              <AlertCircle class="h-3 w-3" />
-              Données non disponibles
-            </span>
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card
-        class="group hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-orange-500/50 relative overflow-hidden">
-        <div
-          class="absolute inset-0 bg-linear-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        </div>
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">Rapports</CardTitle>
-          <div
-            class="h-10 w-10 rounded-xl bg-orange-100 dark:bg-orange-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <FileText class="h-5 w-5 text-orange-600 dark:text-orange-400" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold bg-linear-to-br from-orange-600 to-orange-800 bg-clip-text text-transparent">
-            {{ stats.reports.total }}
           </div>
           <p class="text-xs text-muted-foreground mt-2">
             <span
@@ -382,9 +356,6 @@ const stats = computed(() => {
     },
     users: {
       active: 0
-    },
-    reports: {
-      total: 0
     }
   }
 })
@@ -400,9 +371,8 @@ const recentActivities = computed(() => {
 
   recentFlights.forEach(flight => {
     activities.push({
-      id: `flight-${flight.id}`,
       title: 'Nouveau vol enregistré',
-      description: `${flight.flight_number} ${flight.departure?.[0] || ''}-${flight.arrival?.[0] || ''}`,
+      description: `${flight.flight_number} ${flight.departure?.iata || ''}-${flight.arrival?.iata || ''}`,
       timeAgo: getTimeAgo(flight.departure_time),
       icon: PlaneTakeoff,
       colorClass: 'bg-blue-100 dark:bg-blue-950',

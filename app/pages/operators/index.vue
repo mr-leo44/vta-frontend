@@ -1,17 +1,16 @@
 <template>
   <div class="space-y-6">
     <!-- Header avec linear moderne -->
-    <div class="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 text-white shadow-2xl">
-      <div class="absolute inset-0 bg-black/10"></div>
+    <div class="relative overflow-hidden rounded-2xl p-2">
       <div class="relative z-10 flex items-center justify-between flex-wrap gap-4">
         <div>
           <div class="flex items-center gap-3 mb-2">
-            <div class="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-xl">
-              <Building2 class="h-7 w-7" />
+            <div class="h-16 w-16 rounded-2xl bg-linear-to-br from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-xl">
+              <Building2 class="h-8 w-8 text-white" />
             </div>
             <div>
               <h1 class="text-4xl font-bold">Exploitants</h1>
-              <p class="text-white/90 text-sm mt-1">
+              <p class="text-muted-foreground text-sm mt-1">
                 {{ total ?? 0 }} exploitant{{ total > 1 ? 's' : '' }} enregistré{{ total > 1 ? 's' : '' }}
               </p>
             </div>
@@ -20,7 +19,7 @@
         <Button 
           @click="openCreateDialog"
           size="lg"
-          class="bg-white text-blue-600 hover:bg-white/90 shadow-xl gap-2"
+          class="bg-linear-to-br from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 shadow-xl gap-2"
         >
           <Plus class="h-5 w-5" />
           Nouvel exploitant

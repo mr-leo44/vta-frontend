@@ -1,35 +1,6 @@
 <template>
-  <div v-if="loading" class="space-y-6">
-    <div>
-      <!-- Skeleton pour le titre et le texte -->
-      <div class="mb-4">
-        <Skeleton class="h-8 w-1/3 mb-2" />
-        <Skeleton class="h-4 w-1/4" />
-      </div>
-
-      <!-- Skeleton pour les statistiques -->
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-6">
-        <Skeleton class="h-32 w-full rounded-lg" />
-        <Skeleton class="h-32 w-full rounded-lg" />
-        <Skeleton class="h-32 w-full rounded-lg" />
-        <Skeleton class="h-32 w-full rounded-lg" />
-        <Skeleton class="h-32 w-full rounded-lg" />
-      </div>
-
-      <!-- Skeleton pour le Card -->
-      <Card>
-        <CardHeader>
-          <Skeleton class="h-5 w-1/4 mb-1" />
-          <Skeleton class="h-4 w-1/3" />
-        </CardHeader>
-        <CardContent class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Skeleton class="h-24 w-full rounded-lg" />
-          <Skeleton class="h-24 w-full rounded-lg" />
-          <Skeleton class="h-24 w-full rounded-lg" />
-        </CardContent>
-      </Card>
-    </div>
-  </div>
+  <!-- Écran de chargement complet -->
+  <LoadingScreen v-if="loading" message="Chargement du tableau de bord..." />
 
   <div v-else class="space-y-6">
     <!-- Header avec linear moderne -->
@@ -281,7 +252,7 @@
             <Activity class="h-10 w-10 text-muted-foreground opacity-50" />
           </div>
           <p class="text-lg font-medium mb-2">Aucune activité récente</p>
-          <p class="text-sm text-muted-foreground">Les activités apparaîtront ici une fois que vous commencerez à
+          <p class="text-sm text-muted-foreground">Les activités apparaîtront ici une fois que vous commencerez à 
             utiliser le système</p>
         </div>
       </CardContent>
@@ -293,7 +264,7 @@
 import { Building2, Plane, Users, FileText, Layers, PlaneTakeoff, TrendingUp, TrendingDown, AlertCircle, Zap, Activity } from 'lucide-vue-next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import Skeleton from '~/components/ui/skeleton/Skeleton.vue'
+import LoadingScreen from '~/components/LoadingScreen.vue'
 import { ref, onMounted, computed } from 'vue'
 import { useToast } from '@/composables/useToast'
 

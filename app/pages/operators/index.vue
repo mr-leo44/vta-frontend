@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
-    <!-- Header avec gradient moderne -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 text-white shadow-2xl">
+    <!-- Header avec linear moderne -->
+    <div class="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 text-white shadow-2xl">
       <div class="absolute inset-0 bg-black/10"></div>
       <div class="relative z-10 flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -153,7 +153,7 @@
         <!-- Empty State -->
         <Card v-else class="border-2 border-dashed">
           <CardContent class="flex flex-col items-center justify-center py-16">
-            <div class="h-24 w-24 rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 flex items-center justify-center mb-6">
+            <div class="h-24 w-24 rounded-2xl bg-linear-to-br from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 flex items-center justify-center mb-6">
               <Building2 class="h-12 w-12 text-blue-600 dark:text-blue-400" />
             </div>
             <p class="text-xl font-semibold mb-2">

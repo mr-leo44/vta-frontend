@@ -1,17 +1,16 @@
 <template>
   <div class="space-y-6">
-    <!-- Header avec gradient moderne -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 p-8 text-white shadow-2xl">
-      <div class="absolute inset-0 bg-black/10"></div>
+    <!-- Header avec linear moderne -->
+    <div class="relative overflow-hidden rounded-2xl p-2">
       <div class="relative z-10 flex items-center justify-between flex-wrap gap-4">
         <div>
           <div class="flex items-center gap-3 mb-2">
-            <div class="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-xl">
-              <Layers class="h-7 w-7" />
+            <div class="h-16 w-16 rounded-lg bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 flex items-center justify-center shadow-lg">
+              <Layers class="h-8 w-8 text-white" />
             </div>
             <div>
               <h1 class="text-4xl font-bold tracking-tight">Types d'aéronefs</h1>
-              <p class="text-white/90 text-sm mt-1">
+              <p class="text-muted-foreground text-sm mt-1">
                 Gérer les types d'aéronefs et analyser leur utilisation dans la flotte
               </p>
             </div>
@@ -20,7 +19,7 @@
         <Button 
           @click="openCreateDialog" 
           size="lg"
-          class="bg-white text-green-600 hover:bg-white/90 shadow-xl gap-2"
+          class="bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 shadow-xl gap-2"
         >
           <Plus class="h-5 w-5" />
           Nouveau type
@@ -47,15 +46,15 @@
       <template v-else>
         <!-- Total types -->
         <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-0 bg-linear-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
             <CardTitle class="text-sm font-semibold">Total types</CardTitle>
-            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <Layers class="h-6 w-6 text-white" />
             </div>
           </CardHeader>
           <CardContent class="relative">
-            <div class="text-4xl font-bold bg-gradient-to-br from-blue-600 to-blue-800 bg-clip-text text-transparent">
+            <div class="text-4xl font-bold bg-linear-to-br from-blue-600 to-blue-800 bg-clip-text text-transparent">
               {{ kpis.totalTypes }}
             </div>
             <p class="text-xs flex items-center gap-1 mt-2">
@@ -67,15 +66,15 @@
 
         <!-- Flotte totale -->
         <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-0 bg-linear-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
             <CardTitle class="text-sm font-semibold">Flotte totale</CardTitle>
-            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <Plane class="h-6 w-6 text-white" />
             </div>
           </CardHeader>
           <CardContent class="relative">
-            <div class="text-4xl font-bold bg-gradient-to-br from-green-600 to-green-800 bg-clip-text text-transparent">
+            <div class="text-4xl font-bold bg-linear-to-br from-green-600 to-green-800 bg-clip-text text-transparent">
               {{ kpis.totalAircrafts }}
             </div>
             <div class="flex items-center gap-2 mt-2">
@@ -93,15 +92,15 @@
 
         <!-- Type le plus utilisé -->
         <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-0 bg-linear-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
             <CardTitle class="text-sm font-semibold">Type populaire</CardTitle>
-            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <TrendingUp class="h-6 w-6 text-white" />
             </div>
           </CardHeader>
           <CardContent class="relative">
-            <div class="text-lg font-bold truncate bg-gradient-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent" :title="kpis.mostUsedType?.name">
+            <div class="text-lg font-bold truncate bg-linear-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent" :title="kpis.mostUsedType?.name">
               {{ kpis.mostUsedType?.name || '—' }}
             </div>
             <p class="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
@@ -113,15 +112,15 @@
 
         <!-- Exploitants -->
         <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="absolute inset-0 bg-linear-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
             <CardTitle class="text-sm font-semibold">Exploitants</CardTitle>
-            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <Building2 class="h-6 w-6 text-white" />
             </div>
           </CardHeader>
           <CardContent class="relative">
-            <div class="text-4xl font-bold bg-gradient-to-br from-orange-600 to-orange-800 bg-clip-text text-transparent">
+            <div class="text-4xl font-bold bg-linear-to-br from-orange-600 to-orange-800 bg-clip-text text-transparent">
               {{ kpis.totalOperators }}
             </div>
             <p class="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
@@ -237,7 +236,7 @@
           v-else-if="displayedTypes.length === 0" 
           class="text-center py-16"
         >
-          <div class="h-24 w-24 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-950 dark:to-emerald-950 mx-auto mb-6 flex items-center justify-center">
+          <div class="h-24 w-24 rounded-2xl bg-linear-to-br from-green-100 to-emerald-100 dark:from-green-950 dark:to-emerald-950 mx-auto mb-6 flex items-center justify-center">
             <Layers class="h-12 w-12 text-green-600 dark:text-green-400" />
           </div>
           <h3 class="text-xl font-semibold mb-2">Aucun type trouvé</h3>
@@ -258,12 +257,12 @@
             class="group hover:shadow-2xl transition-all cursor-pointer border-2 hover:border-primary/50 relative overflow-hidden"
             @click="openViewDialog(type)"
           >
-            <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <CardHeader class="pb-3 relative">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-3">
-                    <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <div class="h-12 w-12 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                       <Plane class="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -335,7 +334,7 @@
             <CardContent class="p-4">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4 flex-1">
-                  <div class="h-14 w-14 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-lg">
+                  <div class="h-14 w-14 rounded-full bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-lg">
                     <Layers class="h-7 w-7 text-white" />
                   </div>
                   <div class="flex-1 min-w-0">

@@ -1,7 +1,8 @@
 <template>
   <div class="space-y-6 h-[78vh]">
     <!-- Header -->
-    <div class="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 text-white shadow-2xl">
+    <div
+      class="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 text-white shadow-2xl">
       <div class="absolute inset-0 bg-black/10"></div>
       <div class="relative z-10">
         <div class="flex items-center gap-3 mb-2">
@@ -23,10 +24,12 @@
     <!-- Types de rapports -->
     <div class="grid gap-6 md:grid-cols-3">
       <!-- Rapport Mensuel -->
-      <Card class="group hover:shadow-xl transition-all border-2 hover:border-blue-500/50 cursor-pointer" @click="openMonthlyDialog">
+      <Card class="group hover:shadow-xl transition-all border-2 hover:border-blue-500/50 cursor-pointer"
+        @click="openMonthlyDialog">
         <CardHeader>
           <div class="flex items-center justify-between">
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div
+              class="h-12 w-12 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <Calendar class="h-6 w-6 text-white" />
             </div>
             <Badge variant="secondary">Mensuel</Badge>
@@ -45,10 +48,12 @@
       </Card>
 
       <!-- Rapport Annuel -->
-      <Card class="group hover:shadow-xl transition-all border-2 hover:border-green-500/50 cursor-pointer" @click="openAnnualDialog">
+      <Card class="group hover:shadow-xl transition-all border-2 hover:border-green-500/50 cursor-pointer"
+        @click="openAnnualDialog">
         <CardHeader>
           <div class="flex items-center justify-between">
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div
+              class="h-12 w-12 rounded-xl bg-linear-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <CalendarDays class="h-6 w-6 text-white" />
             </div>
             <Badge variant="secondary">Annuel</Badge>
@@ -67,10 +72,12 @@
       </Card>
 
       <!-- Faits Saillants -->
-      <Card class="group hover:shadow-xl transition-all border-2 hover:border-purple-500/50 cursor-pointer" @click="openHighlightsDialog">
+      <Card class="group hover:shadow-xl transition-all border-2 hover:border-purple-500/50 cursor-pointer"
+        @click="openHighlightsDialog">
         <CardHeader>
           <div class="flex items-center justify-between">
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div
+              class="h-12 w-12 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <Sparkles class="h-6 w-6 text-white" />
             </div>
             <Badge variant="secondary">Synthèse</Badge>
@@ -180,6 +187,18 @@
                 <SelectItem v-for="year in availableYears" :key="year" :value="String(year)">
                   {{ year }}
                 </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div class="space-y-2">
+            <Label for="regime">Régime</Label>
+            <Select v-model="annualForm.regime">
+              <SelectTrigger id="regime">
+                <SelectValue placeholder="Sélectionner un régime" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="domestic">Domestique</SelectItem>
+                <SelectItem value="international">International</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -331,7 +350,8 @@ const monthlyForm = ref({
 })
 
 const annualForm = ref({
-  year: ''
+  year: '',
+  regime: ''
 })
 
 const highlightsForm = ref({
@@ -356,7 +376,7 @@ const isMonthlyFormValid = computed(() => {
 })
 
 const isAnnualFormValid = computed(() => {
-  return annualForm.value.year
+  return annualForm.value.year && annualForm.value.regime
 })
 
 const isHighlightsFormValid = computed(() => {
@@ -383,15 +403,15 @@ const generateMonthlyReport = async () => {
   loadingMonthly.value = true
   try {
     const url = `/trafic-report/export/${monthlyForm.value.month}/${monthlyForm.value.year}/${monthlyForm.value.regime}`
-    
+
     const response = await apiFetch(url, {
       method: 'GET',
       responseType: 'blob'
     })
 
     // Créer un lien de téléchargement
-    const blob = new Blob([response], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -415,7 +435,26 @@ const generateMonthlyReport = async () => {
 const generateAnnualReport = async () => {
   loadingAnnual.value = true
   try {
-    // TODO: Implémenter l'endpoint pour le rapport annuel
+    const url = `/trafic-report/export/${annualForm.value.year}/${annualForm.value.regime}`
+
+    const response = await apiFetch(url, {
+      method: 'GET',
+      responseType: 'blob'
+    })
+
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    const formattedRegime = annualForm.value.regime === 'domestic' ? 'DOMESTIQUE' : 'INTERNATIONAL'
+    link.download = `TRAFIC_ANNUEL_${formattedRegime}_${annualForm.value.year}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(downloadUrl)
+
     success('Rapport généré', 'Le rapport annuel a été téléchargé avec succès')
     annualDialogOpen.value = false
   } catch (err: any) {

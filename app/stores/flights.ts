@@ -4,18 +4,18 @@ import type { Flight, FlightJustification, ApiResponse, PaginatedResponse } from
 
 const handleApiError = (error: any): string => {
   console.error('API Error:', error)
-  
+
   if (error?.data?.message) {
     return error.data.message
   }
-  
+
   if (error?.data?.errors) {
     const firstError = Object.values(error.data.errors)[0]
     if (Array.isArray(firstError) && firstError.length > 0) {
       return firstError[0] as string
     }
   }
-  
+
   return 'Une erreur est survenue'
 }
 
@@ -55,7 +55,7 @@ export const useFlightsStore = defineStore('flights', () => {
   const justifications = ref<FlightJustification[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
-  
+
   // Pagination
   const currentPage = ref(1)
   const lastPage = ref(1)
@@ -72,16 +72,16 @@ export const useFlightsStore = defineStore('flights', () => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
-    
+
     try {
       const response = await apiFetch<PaginatedResponse<Flight>>(`/flights?page=${page}`)
-      
+
       if (append) {
         flights.value = [...flights.value, ...response.data]
       } else {
         flights.value = response.data
       }
-      
+
       currentPage.value = response.meta.current_page
       lastPage.value = response.meta.last_page
       perPage.value = response.meta.per_page
@@ -111,7 +111,7 @@ export const useFlightsStore = defineStore('flights', () => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
-    
+
     try {
       const response = await apiFetch<ApiResponse<Flight>>(`/flights/${id}`)
       currentFlight.value = response.data
@@ -131,13 +131,12 @@ export const useFlightsStore = defineStore('flights', () => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
-    
+
     try {
       // Format: YYYY-MM-DD
-      const flights = (await fetchFlights()).data.filter(flight => {
-        return flight.departure_time.startsWith(date)
-      })
-      return { success: true, data: flights }
+      const response = await apiFetch<ApiResponse<Flight[]>>(`/flights/daily?date=${date}`)
+      flights.value = response.data
+      return { success: true, data: response.data }
     } catch (err: any) {
       error.value = handleApiError(err)
       return { success: false, message: error.value, data: [] }
@@ -158,7 +157,7 @@ export const useFlightsStore = defineStore('flights', () => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
-    
+
     try {
       const response = await apiFetch<ApiResponse<FlightJustification[]>>('/flight-justifications')
       justifications.value = response.data
@@ -178,26 +177,26 @@ export const useFlightsStore = defineStore('flights', () => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
-    
+
     try {
       // Clean and prepare data for API
       const payload = cleanFlightData(data)
-            
+
       const response = await apiFetch<ApiResponse<Flight>>('/flights', {
         method: 'POST',
         body: payload
       })
-      
+
       flights.value.unshift(response.data)
       total.value += 1
-      
+
       return { success: true, data: response.data }
     } catch (err: any) {
       error.value = handleApiError(err)
-      return { 
-        success: false, 
-        message: error.value, 
-        errors: err?.data?.errors 
+      return {
+        success: false,
+        message: error.value,
+        errors: err?.data?.errors
       }
     } finally {
       loading.value = false
@@ -211,32 +210,32 @@ export const useFlightsStore = defineStore('flights', () => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
-    
+
     try {
       // Clean and prepare data for API
       const payload = cleanFlightData(data)
-          
+
       const response = await apiFetch<ApiResponse<Flight>>(`/flights/${id}`, {
         method: 'PUT',
         body: payload
       })
-      
+
       const index = flights.value.findIndex(f => f.id === id)
       if (index !== -1) {
         flights.value[index] = response.data
       }
-      
+
       if (currentFlight.value?.id === id) {
         currentFlight.value = response.data
       }
-      
+
       return { success: true, data: response.data }
     } catch (err: any) {
       error.value = handleApiError(err)
-      return { 
-        success: false, 
-        message: error.value, 
-        errors: err?.data?.errors 
+      return {
+        success: false,
+        message: error.value,
+        errors: err?.data?.errors
       }
     } finally {
       loading.value = false
@@ -250,17 +249,17 @@ export const useFlightsStore = defineStore('flights', () => {
     loading.value = true
     error.value = null
     const { apiFetch } = useApi()
-    
+
     try {
       await apiFetch(`/flights/${id}`, { method: 'DELETE' })
-      
+
       flights.value = flights.value.filter(f => f.id !== id)
       total.value -= 1
-      
+
       if (currentFlight.value?.id === id) {
         currentFlight.value = null
       }
-      
+
       return { success: true }
     } catch (err: any) {
       error.value = handleApiError(err)

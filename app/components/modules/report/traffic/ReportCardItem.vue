@@ -10,7 +10,7 @@
         >
           <component :is="icon" class="h-6 w-6 text-white" />
         </div>
-        <Badge variant="secondary">{{ badgeText }}</Badge>
+        <Badge variant="secondary">{{ badge }}</Badge>
       </div>
       <CardTitle class="mt-4">{{ title }}</CardTitle>
       <CardDescription>{{ description }}</CardDescription>
@@ -34,7 +34,7 @@ interface Props {
   icon: any
   title: string
   description: string
-  badgeText: string
+  badge: string
   gradientClass: string
   hoverBorderClass: string
 }

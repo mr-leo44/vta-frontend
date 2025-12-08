@@ -2,38 +2,16 @@
   <Dialog v-model:open="isOpen">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Rapport Mensuel de Trafic</DialogTitle>
+        <DialogTitle>Rapport Annuel de Trafic</DialogTitle>
         <DialogDescription>
-          Sélectionnez le mois, l'année et le régime pour générer le rapport
+          Sélectionnez l'année et le régime pour générer le rapport annuel
         </DialogDescription>
       </DialogHeader>
       <div class="space-y-4 py-4">
         <div class="space-y-2">
-          <Label for="month">Mois</Label>
-          <Select v-model="form.month">
-            <SelectTrigger id="month">
-              <SelectValue placeholder="Sélectionner un mois" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Janvier</SelectItem>
-              <SelectItem value="2">Février</SelectItem>
-              <SelectItem value="3">Mars</SelectItem>
-              <SelectItem value="4">Avril</SelectItem>
-              <SelectItem value="5">Mai</SelectItem>
-              <SelectItem value="6">Juin</SelectItem>
-              <SelectItem value="7">Juillet</SelectItem>
-              <SelectItem value="8">Août</SelectItem>
-              <SelectItem value="9">Septembre</SelectItem>
-              <SelectItem value="10">Octobre</SelectItem>
-              <SelectItem value="11">Novembre</SelectItem>
-              <SelectItem value="12">Décembre</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div class="space-y-2">
-          <Label for="year">Année</Label>
-          <Select v-model="form.year">
-            <SelectTrigger id="year">
+          <Label for="annual-year">Année</Label>
+          <Select v-model="localForm.year">
+            <SelectTrigger id="annual-year">
               <SelectValue placeholder="Sélectionner une année" />
             </SelectTrigger>
             <SelectContent>
@@ -44,9 +22,9 @@
           </Select>
         </div>
         <div class="space-y-2">
-          <Label for="regime">Régime</Label>
-          <Select v-model="form.regime">
-            <SelectTrigger id="regime">
+          <Label for="annual-regime">Régime</Label>
+          <Select v-model="localForm.regime">
+            <SelectTrigger id="annual-regime">
               <SelectValue placeholder="Sélectionner un régime" />
             </SelectTrigger>
             <SelectContent>
@@ -60,7 +38,7 @@
         <Button variant="outline" @click="close">
           Annuler
         </Button>
-        <Button @click="generate" :disabled="!isFormValid || loading">
+        <Button @click="generate" :disabled="!isValid || loading">
           <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
           <Download v-else class="mr-2 h-4 w-4" />
           Générer
@@ -100,11 +78,10 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  'generate': [form: { month: string; year: string; regime: string }]
+  'generate': [form: { year: string; regime: string }]
 }>()
 
-const form = ref({
-  month: '',
+const localForm = ref({
   year: '',
   regime: ''
 })
@@ -118,8 +95,8 @@ const availableYears = computed(() => {
   return years
 })
 
-const isFormValid = computed(() => {
-  return form.value.month && form.value.year && form.value.regime
+const isValid = computed(() => {
+  return localForm.value.year && localForm.value.regime
 })
 
 const isOpen = computed({
@@ -132,16 +109,15 @@ const close = () => {
 }
 
 const generate = () => {
-  if (isFormValid.value) {
-    emit('generate', { ...form.value })
+  if (isValid.value) {
+    emit('generate', { ...localForm.value })
   }
 }
 
 // Reset form when dialog closes
 watch(() => props.open, (newValue) => {
   if (!newValue) {
-    form.value = {
-      month: '',
+    localForm.value = {
       year: '',
       regime: ''
     }

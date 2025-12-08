@@ -10,7 +10,7 @@
       <div class="space-y-4 py-4">
         <div class="space-y-2">
           <Label for="type">Type de période</Label>
-          <Select v-model="form.type">
+          <Select v-model="localForm.type">
             <SelectTrigger id="type">
               <SelectValue placeholder="Sélectionner le type" />
             </SelectTrigger>
@@ -21,11 +21,10 @@
           </Select>
         </div>
 
-        <!-- Champs mensuels -->
-        <template v-if="form.type === 'monthly'">
+        <template v-if="localForm.type === 'monthly'">
           <div class="space-y-2">
             <Label for="hl-month">Mois</Label>
-            <Select v-model="form.month">
+            <Select v-model="localForm.month">
               <SelectTrigger id="hl-month">
                 <SelectValue placeholder="Sélectionner un mois" />
               </SelectTrigger>
@@ -47,10 +46,9 @@
           </div>
         </template>
 
-        <!-- Année commune -->
         <div class="space-y-2">
           <Label for="hl-year">Année</Label>
-          <Select v-model="form.year">
+          <Select v-model="localForm.year">
             <SelectTrigger id="hl-year">
               <SelectValue placeholder="Sélectionner une année" />
             </SelectTrigger>
@@ -66,7 +64,7 @@
         <Button variant="outline" @click="close">
           Annuler
         </Button>
-        <Button @click="generate" :disabled="!isFormValid || loading">
+        <Button @click="generate" :disabled="!isValid || loading">
           <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
           <Download v-else class="mr-2 h-4 w-4" />
           Générer
@@ -109,7 +107,7 @@ const emit = defineEmits<{
   'generate': [form: { type: string; month: string; year: string }]
 }>()
 
-const form = ref({
+const localForm = ref({
   type: '',
   month: '',
   year: ''
@@ -124,9 +122,9 @@ const availableYears = computed(() => {
   return years
 })
 
-const isFormValid = computed(() => {
-  if (!form.value.type || !form.value.year) return false
-  if (form.value.type === 'monthly' && !form.value.month) return false
+const isValid = computed(() => {
+  if (!localForm.value.type || !localForm.value.year) return false
+  if (localForm.value.type === 'monthly' && !localForm.value.month) return false
   return true
 })
 
@@ -140,15 +138,15 @@ const close = () => {
 }
 
 const generate = () => {
-  if (isFormValid.value) {
-    emit('generate', { ...form.value })
+  if (isValid.value) {
+    emit('generate', { ...localForm.value })
   }
 }
 
 // Reset form when dialog closes
 watch(() => props.open, (newValue) => {
   if (!newValue) {
-    form.value = {
+    localForm.value = {
       type: '',
       month: '',
       year: ''
@@ -157,9 +155,9 @@ watch(() => props.open, (newValue) => {
 })
 
 // Reset month when type changes to annual
-watch(() => form.value.type, (newType) => {
+watch(() => localForm.value.type, (newType) => {
   if (newType === 'annual') {
-    form.value.month = ''
+    localForm.value.month = ''
   }
 })
 </script>

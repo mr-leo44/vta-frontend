@@ -1,56 +1,45 @@
 <template>
   <div class="space-y-6 h-[78vh]">
     <!-- Header -->
-    <div
-      class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 text-white shadow-2xl">
-      <div class="absolute inset-0 bg-black/10"></div>
-      <div class="relative z-10">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-xl">
-            <FileBarChart class="h-7 w-7" />
-          </div>
-          <div>
-            <h1 class="text-4xl font-bold">Rapports de Trafic</h1>
-            <p class="text-white/90 text-sm mt-1">
-              Générer et exporter les rapports mensuels et annuels
-            </p>
-          </div>
-        </div>
-      </div>
-      <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-      <div class="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-    </div>
+    <ReportHeader />
 
     <!-- Types de rapports -->
-    <div class="grid gap-6 md:grid-cols-3">
-      <!-- Rapport Mensuel -->
-      <ReportCard
+    <div class="grid gap-6 md:grid-cols-4">
+      <ReportCardItem
         :icon="Calendar"
         title="Rapport Mensuel"
         description="Générer le rapport pour un mois spécifique"
-        badge-text="Mensuel"
+        badge="Mensuel"
         gradient-class="bg-gradient-to-br from-blue-500 to-blue-600"
         hover-border-class="hover:border-blue-500/50"
         @click="monthlyDialogOpen = true"
       />
 
-      <!-- Rapport Annuel -->
-      <ReportCard
+      <ReportCardItem
         :icon="CalendarDays"
         title="Rapport Annuel"
         description="Générer le rapport pour une année complète"
-        badge-text="Annuel"
+        badge="Annuel"
         gradient-class="bg-gradient-to-br from-green-500 to-green-600"
         hover-border-class="hover:border-green-500/50"
         @click="annualDialogOpen = true"
       />
 
-      <!-- Faits Saillants -->
-      <ReportCard
+      <ReportCardItem
+        :icon="ClipboardList"
+        title="Fiche Journalière"
+        description="Détail du trafic par jour"
+        badge="Journalier"
+        gradient-class="bg-gradient-to-br from-orange-500 to-orange-600"
+        hover-border-class="hover:border-orange-500/50"
+        @click="openDailySheetDialog"
+      />
+
+      <ReportCardItem
         :icon="Sparkles"
         title="Faits Saillants"
         description="Points clés et statistiques importantes"
-        badge-text="Synthèse"
+        badge="Synthèse"
         gradient-class="bg-gradient-to-br from-purple-500 to-purple-600"
         hover-border-class="hover:border-purple-500/50"
         @click="highlightsDialogOpen = true"
@@ -70,6 +59,12 @@
       @generate="generateAnnualReport"
     />
 
+    <DailyReportDialog
+      v-model:open="dailySheetDialogOpen"
+      :loading="loadingDailySheet"
+      @export="exportDailySheet"
+    />
+
     <HighlightsDialog
       v-model:open="highlightsDialogOpen"
       :loading="loadingHighlights"
@@ -79,12 +74,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { FileBarChart, Calendar, CalendarDays, Sparkles } from 'lucide-vue-next'
-import ReportCard from '@/components/modules/report/TrafficReportCard.vue'
-import MonthlyReportDialog from '@/components/modules/report/MonthlyReportDialog.vue'
-import AnnualReportDialog from '@/components/modules/report/AnnualReportDialog.vue'
-import HighlightsDialog from '@/components/modules/report/HighlightsDialog.vue'
+import { ref, nextTick } from 'vue'
+import { Calendar, CalendarDays, ClipboardList, Sparkles } from 'lucide-vue-next'
+import ReportHeader from '@/components/modules/report/traffic/ReportHeader.vue'
+import ReportCardItem from '@/components/modules/report/traffic/ReportCardItem.vue'
+import MonthlyReportDialog from '~/components/modules/report/traffic/MonthlyReportDialog.vue'
+import AnnualReportDialog from '~/components/modules/report/traffic/AnnualReportDialog.vue'
+import DailyReportDialog from '~/components/modules/report/traffic/DailyReportDialog.vue'
+import HighlightsDialog from '~/components/modules/report/traffic/HighlightsDialog.vue'
 
 definePageMeta({
   middleware: 'auth'
@@ -96,14 +93,22 @@ const { apiFetch } = useApi()
 // États des dialogs
 const monthlyDialogOpen = ref(false)
 const annualDialogOpen = ref(false)
+const dailySheetDialogOpen = ref(false)
 const highlightsDialogOpen = ref(false)
 
 // États de chargement
 const loadingMonthly = ref(false)
 const loadingAnnual = ref(false)
+const loadingDailySheet = ref(false)
 const loadingHighlights = ref(false)
 
-// Génération des rapports
+// Handler pour ouvrir le dialog journalier
+const openDailySheetDialog = async () => {
+  dailySheetDialogOpen.value = true
+  await nextTick()
+}
+
+// Génération du rapport mensuel
 const generateMonthlyReport = async (form: { month: string; year: string; regime: string }) => {
   loadingMonthly.value = true
   try {
@@ -114,7 +119,6 @@ const generateMonthlyReport = async (form: { month: string; year: string; regime
       responseType: 'blob'
     })
 
-    // Créer un lien de téléchargement
     const blob = new Blob([response], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
@@ -137,6 +141,7 @@ const generateMonthlyReport = async (form: { month: string; year: string; regime
   }
 }
 
+// Génération du rapport annuel
 const generateAnnualReport = async (form: { year: string; regime: string }) => {
   loadingAnnual.value = true
   try {
@@ -169,6 +174,49 @@ const generateAnnualReport = async (form: { year: string; regime: string }) => {
   }
 }
 
+// Export de la fiche journalière
+const exportDailySheet = async (params: { date: string; format: string }) => {
+  loadingDailySheet.value = true
+  try {
+    const queryParams = new URLSearchParams({
+      date: params.date,
+      format: params.format
+    })
+
+    const url = `/trafic-report/daily/export?${queryParams.toString()}`
+
+    const response = await apiFetch(url, {
+      method: 'GET',
+      responseType: 'blob'
+    })
+
+    let mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    let extension = 'xlsx'
+
+    if (params.format === 'pdf') {
+      mimeType = 'application/pdf'
+      extension = 'pdf'
+    }
+
+    const blob = new Blob([response], { type: mimeType })
+    const downloadUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = `FICHE_JOURNALIERE_${params.date}.${extension}`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(downloadUrl)
+
+    success('Fiche exportée', 'La fiche journalière a été téléchargée avec succès')
+  } catch (err: any) {
+    error('Erreur', err.message || 'Impossible d\'exporter la fiche')
+  } finally {
+    loadingDailySheet.value = false
+  }
+}
+
+// Génération des faits saillants
 const generateHighlights = async (form: { type: string; month: string; year: string }) => {
   loadingHighlights.value = true
   try {

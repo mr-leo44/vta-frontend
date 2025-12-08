@@ -125,7 +125,23 @@ export const useFlightsStore = defineStore('flights', () => {
   }
 
   /**
+   * Convertit une date UTC en fuseau horaire de Kinshasa
+   */
+  const toKinshasa = (date: string) => {
+    const d = new Date(new Date(date).toLocaleString("en-US", { timeZone: "Africa/Kinshasa" }))
+
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    const h = String(d.getHours()).padStart(2, "0")
+    const min = String(d.getMinutes()).padStart(2, "0")
+
+    return `${y}-${m}-${day}T${h}:${min}`
+  }
+
+  /**
    * Récupère les vols d'une date spécifique
+   * Ne retourne que les vols dont la date correspond exactement
    */
   const fetchFlightsByDate = async (date: string) => {
     loading.value = true
@@ -135,8 +151,29 @@ export const useFlightsStore = defineStore('flights', () => {
     try {
       // Format: YYYY-MM-DD
       const response = await apiFetch<ApiResponse<Flight[]>>(`/flights/daily?date=${date}`)
-      flights.value = response.data
-      return { success: true, data: response.data }
+      
+      // L'API retourne tous les vols, on filtre côté client
+      const allFlights = response.data || []
+      
+      // Filtrer uniquement les vols atterris
+      const landedFlights = allFlights.filter(f => f.status === 'atteri')
+      
+      // Filtrer par date en utilisant le fuseau horaire de Kinshasa
+      const dailyFlights: Flight[] = []
+      
+      landedFlights.forEach(flight => {
+        // Convertir la date de départ en fuseau horaire de Kinshasa
+        const formattedDeparture = toKinshasa(flight.departure_time)
+        const departureDate = formattedDeparture.split('T')[0]
+        
+        // Vérifier si la date correspond
+        if (departureDate === date) {
+          dailyFlights.push(flight)
+        }
+      })
+      
+      flights.value = dailyFlights
+      return { success: true, data: dailyFlights }
     } catch (err: any) {
       error.value = handleApiError(err)
       return { success: false, message: error.value, data: [] }
@@ -296,6 +333,7 @@ export const useFlightsStore = defineStore('flights', () => {
     total,
     hasMorePages,
     flightsList,
+    toKinshasa,
     fetchFlights,
     loadNextPage,
     fetchFlight,

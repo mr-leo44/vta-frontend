@@ -1,17 +1,31 @@
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold">Aéronefs</h1>
-        <p class="text-muted-foreground">
-          {{ total ?? 0 }} aéronef{{ total > 1 ? 's' : '' }} enregistré{{ total > 1 ? 's' : '' }}
-        </p>
+    <div
+      class="relative overflow-hidden rounded-2xl p-2">
+      <div class="relative z-10 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <div class="flex h-16 w-16 rounded-lg bg-linear-to-br from-green-600 via-emerald-600 to-teal-600flex items-center justify-center shadow-lg">
+              <PlaneIcon class="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 class="text-4xl font-bold tracking-tight">Aéronefs</h1>
+
+              <p class="text-muted-foreground mt-1">
+                {{ total ?? 0 }} aéronef{{ total > 1 ? 's' : '' }} enregistré{{ total > 1 ? 's' : '' }}
+              </p>
+            </div>
+          </div>
+        </div>
+        <Button @click="openCreateDialog" size="lg" class="bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 shadow-xl gap-2">
+          <Plus class="h-5 w-5" />
+          Nouvel aéronef
+        </Button>
       </div>
-      <Button @click="openCreateDialog">
-        <Plus class="mr-2 h-4 w-4" />
-        Nouvel aéronef
-      </Button>
+      <!-- Decorative circles -->
+      <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
+      <div class="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
     </div>
 
     <!-- Search and View Toggle -->
@@ -20,12 +34,8 @@
         <div class="flex items-center gap-4">
           <div class="flex-1 relative">
             <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              v-model="searchTerm" 
-              placeholder="Rechercher par immatriculation, opérateur ou type..." 
-              class="pl-10"
-              @input="debouncedSearch" 
-            />
+            <Input v-model="searchTerm" placeholder="Rechercher par immatriculation, opérateur ou type..." class="pl-10"
+              @input="debouncedSearch" />
           </div>
           <Button variant="outline" @click="clearSearch" :disabled="!searchTerm">
             <X class="h-4 w-4" />
@@ -33,20 +43,10 @@
 
           <!-- View Toggle -->
           <div class="flex items-center border rounded-lg">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              :class="{ 'bg-muted': viewMode === 'cards' }" 
-              @click="viewMode = 'cards'"
-            >
+            <Button variant="ghost" size="sm" :class="{ 'bg-muted': viewMode === 'cards' }" @click="viewMode = 'cards'">
               <LayoutGrid class="h-4 w-4" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              :class="{ 'bg-muted': viewMode === 'table' }" 
-              @click="viewMode = 'table'"
-            >
+            <Button variant="ghost" size="sm" :class="{ 'bg-muted': viewMode === 'table' }" @click="viewMode = 'table'">
               <List class="h-4 w-4" />
             </Button>
           </div>
@@ -57,13 +57,8 @@
     <!-- Filters Sidebar (Desktop) -->
     <div class="grid gap-6 md:grid-cols-[280px_1fr]">
       <div class="hidden md:block">
-        <AircraftFilters 
-          :filters="filters" 
-          :available-operators="availableOperators"
-          :available-types="availableTypes"
-          @update:filters="filters = $event"
-          @apply="applyFilters" 
-        />
+        <AircraftFilters :filters="filters" :available-operators="availableOperators" :available-types="availableTypes"
+          @update:filters="filters = $event" @apply="applyFilters" />
       </div>
 
       <!-- Main Content -->
@@ -80,26 +75,14 @@
         <div v-else-if="aircrafts.length > 0" class="space-y-4">
           <!-- Cards View -->
           <div v-if="viewMode === 'cards'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <AircraftCard 
-              v-for="aircraft in aircrafts" 
-              :key="aircraft.id" 
-              :aircraft="aircraft" 
-              @view="openViewDialog"
-              @edit="openEditDialog" 
-              @delete="confirmDelete" 
-            />
+            <AircraftCard v-for="aircraft in aircrafts" :key="aircraft.id" :aircraft="aircraft" @view="openViewDialog"
+              @edit="openEditDialog" @delete="confirmDelete" />
           </div>
 
           <!-- Table View -->
           <div v-else class="space-y-3">
-            <AircraftTableRow 
-              v-for="aircraft in aircrafts" 
-              :key="aircraft.id" 
-              :aircraft="aircraft"
-              @view="openViewDialog"
-              @edit="openEditDialog" 
-              @delete="confirmDelete" 
-            />
+            <AircraftTableRow v-for="aircraft in aircrafts" :key="aircraft.id" :aircraft="aircraft"
+              @view="openViewDialog" @edit="openEditDialog" @delete="confirmDelete" />
           </div>
 
           <!-- Load More Trigger -->
@@ -131,7 +114,8 @@
               {{ searchTerm ? 'Aucun résultat trouvé' : 'Aucun aéronef enregistré' }}
             </p>
             <p class="text-muted-foreground mb-4">
-              {{ searchTerm ? 'Essayez avec d\'autres termes de recherche' : 'Commencez par créer votre premier aéronef' }}
+              {{ searchTerm ? 'Essayez avec d\'autres termes de recherche' : 'Commencez par créer votre premier aéronef'
+              }}
             </p>
             <Button v-if="!searchTerm" @click="openCreateDialog">
               <Plus class="mr-2 h-4 w-4" />
@@ -146,18 +130,10 @@
     </div>
 
     <!-- View Dialog -->
-    <AircraftViewDialog 
-      v-model:open="viewDialogOpen" 
-      :aircraft="selectedAircraft" 
-      @edit="openEditDialog" 
-    />
+    <AircraftViewDialog v-model:open="viewDialogOpen" :aircraft="selectedAircraft" @edit="openEditDialog" />
 
     <!-- Form Dialog (Create/Edit) -->
-    <AircraftFormDialog 
-      v-model:open="formDialogOpen" 
-      :aircraft="aircraftToEdit" 
-      @success="handleFormSuccess" 
-    />
+    <AircraftFormDialog v-model:open="formDialogOpen" :aircraft="aircraftToEdit" @success="handleFormSuccess" />
 
     <!-- Delete Confirmation Dialog -->
     <AlertDialog v-model:open="deleteDialogOpen">
@@ -165,16 +141,14 @@
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
           <AlertDialogDescription>
-            Êtes-vous sûr de vouloir supprimer l'aéronef <strong class="font-mono">"{{ aircraftToDelete?.immatriculation }}"</strong> ?
+            Êtes-vous sûr de vouloir supprimer l'aéronef <strong class="font-mono">"{{ aircraftToDelete?.immatriculation
+            }}"</strong> ?
             Cette action est irréversible et supprimera également toutes les données associées.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction 
-            @click="deleteAircraft"
-            class="bg-destructive text-white hover:bg-destructive/90"
-          >
+          <AlertDialogAction @click="deleteAircraft" class="bg-destructive text-white hover:bg-destructive/90">
             Supprimer
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -191,7 +165,8 @@ import {
   X,
   LayoutGrid,
   List,
-  Plane
+  Plane,
+  PlaneIcon
 } from 'lucide-vue-next'
 import type { Aircraft, AircraftType, Operator } from '~/types/api'
 import { Card, CardContent } from '@/components/ui/card'

@@ -25,7 +25,7 @@
                 <SelectValue placeholder="Sélectionner un type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="type in aircraftTypes.data" :key="type.id" :value="type.id.toString()">
+                <SelectItem v-for="type in aircraftTypes" :key="type.id" :value="type.id.toString()">
                   {{ type.name }} ({{ type.sigle }})
                 </SelectItem>
               </SelectContent>
@@ -141,12 +141,12 @@ const errors = ref<Partial<Record<keyof AircraftFormSchema, string>>>({})
 const aircraftTypes = ref<AircraftType[]>([])
 const operators = ref<Operator[]>([])
 
-const formData = ref<AircraftFormSchema>({
+const formData = ref<any>({
   immatriculation: '',
   pmad: null,
-  in_activity: true,
-  aircraft_type_id: 0,
-  operator_id: 0
+  in_activity: 'true',
+  aircraft_type_id: '',
+  operator_id: ''
 })
 
 // Charger les types d'aéronefs et opérateurs
@@ -157,8 +157,13 @@ const loadFormData = async () => {
       apiFetch<{ data: AircraftType[] }>('/aircraft-types/all'),
       apiFetch<{ data: Operator[] }>('/operators/all')
     ])
-    aircraftTypes.value = typesRes || []
+    aircraftTypes.value = typesRes.data || []
     operators.value = operatorsRes.data || []
+    
+    // Une fois les données chargées, initialiser le formulaire si en mode édition
+    if (props.aircraft) {
+      initializeForm(props.aircraft)
+    }
   } catch (error) {
     showError('Erreur lors du chargement des données')
   } finally {
@@ -166,23 +171,33 @@ const loadFormData = async () => {
   }
 }
 
-// Initialiser le formulaire
-watch(() => props.aircraft, (aircraft) => {
-  if (aircraft) {
-    formData.value = {
-      immatriculation: aircraft.immatriculation,
-      pmad: aircraft.pmad,
-      in_activity: aircraft.in_activity,
-      aircraft_type_id: aircraft.aircraft_type_id,
-      operator_id: aircraft.operator_id
-    }
+// Initialiser le formulaire avec les données de l'aircraft
+const initializeForm = (aircraft: Aircraft) => {
+  formData.value = {
+    immatriculation: aircraft.immatriculation,
+    pmad: aircraft.pmad,
+    in_activity: aircraft.in_activity ? 'true' : 'false',
+    aircraft_type_id: aircraft.type.id.toString(),
+    operator_id: aircraft.operator.id.toString()
+  }
+}
+
+// Surveiller les changements de props.aircraft ET de props.open
+watch([() => props.aircraft, () => props.open], ([aircraft, open]) => {
+  if (open && aircraft && aircraftTypes.value.length > 0 && operators.value.length > 0) {
+    initializeForm(aircraft)
   }
 }, { immediate: true })
 
-watch(isOpen, (open) => {
+// Surveiller l'ouverture du dialog
+watch(isOpen, async (open) => {
   if (open) {
-    loadFormData()
-  } else if (!props.aircraft) {
+    await loadFormData()
+    // Re-initialiser après le chargement si en mode édition
+    if (props.aircraft) {
+      initializeForm(props.aircraft)
+    }
+  } else if (!isEdit.value) {
     resetForm()
   }
 })
@@ -191,9 +206,9 @@ const resetForm = () => {
   formData.value = {
     immatriculation: '',
     pmad: null,
-    in_activity: true,
-    aircraft_type_id: 0,
-    operator_id: 0
+    in_activity: 'true',
+    aircraft_type_id: '',
+    operator_id: ''
   }
   errors.value = {}
 }
@@ -213,7 +228,7 @@ const handleSubmit = async () => {
     ...formData.value,
     aircraft_type_id: parseInt(formData.value.aircraft_type_id as any) || 0,
     operator_id: parseInt(formData.value.operator_id as any) || 0,
-    in_activity: formData.value.in_activity === true || formData.value.in_activity === 'true'
+    in_activity: formData.value.in_activity === 'true' || formData.value.in_activity === true
   }
 
   // Validation avec Zod

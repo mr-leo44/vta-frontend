@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 h-[78vh]">
+  <div class="space-y-6 h-full md:h-[78vh]">
     <!-- Header -->
     <ReportHeader />
 

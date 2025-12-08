@@ -26,7 +26,8 @@ export default defineNuxtConfig({
     server: {
       proxy: {
         '/api': {
-          target: 'http://vta-app.test',
+          // target: 'http://vta-app.test',
+          target: 'https://hbvtbgkxmm.sharedwithexpose.com',
           changeOrigin: true,
           secure: false
         }
@@ -36,7 +37,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: 'http://vta-app.test/api'
+            // apiBase: 'http://vta-app.test/api'
+      apiBase: 'https://hbvtbgkxmm.sharedwithexpose.com/api'
     }
   },
 

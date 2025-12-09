@@ -1,22 +1,33 @@
 <template>
   <div class="space-y-6">
-    <!-- Header avec actions -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <div class="h-10 w-10 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-            <Layers class="h-6 w-6 text-white" />
+    <!-- Header avec linear moderne -->
+    <div class="relative overflow-hidden rounded-2xl p-2">
+      <div class="relative z-10 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <div class="h-16 w-16 rounded-lg bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 flex items-center justify-center shadow-lg">
+              <Layers class="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 class="text-4xl font-bold tracking-tight">Types d'aéronefs</h1>
+              <p class="text-muted-foreground text-sm mt-1">
+                Gérer les types d'aéronefs et analyser leur utilisation dans la flotte
+              </p>
+            </div>
           </div>
-          Types d'aéronefs
-        </h1>
-        <p class="text-muted-foreground mt-2">
-          Gérer les types d'aéronefs et analyser leur utilisation dans la flotte
-        </p>
+        </div>
+        <Button 
+          @click="openCreateDialog" 
+          size="lg"
+          class="bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 shadow-xl gap-2"
+        >
+          <Plus class="h-5 w-5" />
+          Nouveau type
+        </Button>
       </div>
-      <Button @click="openCreateDialog" size="lg" class="gap-2">
-        <Plus class="h-4 w-4" />
-        Nouveau type
-      </Button>
+      <!-- Decorative circles -->
+      <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
+      <div class="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
     </div>
 
     <!-- KPI Cards -->
@@ -34,58 +45,65 @@
 
       <template v-else>
         <!-- Total types -->
-        <Card class="border-2 hover:shadow-lg transition-shadow bg-linear-to-br from-blue-50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-semibold text-blue-900 dark:text-blue-100">Total types</CardTitle>
-            <div class="h-10 w-10 rounded-lg bg-blue-500 dark:bg-blue-600 flex items-center justify-center shadow-md">
-              <Layers class="h-5 w-5 text-white" />
+        <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
+          <div class="absolute inset-0 bg-linear-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+            <CardTitle class="text-sm font-semibold">Total types</CardTitle>
+            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <Layers class="h-6 w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div class="text-3xl font-bold text-blue-900 dark:text-blue-100">{{ kpis.totalTypes }}</div>
-            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
-              <Database class="h-3 w-3" />
-              Types enregistrés
+          <CardContent class="relative">
+            <div class="text-4xl font-bold bg-linear-to-br from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              {{ kpis.totalTypes }}
+            </div>
+            <p class="text-xs flex items-center gap-1 mt-2">
+              <Database class="h-3 w-3 text-muted-foreground" />
+              <span class="text-muted-foreground">Types enregistrés</span>
             </p>
           </CardContent>
         </Card>
 
-        <!-- Aéronefs associés -->
-        <Card class="border-2 hover:shadow-lg transition-shadow bg-linear-to-br from-green-50 to-green-100/30 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-semibold text-green-900 dark:text-green-100">Flotte totale</CardTitle>
-            <div class="h-10 w-10 rounded-lg bg-green-500 dark:bg-green-600 flex items-center justify-center shadow-md">
-              <Plane class="h-5 w-5 text-white" />
+        <!-- Flotte totale -->
+        <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
+          <div class="absolute inset-0 bg-linear-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+            <CardTitle class="text-sm font-semibold">Flotte totale</CardTitle>
+            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <Plane class="h-6 w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div class="text-3xl font-bold text-green-900 dark:text-green-100">{{ kpis.totalAircrafts }}</div>
-            <div class="flex items-center gap-2 mt-1 text-xs">
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-600/20 text-green-700 dark:text-green-300">
-                <div class="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+          <CardContent class="relative">
+            <div class="text-4xl font-bold bg-linear-to-br from-green-600 to-green-800 bg-clip-text text-transparent">
+              {{ kpis.totalAircrafts }}
+            </div>
+            <div class="flex items-center gap-2 mt-2">
+              <Badge variant="default" class="gap-1 text-xs">
+                <div class="h-1.5 w-1.5 rounded-full bg-green-200"></div>
                 {{ kpis.activeAircrafts }}
-              </span>
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-600 dark:text-gray-400">
+              </Badge>
+              <Badge variant="secondary" class="gap-1 text-xs">
                 <div class="h-1.5 w-1.5 rounded-full bg-gray-400"></div>
                 {{ kpis.inactiveAircrafts }}
-              </span>
+              </Badge>
             </div>
           </CardContent>
         </Card>
 
         <!-- Type le plus utilisé -->
-        <Card class="border-2 hover:shadow-lg transition-shadow bg-linear-to-br from-purple-50 to-purple-100/30 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-semibold text-purple-900 dark:text-purple-100">Type populaire</CardTitle>
-            <div class="h-10 w-10 rounded-lg bg-purple-500 dark:bg-purple-600 flex items-center justify-center shadow-md">
-              <TrendingUp class="h-5 w-5 text-white" />
+        <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
+          <div class="absolute inset-0 bg-linear-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+            <CardTitle class="text-sm font-semibold">Type populaire</CardTitle>
+            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <TrendingUp class="h-6 w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div class="text-lg font-bold text-purple-900 dark:text-purple-100 truncate" :title="kpis.mostUsedType?.name">
+          <CardContent class="relative">
+            <div class="text-lg font-bold truncate bg-linear-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent" :title="kpis.mostUsedType?.name">
               {{ kpis.mostUsedType?.name || '—' }}
             </div>
-            <p class="text-xs text-purple-600 dark:text-purple-400 mt-1 flex items-center gap-1">
+            <p class="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
               <Plane class="h-3 w-3" />
               {{ kpis.mostUsedType?.count || 0 }} aéronefs
             </p>
@@ -93,16 +111,19 @@
         </Card>
 
         <!-- Exploitants -->
-        <Card class="border-2 hover:shadow-lg transition-shadow bg-linear-to-br from-orange-50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border-orange-200 dark:border-orange-800">
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle class="text-sm font-semibold text-orange-900 dark:text-orange-100">Exploitants</CardTitle>
-            <div class="h-10 w-10 rounded-lg bg-orange-500 dark:bg-orange-600 flex items-center justify-center shadow-md">
-              <Building2 class="h-5 w-5 text-white" />
+        <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
+          <div class="absolute inset-0 bg-linear-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+            <CardTitle class="text-sm font-semibold">Exploitants</CardTitle>
+            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <Building2 class="h-6 w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
-            <div class="text-3xl font-bold text-orange-900 dark:text-orange-100">{{ kpis.totalOperators }}</div>
-            <p class="text-xs text-orange-600 dark:text-orange-400 mt-1 flex items-center gap-1">
+          <CardContent class="relative">
+            <div class="text-4xl font-bold bg-linear-to-br from-orange-600 to-orange-800 bg-clip-text text-transparent">
+              {{ kpis.totalOperators }}
+            </div>
+            <p class="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
               <Building2 class="h-3 w-3" />
               Compagnies actives
             </p>
@@ -112,13 +133,16 @@
     </div>
 
     <!-- Filtres et recherche -->
-    <Card>
+    <Card class="border-2 shadow-lg">
       <CardHeader>
         <div class="flex items-center justify-between">
-          <CardTitle class="flex items-center gap-2">
-            <Filter class="h-4 w-4" />
-            Recherche et filtres
-          </CardTitle>
+          <div class="flex items-center gap-2">
+            <Filter class="h-5 w-5 text-muted-foreground" />
+            <CardTitle>Recherche et filtres</CardTitle>
+            <Badge v-if="hasActiveFilters" variant="secondary">
+              Active
+            </Badge>
+          </div>
           <Button 
             v-if="hasActiveFilters" 
             variant="ghost" 
@@ -135,17 +159,17 @@
         <div class="flex flex-col sm:flex-row gap-4">
           <div class="flex-1">
             <div class="relative">
-              <Search class="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Search class="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
               <Input
                 v-model="searchQuery"
                 placeholder="Rechercher par nom ou code ICAO..."
-                class="pl-10"
+                class="pl-10 h-12 border-2"
                 @input="debouncedSearch"
               />
             </div>
           </div>
           <Select v-model="sortBy">
-            <SelectTrigger class="w-full sm:w-60">
+            <SelectTrigger class="w-full sm:w-60 h-12">
               <SelectValue placeholder="Trier par..." />
             </SelectTrigger>
             <SelectContent>
@@ -164,11 +188,11 @@
     </Card>
 
     <!-- Liste des types -->
-    <Card>
+    <Card class="border-2 shadow-lg">
       <CardHeader>
         <div class="flex items-center justify-between">
           <div>
-            <CardTitle class="flex items-center gap-2">
+            <CardTitle class="flex items-center gap-2 text-xl">
               <Layers class="h-5 w-5" />
               Types d'aéronefs ({{ displayedTypes.length }})
             </CardTitle>
@@ -181,7 +205,7 @@
               variant="outline"
               size="sm"
               @click="viewMode = 'grid'"
-              :class="viewMode === 'grid' ? 'bg-muted' : ''"
+              :class="viewMode === 'grid' ? 'bg-primary text-primary-foreground' : ''"
             >
               <LayoutGrid class="h-4 w-4" />
             </Button>
@@ -189,7 +213,7 @@
               variant="outline"
               size="sm"
               @click="viewMode = 'list'"
-              :class="viewMode === 'list' ? 'bg-muted' : ''"
+              :class="viewMode === 'list' ? 'bg-primary text-primary-foreground' : ''"
             >
               <List class="h-4 w-4" />
             </Button>
@@ -212,15 +236,15 @@
           v-else-if="displayedTypes.length === 0" 
           class="text-center py-16"
         >
-          <div class="h-20 w-20 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-            <Layers class="h-10 w-10 text-muted-foreground opacity-50" />
+          <div class="h-24 w-24 rounded-2xl bg-linear-to-br from-green-100 to-emerald-100 dark:from-green-950 dark:to-emerald-950 mx-auto mb-6 flex items-center justify-center">
+            <Layers class="h-12 w-12 text-green-600 dark:text-green-400" />
           </div>
-          <h3 class="text-lg font-semibold mb-2">Aucun type trouvé</h3>
+          <h3 class="text-xl font-semibold mb-2">Aucun type trouvé</h3>
           <p class="text-muted-foreground mb-6">
             {{ searchQuery ? 'Aucun résultat pour cette recherche' : 'Commencez par créer un type d\'aéronef' }}
           </p>
-          <Button v-if="!searchQuery" @click="openCreateDialog" size="lg">
-            <Plus class="mr-2 h-4 w-4" />
+          <Button v-if="!searchQuery" @click="openCreateDialog" size="lg" class="gap-2">
+            <Plus class="h-4 w-4" />
             Créer un type
           </Button>
         </div>
@@ -230,18 +254,19 @@
           <Card
             v-for="type in displayedTypes"
             :key="type.id"
-            class="hover:shadow-lg transition-all cursor-pointer group border-2"
+            class="group hover:shadow-2xl transition-all cursor-pointer border-2 hover:border-primary/50 relative overflow-hidden"
             @click="openViewDialog(type)"
           >
-            <CardHeader class="pb-3">
+            <div class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <CardHeader class="pb-3 relative">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <div class="h-8 w-8 rounded-lg bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                      <Plane class="h-4 w-4 text-white" />
+                  <div class="flex items-center gap-2 mb-3">
+                    <div class="h-12 w-12 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <Plane class="h-6 w-6 text-white" />
                     </div>
                   </div>
-                  <CardTitle class="text-base group-hover:text-primary transition-colors leading-tight">
+                  <CardTitle class="text-lg group-hover:text-primary transition-colors leading-tight">
                     {{ type.name }}
                   </CardTitle>
                   <Badge variant="secondary" class="font-mono mt-2 text-xs">
@@ -275,14 +300,14 @@
                 </DropdownMenu>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent class="relative">
               <div class="space-y-3 text-sm">
-                <div class="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                <div class="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <span class="text-muted-foreground flex items-center gap-2">
                     <Plane class="h-3.5 w-3.5" />
                     Aéronefs
                   </span>
-                  <Badge variant="outline" class="font-semibold">
+                  <Badge variant="default" class="font-semibold">
                     {{ getAircraftCount(type.id) }}
                   </Badge>
                 </div>
@@ -309,12 +334,12 @@
             <CardContent class="p-4">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4 flex-1">
-                  <div class="h-12 w-12 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0 shadow-md">
-                    <Layers class="h-6 w-6 text-white" />
+                  <div class="h-14 w-14 rounded-full bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-lg">
+                    <Layers class="h-7 w-7 text-white" />
                   </div>
                   <div class="flex-1 min-w-0">
-                    <div class="font-bold text-base">{{ type.name }}</div>
-                    <div class="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                    <div class="font-bold text-lg">{{ type.name }}</div>
+                    <div class="text-sm text-muted-foreground flex items-center gap-2 mt-1 flex-wrap">
                       <Badge variant="secondary" class="font-mono text-xs">
                         {{ type.sigle }}
                       </Badge>
@@ -362,7 +387,8 @@
 
     <!-- Load More Trigger -->
     <div v-if="hasMorePages && !aircraftTypesStore.loading" ref="loadMoreTrigger" class="flex justify-center py-8">
-      <Button variant="outline" @click="loadMore" :disabled="aircraftTypesStore.loading">
+      <Button variant="outline" @click="loadMore" :disabled="aircraftTypesStore.loading" size="lg" class="gap-2">
+        <ChevronDown class="h-4 w-4" />
         Charger plus de types
       </Button>
     </div>
@@ -409,9 +435,9 @@
           <AlertDialogCancel>Annuler</AlertDialogCancel>
           <AlertDialogAction
             @click="handleDelete"
-            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
           >
-            <Trash2 class="mr-2 h-4 w-4" />
+            <Trash2 class="h-4 w-4" />
             Supprimer définitivement
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -439,7 +465,8 @@ import {
   List,
   Filter,
   Database,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-vue-next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -555,7 +582,6 @@ const debouncedSearch = () => {
   searchTimeout = setTimeout(async () => {
     if (searchQuery.value.trim()) {
       // TODO: implémenter la recherche via l'API si nécessaire
-      // Pour l'instant on peut garder le filtrage côté client ou appeler une API
     } else {
       await fetchAircraftTypes()
     }
@@ -630,13 +656,13 @@ const handleDelete = async () => {
     const result = await aircraftTypesStore.deleteAircraftType(typeToDelete.value.id)
     
     if (result.success) {
-      showSuccess('Type supprimé', `Le type ${typeToDelete.value.name} a été supprimé avec succès.`)
+      showSuccess('Type supprimé avec succès')
       await fetchAircraftTypes()
     } else {
       throw new Error(result.message)
     }
   } catch (error: any) {
-    showError('Erreur', error?.message || 'Impossible de supprimer ce type.')
+    showError(error?.message || 'Impossible de supprimer ce type.')
   } finally {
     deleteDialogOpen.value = false
     typeToDelete.value = null
@@ -656,7 +682,6 @@ onMounted(async () => {
     operatorsStore.fetchAllOperators()
   ])
 
-  // Setup observer after a short delay to ensure DOM is ready
   setTimeout(() => {
     setupIntersectionObserver()
   }, 100)

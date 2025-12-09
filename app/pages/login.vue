@@ -98,7 +98,7 @@
       <CardFooter class="flex flex-col gap-4">
         <div class="text-sm text-muted-foreground text-center w-full flex items-center gap-2 justify-center">
           <Shield class="h-4 w-4" />
-          Système de gestion des vols • VTA
+          Système de gestion du Trafic Aérien • VTA
         </div>
       </CardFooter>
     </Card>

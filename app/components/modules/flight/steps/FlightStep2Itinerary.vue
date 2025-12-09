@@ -1,3 +1,4 @@
+<!-- components/modules/flight/steps/FlightStep2Itinerary.vue -->
 <template>
   <div class="space-y-5 animate-in fade-in-50">
     <!-- Departure Airport -->
@@ -9,6 +10,7 @@
         label-class="text-base font-semibold flex items-center gap-2 mb-3"
         :error-iata="errors['departure.iata']"
         :error-name="errors['departure.name']"
+        :exclude-iata="formData.arrival.iata"
       >
         <template #label>
           <MapPin class="h-4 w-4 text-blue-600" />
@@ -26,6 +28,7 @@
         label-class="text-base font-semibold flex items-center gap-2 mb-3"
         :error-iata="errors['arrival.iata']"
         :error-name="errors['arrival.name']"
+        :exclude-iata="formData.departure.iata"
       >
         <template #label>
           <MapPin class="h-4 w-4 text-green-600" />

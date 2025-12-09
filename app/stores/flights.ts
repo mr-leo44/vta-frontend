@@ -51,9 +51,11 @@ const cleanFlightData = (data: any) => {
 
 export const useFlightsStore = defineStore('flights', () => {
   const flights = ref<Flight[]>([])
+  const allFlights = ref<Flight[]>([])
   const currentFlight = ref<Flight | null>(null)
   const justifications = ref<FlightJustification[]>([])
   const loading = ref(false)
+  const loadingAll = ref(false)
   const error = ref<string | null>(null)
 
   // Pagination
@@ -64,7 +66,26 @@ export const useFlightsStore = defineStore('flights', () => {
   const hasMorePages = computed(() => currentPage.value < lastPage.value)
 
   const flightsList = computed(() => flights.value)
+  const allFlightsList = computed(() => allFlights.value)
 
+
+  const fetchAllAircrafts = async () => {
+      loadingAll.value = true
+      error.value = null
+      const { apiFetch } = useApi()
+      
+      try {
+        const response = await apiFetch<ApiResponse<Flight[]>>('/flights/all')
+        allFlights.value = response.data
+        
+        return { success: true, data: response.data }
+      } catch (err: any) {
+        error.value = handleApiError(err)
+        return { success: false, message: error.value }
+      } finally {
+        loadingAll.value = false
+      }
+    }
   /**
    * Récupère les vols avec pagination
    */
@@ -321,11 +342,17 @@ export const useFlightsStore = defineStore('flights', () => {
     total.value = 0
   }
 
+  const clearAll = () => {
+    allFlights.value = []
+  }
+
   return {
     flights,
+    allFlights,
     currentFlight,
     justifications,
     loading,
+    loadingAll,
     error,
     currentPage,
     lastPage,
@@ -333,7 +360,9 @@ export const useFlightsStore = defineStore('flights', () => {
     total,
     hasMorePages,
     flightsList,
+    allFlightsList,
     toKinshasa,
+    fetchAllAircrafts,
     fetchFlights,
     loadNextPage,
     fetchFlight,
@@ -345,6 +374,7 @@ export const useFlightsStore = defineStore('flights', () => {
     deleteFlight,
     clearError,
     clearCurrentFlight,
+    clearAll,
     resetPagination
   }
 })

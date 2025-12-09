@@ -340,7 +340,7 @@ const flightToDelete = ref<Flight | null>(null)
 
 // Computed
 const flights = computed(() => flightsStore.flights)
-const totalFlights = computed(() => flights.value.length)
+const totalFlights = computed(() => flightsStore.total)
 const hasMorePages = computed(() => flightsStore.hasMorePages)
 const operators = computed(() => operatorsStore.operators)
 const aircrafts = computed(() => aircraftsStore.aircrafts)
@@ -356,7 +356,7 @@ const paxOfMonth = computed(() => {
 
 // KPIs Computed
 const kpis = computed(() => ({
-  total_flights: flights.value.length,
+  total_flights: totalFlights.value,
   total_today: flights.value.filter(f => isToday(f.departure_time)).length,
   total_this_week: flights.value.filter(f => isThisWeek(f.departure_time)).length,
   total_this_month: flights.value.filter(f => isThisMonth(f.departure_time)).length,
@@ -577,7 +577,6 @@ const deleteFlight = async () => {
 
 const handleFormSubmit = async () => {
   await fetchFlights()
-  showSuccess('Opération effectuée avec succès')
 }
 
 const loadMore = async () => {

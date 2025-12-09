@@ -1,3 +1,4 @@
+// composables/useFlightForm.ts
 import { ref, computed } from 'vue'
 import type { FlightFormData, Flight } from '~/types/api'
 
@@ -61,6 +62,15 @@ export const useFlightForm = () => {
     if (!formData.value.arrival.name) {
       errors.value['arrival.name'] = "Nom de l'aéroport d'arrivée requis"
     }
+    
+    // Validation: départ != arrivée
+    if (formData.value.departure.iata && formData.value.arrival.iata) {
+      if (formData.value.departure.iata === formData.value.arrival.iata) {
+        errors.value['arrival.iata'] = "L'aéroport d'arrivée doit être différent du départ"
+        errors.value['departure.iata'] = "L'aéroport de départ doit être différent de l'arrivée"
+      }
+    }
+    
     if (!formData.value.departure_time) {
       errors.value.departure_time = 'Heure de départ requise'
     }

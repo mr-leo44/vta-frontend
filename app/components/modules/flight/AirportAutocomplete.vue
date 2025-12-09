@@ -1,3 +1,4 @@
+<!-- components/modules/flight/AirportAutocomplete.vue -->
 <template>
   <div class="space-y-2">
     <Label :class="labelClass">
@@ -108,6 +109,7 @@ interface Props {
   labelClass?: string
   errorIata?: string
   errorName?: string
+  excludeIata?: string  // Code IATA à exclure (pour éviter départ = arrivée)
 }
 
 interface Emits {
@@ -116,7 +118,8 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   label: 'Aéroport',
-  labelClass: 'text-base font-semibold flex items-center gap-2'
+  labelClass: 'text-base font-semibold flex items-center gap-2',
+  excludeIata: ''
 })
 
 const emit = defineEmits<Emits>()
@@ -133,7 +136,7 @@ onMounted(async () => {
   }
 })
 
-// Récupérer les aéroports uniques de TOUS les vols existants
+// Récupérer les aéroports uniques de TOUS les vols existants (en excluant l'aéroport interdit)
 const knownAirports = computed(() => {
   const airports = new Map<string, Airport>()
   
@@ -145,7 +148,7 @@ const knownAirports = computed(() => {
         ? flight.departure 
         : { iata: flight.departure[0] || '', name: flight.departure[1] || '' }
       
-      if (dep.iata && !airports.has(dep.iata)) {
+      if (dep.iata && !airports.has(dep.iata) && dep.iata !== props.excludeIata) {
         airports.set(dep.iata, { iata: dep.iata, name: dep.name })
       }
     }
@@ -156,7 +159,7 @@ const knownAirports = computed(() => {
         ? flight.arrival
         : { iata: flight.arrival[0] || '', name: flight.arrival[1] || '' }
       
-      if (arr.iata && !airports.has(arr.iata)) {
+      if (arr.iata && !airports.has(arr.iata) && arr.iata !== props.excludeIata) {
         airports.set(arr.iata, { iata: arr.iata, name: arr.name })
       }
     }
@@ -186,6 +189,12 @@ const filterAirports = (list: any[], search: string) => {
 const createNewAirport = () => {
   const iataCode = searchQuery.value.trim().toUpperCase()
   
+  // Vérifier que ce n'est pas le code exclu
+  if (props.excludeIata && iataCode === props.excludeIata) {
+    // Ne rien faire, l'utilisateur ne peut pas sélectionner ce code
+    return
+  }
+  
   if (isValidIataCode(iataCode)) {
     emit('update:modelValue', { iata: iataCode, name: '' })
     popoverOpen.value = false
@@ -202,6 +211,11 @@ const createNewAirport = () => {
 }
 
 const selectAirport = (airport: Airport) => {
+  // Vérifier que ce n'est pas le code exclu
+  if (props.excludeIata && airport.iata === props.excludeIata) {
+    return
+  }
+  
   emit('update:modelValue', { iata: airport.iata, name: airport.name })
   popoverOpen.value = false
   searchQuery.value = ''

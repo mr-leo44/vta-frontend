@@ -213,7 +213,6 @@ import FlightStep1BasicInfo from '@/components/modules/flight/steps/FlightStep1B
 import FlightStep2Itinerary from '@/components/modules/flight/steps/FlightStep2Itinerary.vue'
 import FlightStep3Freights from '@/components/modules/flight/steps/FlightStep3Freights.vue'
 import FlightStep4Passengers from '@/components/modules/flight/steps/FlightStep4Passengers.vue'
-import { useFlightForm } from '@/composables/useFlightForm'
 
 interface Props {
   open?: boolean
@@ -303,6 +302,11 @@ const handleOperatorChange = async (operatorId: number) => {
 const handleSubmit = async () => {
   try {
     if (!validateForm()) {
+      // Afficher le premier message d'erreur dans un toast
+      const firstError = Object.values(errors.value)[0]
+      if (firstError) {
+        showError(firstError)
+      }
       return
     }
 

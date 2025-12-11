@@ -1,4 +1,3 @@
-// composables/useFlightForm.ts
 import { ref, computed } from 'vue'
 import type { FlightFormData, Flight } from '~/types/api'
 
@@ -62,20 +61,21 @@ export const useFlightForm = () => {
     if (!formData.value.arrival.name) {
       errors.value['arrival.name'] = "Nom de l'aéroport d'arrivée requis"
     }
-    
-    // Validation: départ != arrivée
-    if (formData.value.departure.iata && formData.value.arrival.iata) {
-      if (formData.value.departure.iata === formData.value.arrival.iata) {
-        errors.value['arrival.iata'] = "L'aéroport d'arrivée doit être différent du départ"
-        errors.value['departure.iata'] = "L'aéroport de départ doit être différent de l'arrivée"
-      }
-    }
-    
     if (!formData.value.departure_time) {
       errors.value.departure_time = 'Heure de départ requise'
     }
     if (!formData.value.arrival_time) {
       errors.value.arrival_time = "Heure d'arrivée requise"
+    }
+
+    // Validation: l'heure d'arrivée doit être postérieure à l'heure de départ
+    if (formData.value.departure_time && formData.value.arrival_time) {
+      const departureDate = new Date(formData.value.departure_time)
+      const arrivalDate = new Date(formData.value.arrival_time)
+      
+      if (departureDate <= arrivalDate) {
+        errors.value.arrival_time = "L'heure de départ doit être postérieure à l'heure d'arrivée"
+      }
     }
 
     return Object.keys(errors.value).length === 0

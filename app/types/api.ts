@@ -53,6 +53,7 @@ export interface AircraftType {
   id: number
   name: string
   sigle: string
+  default_pmad: number | 0
   created_at: string | null
   updated_at: string | null
 }
@@ -83,6 +84,7 @@ export interface OperatorWithAircraftCount {
 export interface AircraftTypeFormData {
   name: string
   sigle: string
+  default_pmad?: number | 0
 }
 
 // ==================== AIRCRAFTS ====================

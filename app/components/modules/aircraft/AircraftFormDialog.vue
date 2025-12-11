@@ -17,6 +17,7 @@
               :class="{ 'border-destructive': errors.immatriculation }" />
             <p v-if="errors.immatriculation" class="text-sm text-destructive mt-1">{{ errors.immatriculation }}</p>
           </div>
+          
           <!-- Type d'aéronef -->
           <div class="col-span-2">
             <Label for="aircraft_type_id">Type d'aéronef <span class="text-destructive">*</span></Label>
@@ -50,15 +51,36 @@
           </div>
 
           <!-- PMAD -->
-          <div>
-            <Label for="pmad">PMAD (kg)</Label>
-            <Input id="pmad" v-model.number="formData.pmad" type="number" placeholder="Ex: 79000"
-              :class="{ 'border-destructive': errors.pmad }" />
+          <div class="col-span-2">
+            <div class="flex items-center justify-between mb-2">
+              <Label for="pmad">PMAD (kg)</Label>
+              <Button 
+                v-if="!isPmadManual && formData.pmad" 
+                type="button" 
+                variant="ghost" 
+                size="sm"
+                @click="isPmadManual = true"
+                class="h-auto py-1 px-2 text-xs"
+              >
+                Saisir manuellement
+              </Button>
+            </div>
+            <Input 
+              id="pmad" 
+              v-model.number="formData.pmad" 
+              type="number" 
+              placeholder="Ex: 79000"
+              :class="{ 'border-destructive': errors.pmad }"
+              :disabled="!isPmadManual && !isEdit && formData.pmad !== null" 
+            />
             <p v-if="errors.pmad" class="text-sm text-destructive mt-1">{{ errors.pmad }}</p>
+            <p v-if="!isPmadManual && formData.pmad && !isEdit" class="text-sm text-muted-foreground mt-1">
+              PMAD par défaut du type d'aéronef
+            </p>
           </div>
 
           <!-- Statut -->
-          <div>
+          <div class="col-span-2">
             <Label for="in_activity">Statut <span class="text-destructive">*</span></Label>
             <Select v-model="formData.in_activity">
               <SelectTrigger :class="{ 'border-destructive': errors.in_activity }">
@@ -140,6 +162,7 @@ const errors = ref<Partial<Record<keyof AircraftFormSchema, string>>>({})
 
 const aircraftTypes = ref<AircraftType[]>([])
 const operators = ref<Operator[]>([])
+const isPmadManual = ref(false)
 
 const formData = ref<any>({
   immatriculation: '',
@@ -182,6 +205,18 @@ const initializeForm = (aircraft: Aircraft) => {
   }
 }
 
+// Surveiller les changements de type d'aéronef pour précharger le PMAD
+watch(() => formData.value.aircraft_type_id, (newTypeId) => {
+  if (!isEdit.value && newTypeId && !isPmadManual.value) {
+    const selectedType = aircraftTypes.value.find(type => type.id.toString() === newTypeId)
+    if (selectedType && selectedType.default_pmad && selectedType.default_pmad > 0) {
+      formData.value.pmad = selectedType.default_pmad
+    } else {
+      formData.value.pmad = null
+    }
+  }
+})
+
 // Surveiller les changements de props.aircraft ET de props.open
 watch([() => props.aircraft, () => props.open], ([aircraft, open]) => {
   if (open && aircraft && aircraftTypes.value.length > 0 && operators.value.length > 0) {
@@ -211,6 +246,7 @@ const resetForm = () => {
     operator_id: ''
   }
   errors.value = {}
+  isPmadManual.value = false
 }
 
 const handleCancel = () => {

@@ -64,6 +64,33 @@
           </p>
         </div>
 
+        <!-- PMAD -->
+        <div class="space-y-2">
+          <Label for="default_pmad" class="flex items-center gap-2">
+            <Weight class="h-3.5 w-3.5" />
+            PMAD
+            <span class="text-destructive">*</span>
+          </Label>
+          <Input
+            id="default_pmad"
+            v-model="formData.default_pmad"
+            placeholder="En Kilogrammes"
+            :disabled="loading"
+            maxlength="15"
+            class="font-mono uppercase"
+            required
+            :class="errors.default_pmad ? 'border-destructive' : ''"
+            @input="formData.default_pmad = formData.default_pmad"
+          />
+          <p v-if="errors.default_pmad" class="text-xs text-destructive flex items-center gap-1">
+            <AlertCircle class="h-3 w-3" />
+            {{ errors.default_pmad }}
+          </p>
+          <p v-else class="text-xs text-muted-foreground">
+            Le PMAD standard pour ce type d'aéronef en kilogrammes.
+          </p>
+        </div>
+
         <!-- Guide des exemples -->
         <div class="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg space-y-3">
           <div class="flex items-center gap-2 text-sm font-semibold text-blue-900 dark:text-blue-100">
@@ -109,14 +136,19 @@
             Aperçu du type
           </div>
           <div class="flex items-center gap-3">
-            <div class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+            <div class="h-12 w-12 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
               <Plane class="h-6 w-6 text-white" />
             </div>
             <div class="flex-1">
               <div class="font-bold text-base">{{ formData.name }}</div>
-              <Badge variant="secondary" class="font-mono text-xs mt-1">
-                {{ formData.sigle }}
-              </Badge>
+              <div class="flex gap-1">
+                <Badge variant="secondary" class="font-mono text-xs mt-1">
+                  {{ formData.sigle }}
+                </Badge>
+                 <Badge variant="secondary" class="font-mono text-xs mt-1">
+                  {{ formData.default_pmad }} kg
+                </Badge>
+              </div>
             </div>
           </div>
         </div>
@@ -192,10 +224,12 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { AircraftType, AircraftTypeFormData } from '~/types/api'
+import { Weight } from 'lucide-vue-next';
 
 interface FormErrors {
   name?: string
   sigle?: string
+  default_pmad?: string
 }
 
 const props = defineProps<{
@@ -215,7 +249,8 @@ const { success: showSuccess, error: showError } = useToast()
 const loading = ref(false)
 const formData = ref<AircraftTypeFormData>({
   name: '',
-  sigle: ''
+  sigle: '',
+  default_pmad: 0
 })
 const errors = ref<FormErrors>({})
 
@@ -229,6 +264,7 @@ const isEditing = computed(() => !!props.aircraftType)
 const isFormValid = computed(() => {
   return formData.value.name.trim().length > 0 &&
          formData.value.sigle.trim().length > 0 &&
+         formData.value.default_pmad !== null &&
          formData.value.name.length <= 255 &&
          formData.value.sigle.length <= 15 &&
          /^[A-Z0-9-]+$/.test(formData.value.sigle)
@@ -258,7 +294,8 @@ watch(() => props.open, (open) => {
     if (props.aircraftType) {
       formData.value = {
         name: props.aircraftType.name,
-        sigle: props.aircraftType.sigle
+        sigle: props.aircraftType.sigle,
+        default_pmad: props.aircraftType.default_pmad || 0
       }
     } else {
       resetForm()
@@ -270,7 +307,8 @@ watch(() => props.open, (open) => {
 const resetForm = () => {
   formData.value = {
     name: '',
-    sigle: ''
+    sigle: '',
+    default_pmad: 0
   }
   errors.value = {}
 }
@@ -297,6 +335,11 @@ const validateForm = (): boolean => {
     isValid = false
   } else if (!/^[A-Z0-9-]+$/.test(formData.value.sigle)) {
     errors.value.sigle = 'Le sigle ne peut contenir que des lettres majuscules, chiffres et tirets'
+    isValid = false
+  }
+
+  if(!formData.value.default_pmad || formData.value.default_pmad < 0) {
+    errors.value.default_pmad = 'Le PMAD doit être un nombre positif'
     isValid = false
   }
 

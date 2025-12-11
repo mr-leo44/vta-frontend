@@ -105,8 +105,8 @@
                   <Weight class="h-6 w-6 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div class="flex-1">
-                  <div class="text-xs text-muted-foreground font-medium">PMAD moyen</div>
-                  <div class="text-xl font-bold">{{ formatWeight(kpis?.average_pmad || 0) }}</div>
+                  <div class="text-xs text-muted-foreground font-medium">PMAD</div>
+                  <div class="text-xl font-bold">{{ `${formatWeight(kpis?.average_pmad)} (${kgToTons(kpis?.average_pmad)})` || 0 }}</div>
                 </div>
               </div>
             </CardContent>
@@ -340,6 +340,7 @@ const emit = defineEmits<{
 }>()
 
 const aircraftTypesStore = useAircraftTypesStore()
+const { kgToTons, formatWeight } = useAircraftUtils()
 
 const isOpen = computed({
   get: () => props.open,
@@ -392,11 +393,6 @@ const formatDate = (date: string | null) => {
     hour: '2-digit',
     minute: '2-digit'
   })
-}
-
-const formatWeight = (weight: number) => {
-  if (!weight) return '—'
-  return `${weight.toLocaleString('fr-FR')} kg`
 }
 
 const getPerformanceLabel = (flightsPerAircraft: number) => {

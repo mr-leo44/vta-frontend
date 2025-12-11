@@ -49,7 +49,7 @@
               <div>
                 <label class="text-sm font-medium text-muted-foreground">PMAD</label>
                 <p class="text-base">
-                  {{ aircraft.pmad ? `${aircraft.pmad.toLocaleString()} kg` : '—' }}
+                  {{ aircraft.pmad ? `${kgToTons(aircraft.pmad)} (${formatWeight(aircraft.pmad)})` : '—' }}
                 </p>
               </div>
             </div>
@@ -209,6 +209,7 @@ const emit = defineEmits<{
   edit: [aircraft: Aircraft]
 }>()
 
+const { kgToTons, formatWeight } = useAircraftUtils()
 
 const isOpen = computed({
   get: () => props.open,

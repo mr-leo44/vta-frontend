@@ -98,7 +98,7 @@
           <Building2 class="h-4 w-4 text-muted-foreground shrink-0" />
           <span class="font-medium">{{ aircraft.operator?.name || 'Opérateur inconnu' }}</span>
         </div>
-        
+
         <!-- Flights count -->
         <div v-if="aircraft.flights && aircraft.flights.length > 0" class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div class="flex items-center gap-2">
@@ -138,8 +138,5 @@ defineEmits<{
   delete: [aircraft: Aircraft]
 }>()
 
-const kgToTons = (kg: number) => {
-  if (!kg) return '0 T'
-  return `${Math.ceil(kg / 1000)} T`
-}
+const { kgToTons } = useAircraftUtils()
 </script>

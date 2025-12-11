@@ -83,8 +83,5 @@ defineEmits<{
   delete: [aircraft: Aircraft]
 }>()
 
-const kgToTons = (kg: number) => {
-  if (!kg) return '0 T'
-  return `${Math.ceil(kg / 1000)} T`
-}
+const { kgToTons } = useAircraftUtils()
 </script>

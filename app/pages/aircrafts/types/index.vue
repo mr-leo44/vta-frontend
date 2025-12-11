@@ -517,6 +517,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const { kgToTons } = useAircraftUtils()
 const aircraftsStore = useAircraftsStore()
 const aircraftTypesStore = useAircraftTypesStore()
 const operatorsStore = useOperatorsStore()
@@ -631,11 +632,6 @@ const formatDate = (date: string | null) => {
     month: 'short',
     year: 'numeric'
   })
-}
-
-const kgToTons = (kg: number) => {
-  if (!kg) return '0 T'
-  return `${Math.ceil(kg / 1000)} T`
 }
 
 const openCreateDialog = () => {

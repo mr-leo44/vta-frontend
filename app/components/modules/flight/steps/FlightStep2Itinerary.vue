@@ -1,4 +1,3 @@
-<!-- components/modules/flight/steps/FlightStep2Itinerary.vue -->
 <template>
   <div class="space-y-5 animate-in fade-in-50">
     <!-- Departure Airport -->
@@ -10,7 +9,6 @@
         label-class="text-base font-semibold flex items-center gap-2 mb-3"
         :error-iata="errors['departure.iata']"
         :error-name="errors['departure.name']"
-        :exclude-iata="formData.arrival.iata"
       >
         <template #label>
           <MapPin class="h-4 w-4 text-blue-600" />
@@ -28,7 +26,6 @@
         label-class="text-base font-semibold flex items-center gap-2 mb-3"
         :error-iata="errors['arrival.iata']"
         :error-name="errors['arrival.name']"
-        :exclude-iata="formData.departure.iata"
       >
         <template #label>
           <MapPin class="h-4 w-4 text-green-600" />
@@ -54,8 +51,10 @@
             type="datetime-local" 
             class="text-base"
             :class="{ 'border-destructive': errors.departure_time }" 
+            @change="validateTimes"
           />
-          <p v-if="errors.departure_time" class="text-xs text-destructive mt-1">
+          <p v-if="errors.departure_time" class="text-xs text-destructive mt-1 flex items-center gap-1">
+            <AlertCircle class="h-3 w-3" />
             {{ errors.departure_time }}
           </p>
         </div>
@@ -68,10 +67,16 @@
             v-model="formData.arrival_time" 
             type="datetime-local" 
             class="text-base"
-            :class="{ 'border-destructive': errors.arrival_time }" 
+            :class="{ 'border-destructive': errors.arrival_time || timeValidationError }" 
+            @change="validateTimes"
           />
-          <p v-if="errors.arrival_time" class="text-xs text-destructive mt-1">
+          <p v-if="errors.arrival_time" class="text-xs text-destructive mt-1 flex items-center gap-1">
+            <AlertCircle class="h-3 w-3" />
             {{ errors.arrival_time }}
+          </p>
+          <p v-else-if="timeValidationError" class="text-xs text-destructive mt-1 flex items-center gap-1">
+            <AlertCircle class="h-3 w-3" />
+            {{ timeValidationError }}
           </p>
         </div>
       </div>
@@ -80,7 +85,8 @@
 </template>
 
 <script setup lang="ts">
-import { MapPin, Clock } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { MapPin, Clock, AlertCircle } from 'lucide-vue-next'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import AirportAutocomplete from '~/components/modules/flight/AirportAutocomplete.vue'
@@ -91,7 +97,22 @@ interface Props {
   errors: Record<string, string>
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const timeValidationError = ref<string>('')
+
+const validateTimes = () => {
+  timeValidationError.value = ''
+  
+  if (props.formData.departure_time && props.formData.arrival_time) {
+    const departureDate = new Date(props.formData.departure_time)
+    const arrivalDate = new Date(props.formData.arrival_time)
+    
+    if (departureDate <= arrivalDate) {
+      timeValidationError.value = "L'heure de départ doit être postérieure à l'heure d'arrivée"
+    }
+  }
+}
 </script>
 
 <style scoped>

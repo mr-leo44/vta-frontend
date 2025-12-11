@@ -41,6 +41,10 @@
                   <Layers class="h-3 w-3" />
                   {{ aircraft.type?.sigle || 'N/A' }}
                 </Badge>
+                <Badge variant="outline" class="gap-1">
+                  <Weight class="h-3 w-3" />
+                  {{ kgToTons(aircraft.pmad) }}
+                </Badge>
                 <Badge :variant="aircraft.in_activity ? 'default' : 'outline'" class="gap-1">
                   <Activity class="h-3 w-3" />
                   {{ aircraft.in_activity ? 'Actif' : 'Inactif' }}
@@ -94,16 +98,7 @@
           <Building2 class="h-4 w-4 text-muted-foreground shrink-0" />
           <span class="font-medium">{{ aircraft.operator?.name || 'Opérateur inconnu' }}</span>
         </div>
-        
-        <!-- PMAD -->
-        <div v-if="aircraft.pmad" class="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20">
-          <div class="flex items-center gap-2">
-            <Weight class="h-4 w-4 text-primary" />
-            <span class="text-sm font-medium">PMAD</span>
-          </div>
-          <span class="font-bold text-primary">{{ aircraft.pmad.toLocaleString() }} kg</span>
-        </div>
-        
+
         <!-- Flights count -->
         <div v-if="aircraft.flights && aircraft.flights.length > 0" class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div class="flex items-center gap-2">
@@ -142,4 +137,6 @@ defineEmits<{
   edit: [aircraft: Aircraft]
   delete: [aircraft: Aircraft]
 }>()
+
+const { kgToTons } = useAircraftUtils()
 </script>

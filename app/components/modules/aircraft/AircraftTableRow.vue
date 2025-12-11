@@ -24,7 +24,7 @@
           <span v-if="aircraft.type?.sigle" class="text-xs">({{ aircraft.type.sigle }})</span>
         </span>
         <span>• {{ aircraft.operator?.name || 'Opérateur inconnu' }}</span>
-        <span v-if="aircraft.pmad">• PMAD: {{ aircraft.pmad.toLocaleString() }} kg</span>
+        <span v-if="aircraft.pmad">• PMAD: {{ kgToTons(aircraft.pmad) }}</span>
       </div>
     </div>
     
@@ -82,4 +82,6 @@ defineEmits<{
   edit: [aircraft: Aircraft]
   delete: [aircraft: Aircraft]
 }>()
+
+const { kgToTons } = useAircraftUtils()
 </script>

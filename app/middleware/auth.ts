@@ -1,22 +1,36 @@
 export default defineNuxtRouteMiddleware(async (to, from) => {
+  // Côté serveur, on laisse passer
+  if (process.server) {
+    return
+  }
+
   const authStore = useAuthStore()
 
-  await authStore.$hydrate()
-
+  // Attendre l'hydratation du store
+  if (authStore.$hydrate) {
+    await authStore.$hydrate()
+  }
   await nextTick()
-  const isAuth = await authStore.checkAuth()
-  setTimeout(() => {
-    if (!isAuth && to.path !== '/login') {
-      // Sauvegarde la route demandée pour redirection après login
-      const redirectPath = to.fullPath || '/'
-      return navigateTo(`/login?redirect=${encodeURIComponent(redirectPath)}`)
-    }
+  
+  // Vérifier l'authentification
+  const isAuth = authStore.isAuthenticated
 
-    // Si l'utilisateur est connecté et tente d'aller sur /login
-    if (isAuth && to.path === '/login') {
-      // Redirige vers la page d'origine ou vers la racine si aucun "from"
-      const redirectPath = from.fullPath && from.fullPath !== '/login' ? from.fullPath : '/'
-      return navigateTo(redirectPath)
+  // Si non authentifié et que l'utilisateur essaie d'accéder à une page protégée
+  if (!isAuth && to.path !== '/login') {
+    const redirectPath = to.fullPath || '/'
+    return navigateTo(`/login?redirect=${encodeURIComponent(redirectPath)}`)
+  }
+
+  // Si authentifié et que l'utilisateur essaie d'accéder à la page de login
+  if (isAuth && to.path === '/login') {
+    // Vérifier s'il y a un paramètre de redirection dans l'URL
+    const redirect = to.query.redirect as string
+    
+    if (redirect && redirect !== '/login') {
+      return navigateTo(redirect)
     }
-  }, 500)
+    
+    // Sinon rediriger vers la page d'accueil
+    return navigateTo('/')
+  }
 })

@@ -1,59 +1,57 @@
-// composables/useToast.ts
-import { toast as sonnerToast } from 'vue-sonner'
+import { toast } from 'vue-sonner'
 
-/**
- * Composable pour utiliser les toasts de manière cohérente dans l'application
- * Utilise vue-sonner sous le capot
- * 
- * @example
- * const { success, error } = useToast()
- * success('Opération réussie', 'Les données ont été sauvegardées')
- * error('Erreur', 'Une erreur est survenue')
- */
 export const useToast = () => {
   const success = (title: string, description?: string) => {
-    sonnerToast.success(title, {
-      description
+    toast.success(title, {
+      description,
+      duration: 4000,
     })
   }
 
   const error = (title: string, description?: string) => {
-    sonnerToast.error(title, {
-      description
+    toast.error(title, {
+      description,
+      duration: 5000,
     })
   }
 
   const info = (title: string, description?: string) => {
-    sonnerToast.info(title, {
-      description
+    toast.info(title, {
+      description,
+      duration: 4000,
     })
   }
 
   const warning = (title: string, description?: string) => {
-    sonnerToast.warning(title, {
-      description
+    toast.warning(title, {
+      description,
+      duration: 4000,
     })
   }
 
   const loading = (title: string, description?: string) => {
-    return sonnerToast.loading(title, {
-      description
+    return toast.loading(title, {
+      description,
     })
   }
 
-  const promise = <T>(
+  const promise = <T,>(
     promise: Promise<T>,
-    options: {
+    {
+      loading: loadingMsg,
+      success: successMsg,
+      error: errorMsg,
+    }: {
       loading: string
       success: string | ((data: T) => string)
       error: string | ((error: any) => string)
     }
   ) => {
-    return sonnerToast.promise(promise, options)
-  }
-
-  const dismiss = (toastId?: string | number) => {
-    sonnerToast.dismiss(toastId)
+    return toast.promise(promise, {
+      loading: loadingMsg,
+      success: successMsg,
+      error: errorMsg,
+    })
   }
 
   return {
@@ -63,7 +61,5 @@ export const useToast = () => {
     warning,
     loading,
     promise,
-    dismiss,
-    toast: sonnerToast
   }
 }

@@ -6,27 +6,27 @@ export default defineNuxtConfig({
   },
 
   devtools: { enabled: true },
-  
+
   modules: [
     'shadcn-nuxt',
     '@pinia/nuxt',
     '@pinia-plugin-persistedstate/nuxt',
     '@vite-pwa/nuxt'
   ],
-  
+
   shadcn: {
     prefix: '',
     componentDir: '~/components/ui'
   },
-  
+
   css: ['~/assets/css/tailwind.css'],
-  
+
   vite: {
     plugins: [tailwindcss()],
     server: {
       proxy: {
         '/api': {
-          target: 'http://vta-app.test',
+          target: process.env.NUXT_PUBLIC_API_URL,
           changeOrigin: true,
           secure: false
         }
@@ -36,7 +36,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: 'http://vta-app.test/api'
+      apiBase: process.env.NUXT_PUBLIC_API_BASE,
     }
   },
 

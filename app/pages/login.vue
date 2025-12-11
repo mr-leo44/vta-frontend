@@ -1,5 +1,8 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 relative overflow-hidden">
+  <!-- Écran de chargement pendant la vérification -->
+  <LoadingScreen v-if="checking" message="Vérification de votre session..." />
+
+  <div v-else class="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 relative overflow-hidden">
     <!-- Animated background elements -->
     <div class="absolute inset-0 overflow-hidden">
       <div class="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl animate-pulse"></div>
@@ -13,15 +16,15 @@
         <!-- Logo avec animation -->
         <div class="flex justify-center">
           <div class="relative group">
-            <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-            <div class="relative h-20 w-20 rounded-full bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-xl transform group-hover:scale-110 transition-transform duration-300">
+            <div class="absolute inset-0 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+            <div class="relative h-20 w-20 rounded-full bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-xl transform group-hover:scale-110 transition-transform duration-300">
               <span class="text-3xl font-black text-white">VTA</span>
             </div>
           </div>
         </div>
 
         <div class="text-center space-y-2">
-          <CardTitle class="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <CardTitle class="text-3xl font-bold bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
             Connexion
           </CardTitle>
           <CardDescription class="text-base">
@@ -77,7 +80,7 @@
 
           <Button 
             type="submit" 
-            class="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300" 
+            class="w-full h-12 text-base font-semibold bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300" 
             :disabled="loading"
           >
             <span v-if="loading" class="flex items-center gap-2">
@@ -95,7 +98,7 @@
       <CardFooter class="flex flex-col gap-4">
         <div class="text-sm text-muted-foreground text-center w-full flex items-center gap-2 justify-center">
           <Shield class="h-4 w-4" />
-          Système de gestion des vols • VTA
+          Système de gestion du Trafic Aérien • VTA
         </div>
       </CardFooter>
     </Card>
@@ -115,6 +118,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import LoadingScreen from '@/components/LoadingScreen.vue'
 
 definePageMeta({
   layout: false,
@@ -123,15 +127,26 @@ definePageMeta({
 
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const username = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+const checking = ref(true)
 
-onMounted(() => {
+onMounted(async () => {
+  // Attendre l'hydratation complète
+  if (authStore.$hydrate) {
+    await authStore.$hydrate()
+  }
+  
+  // Vérifier si déjà authentifié
   if (authStore.isAuthenticated) {
-    router.push('/')
+    const redirect = route.query.redirect as string
+    await router.push(redirect && redirect !== '/login' ? redirect : '/')
+  } else {
+    checking.value = false
   }
 })
 
@@ -147,7 +162,11 @@ const handleLogin = async () => {
   loading.value = false
   
   if (result.success) {
-    await router.push('/')
+    // Récupérer le paramètre de redirection depuis l'URL
+    const redirect = route.query.redirect as string
+    
+    // Rediriger vers la page demandée ou vers l'accueil
+    await router.push(redirect && redirect !== '/login' ? redirect : '/')
   } else {
     error.value = result.message || 'Identifiants incorrects'
     password.value = ''

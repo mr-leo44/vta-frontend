@@ -121,3 +121,65 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Ajouter dans votre fichier CSS global ou dans un <style> tag */
+
+@media print {
+  /* Cacher les éléments non nécessaires */
+  .no-print,
+  nav,
+  header,
+  button:not(.print-keep),
+  .sidebar {
+    display: none !important;
+  }
+
+  /* Optimiser la page pour l'impression */
+  body {
+    margin: 0;
+    padding: 20px;
+    font-size: 10pt;
+  }
+
+  /* Tableaux */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* Cards */
+  .card {
+    border: 1px solid #ddd;
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+
+  /* Badges */
+  .badge {
+    border: 1px solid currentColor;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9pt;
+  }
+
+  /* Titres */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* Forcer les couleurs pour l'impression */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

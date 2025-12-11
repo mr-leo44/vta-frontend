@@ -77,7 +77,7 @@
             placeholder="En Kilogrammes"
             :disabled="loading"
             maxlength="15"
-            class="font-mono uppercase"
+            class="font-mono"
             required
             :class="errors.default_pmad ? 'border-destructive' : ''"
             @input="formData.default_pmad = formData.default_pmad"

@@ -269,9 +269,14 @@
                   <CardTitle class="text-lg group-hover:text-primary transition-colors leading-tight">
                     {{ type.name }}
                   </CardTitle>
-                  <Badge variant="secondary" class="font-mono mt-2 text-xs">
-                    {{ type.sigle }}
-                  </Badge>
+                  <div class="flex gap-2 mt-1 flex-wrap">
+                    <Badge variant="secondary" class="font-mono mt-2 text-xs">
+                      {{ type.sigle }}
+                    </Badge>
+                    <Badge variant="default" class="font-mono mt-2 text-xs">
+                      {{ kgToTons(type.default_pmad) }}
+                    </Badge>
+                  </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger as-child @click.stop>
@@ -340,9 +345,14 @@
                   <div class="flex-1 min-w-0">
                     <div class="font-bold text-lg">{{ type.name }}</div>
                     <div class="text-sm text-muted-foreground flex items-center gap-2 mt-1 flex-wrap">
-                      <Badge variant="secondary" class="font-mono text-xs">
-                        {{ type.sigle }}
-                      </Badge>
+                      <div class="flex gap-2">
+                        <Badge variant="secondary" class="font-mono text-xs">
+                          {{ type.sigle }}
+                        </Badge>
+                        <Badge variant="default" class="font-mono text-xs">
+                          {{ kgToTons(type.default_pmad) }}
+                        </Badge>
+                      </div>
                       <span>•</span>
                       <span class="flex items-center gap-1">
                         <Plane class="h-3 w-3" />
@@ -621,6 +631,11 @@ const formatDate = (date: string | null) => {
     month: 'short',
     year: 'numeric'
   })
+}
+
+const kgToTons = (kg: number) => {
+  if (!kg) return '0 T'
+  return `${Math.ceil(kg / 1000)} T`
 }
 
 const openCreateDialog = () => {

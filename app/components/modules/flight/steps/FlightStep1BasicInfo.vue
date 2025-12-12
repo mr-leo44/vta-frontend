@@ -25,7 +25,7 @@
         Exploitant
       </Label>
       <Popover v-model:open="operatorPopoverOpen">
-        <PopoverTrigger asChild>
+        <PopoverTrigger as-child>
           <Button 
             variant="outline" 
             role="combobox" 
@@ -40,26 +40,28 @@
           </Button>
         </PopoverTrigger>
         <PopoverContent class="w-full p-0">
-          <Command>
+          <Command v-model:search-term="operatorSearchTerm">
             <CommandInput placeholder="Chercher exploitant..." />
             <CommandEmpty>Aucun exploitant trouvé</CommandEmpty>
-            <CommandGroup class="max-h-64 overflow-y-auto">
-              <CommandItem 
-                v-for="operator in operators" 
-                :key="operator.id" 
-                :value="operator.id.toString()"
-                @select="selectOperator(operator)"
-              >
-                <Check :class="[
-                  'mr-2 h-4 w-4',
-                  formData.operator_id === operator.id ? 'opacity-100' : 'opacity-0'
-                ]" />
-                <div class="flex-1">
-                  <div class="font-medium">{{ operator.name }}</div>
-                  <div class="text-xs text-muted-foreground">{{ operator.sigle }}</div>
-                </div>
-              </CommandItem>
-            </CommandGroup>
+            <CommandList>
+              <CommandGroup class="max-h-64 overflow-y-auto">
+                <CommandItem 
+                  v-for="operator in filteredOperators" 
+                  :key="operator.id" 
+                  :value="operator.id.toString()"
+                  @select="selectOperator(operator)"
+                >
+                  <Check :class="[
+                    'mr-2 h-4 w-4',
+                    formData.operator_id === operator.id ? 'opacity-100' : 'opacity-0'
+                  ]" />
+                  <div class="flex-1">
+                    <div class="font-medium">{{ operator.name }}</div>
+                    <div class="text-xs text-muted-foreground">{{ operator.sigle }}</div>
+                  </div>
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
@@ -70,12 +72,37 @@
 
     <!-- Aircraft Selection -->
     <div class="space-y-2">
-      <Label class="text-base font-semibold flex items-center gap-2">
-        <Plane class="h-4 w-4" />
-        Aéronef
-      </Label>
+      <div class="flex items-center justify-between mb-1">
+        <Label class="text-base font-semibold flex items-center gap-2">
+          <Plane class="h-4 w-4" />
+          Aéronef
+        </Label>
+        <Button
+          v-if="formData.operator_id && !showAllAircrafts"
+          type="button"
+          variant="ghost"
+          size="sm"
+          @click="showAllAircrafts = true"
+          class="text-xs h-auto py-1"
+        >
+          <Plus class="h-3 w-3 mr-1" />
+          Choisir autre aéronef
+        </Button>
+        <Button
+          v-if="showAllAircrafts"
+          type="button"
+          variant="ghost"
+          size="sm"
+          @click="showAllAircrafts = false"
+          class="text-xs h-auto py-1"
+        >
+          <X class="h-3 w-3 mr-1" />
+          Uniquement opérateur
+        </Button>
+      </div>
+      
       <Popover v-model:open="aircraftPopoverOpen">
-        <PopoverTrigger asChild>
+        <PopoverTrigger as-child>
           <Button 
             variant="outline" 
             role="combobox" 
@@ -91,36 +118,67 @@
           </Button>
         </PopoverTrigger>
         <PopoverContent class="w-full p-0">
-          <Command>
+          <Command v-model:search-term="aircraftSearchTerm">
             <CommandInput placeholder="Chercher aéronef..." />
             <CommandEmpty>Aucun aéronef trouvé</CommandEmpty>
-            <CommandGroup class="max-h-64 overflow-y-auto">
-              <CommandItem 
-                v-for="aircraft in filteredAircrafts" 
-                :key="aircraft.id" 
-                :value="aircraft.id.toString()"
-                @select="selectAircraft(aircraft)"
-              >
-                <Check :class="[
-                  'mr-2 h-4 w-4',
-                  formData.aircraft_id === aircraft.id ? 'opacity-100' : 'opacity-0'
-                ]" />
-                <div class="flex-1">
-                  <div class="font-medium">{{ aircraft.immatriculation }}</div>
-                  <div class="text-xs text-muted-foreground">{{ aircraft.type?.name }}</div>
+            <CommandList>
+              <CommandGroup v-if="!showAllAircrafts && operatorAircrafts.length > 0" class="max-h-64 overflow-y-auto">
+                <div class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Aéronefs de l'exploitant
                 </div>
-              </CommandItem>
-            </CommandGroup>
+                <CommandItem 
+                  v-for="aircraft in filteredOperatorAircrafts" 
+                  :key="aircraft.id" 
+                  :value="aircraft.id.toString()"
+                  @select="selectAircraft(aircraft)"
+                >
+                  <Check :class="[
+                    'mr-2 h-4 w-4',
+                    formData.aircraft_id === aircraft.id ? 'opacity-100' : 'opacity-0'
+                  ]" />
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono font-medium">{{ aircraft.immatriculation }}</span>
+                    <Badge variant="secondary" class="text-xs">{{ aircraft.type?.sigle || aircraft.type?.name }}</Badge>
+                  </div>
+                </CommandItem>
+              </CommandGroup>
+              
+              <CommandGroup v-if="showAllAircrafts" class="max-h-64 overflow-y-auto">
+                <div class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Tous les aéronefs
+                </div>
+                <CommandItem 
+                  v-for="aircraft in filteredAllAircrafts" 
+                  :key="aircraft.id" 
+                  :value="aircraft.id.toString()"
+                  @select="selectAircraft(aircraft)"
+                >
+                  <Check :class="[
+                    'mr-2 h-4 w-4',
+                    formData.aircraft_id === aircraft.id ? 'opacity-100' : 'opacity-0'
+                  ]" />
+                  <div class="flex items-center gap-2 flex-1">
+                    <span class="font-mono font-medium">{{ aircraft.immatriculation }}</span>
+                    <Badge variant="secondary" class="text-xs">{{ aircraft.type?.sigle || aircraft.type?.name }}</Badge>
+                    <span class="text-xs text-muted-foreground ml-auto">{{ aircraft.operator?.sigle }}</span>
+                  </div>
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
+      
       <p v-if="errors.aircraft_id" class="text-xs text-destructive flex items-center gap-1">
         <AlertCircle class="h-3 w-3" />{{ errors.aircraft_id }}
       </p>
       <p v-if="!formData.operator_id" class="text-xs text-muted-foreground">
         Sélectionnez d'abord un exploitant
       </p>
-      <p v-else-if="filteredAircrafts.length === 0" class="text-xs text-amber-600 dark:text-amber-400">
+      <p v-else-if="showAllAircrafts" class="text-xs text-muted-foreground">
+        Affichage de tous les aéronefs disponibles
+      </p>
+      <p v-else-if="operatorAircrafts.length === 0" class="text-xs text-amber-600 dark:text-amber-400">
         Aucun aéronef trouvé pour cet exploitant
       </p>
     </div>
@@ -145,10 +203,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Plane, Building2, AlertCircle, ChevronsUpDown, Check } from 'lucide-vue-next'
+import { Plane, Building2, AlertCircle, ChevronsUpDown, Check, Plus, X } from 'lucide-vue-next'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Popover,
   PopoverTrigger,
@@ -159,7 +218,8 @@ import {
   CommandInput,
   CommandGroup,
   CommandItem,
-  CommandEmpty
+  CommandEmpty,
+  CommandList
 } from '@/components/ui/command'
 import {
   Select,
@@ -192,30 +252,58 @@ const operatorsStore = useOperatorsStore()
 
 const operatorPopoverOpen = ref(false)
 const aircraftPopoverOpen = ref(false)
+const operatorSearchTerm = ref('')
+const aircraftSearchTerm = ref('')
+const showAllAircrafts = ref(false)
+
+// Filtered operators
+const filteredOperators = computed(() => {
+  if (!operatorSearchTerm.value) return props.operators
+  return props.operators.filter(operator =>
+    operator.name.toLowerCase().includes(operatorSearchTerm.value.toLowerCase()) ||
+    operator.sigle.toLowerCase().includes(operatorSearchTerm.value.toLowerCase())
+  )
+})
 
 // Filtrer les avions selon l'opérateur sélectionné
-const filteredAircrafts = computed(() => {
+const operatorAircrafts = computed(() => {
   if (!props.formData.operator_id) return []
   
-  // Filter aircrafts by operator_id
-  const filtered = props.aircrafts.filter(aircraft => {
-    // Handle both direct operator_id and nested operator object
+  return props.aircrafts.filter(aircraft => {
     const aircraftOperatorId = aircraft.operator_id || aircraft.operator?.id
     return aircraftOperatorId === props.formData.operator_id
   })
-  
-  console.log('Filtered aircrafts for operator', props.formData.operator_id, ':', filtered)
-  return filtered
+})
+
+const filteredOperatorAircrafts = computed(() => {
+  if (!aircraftSearchTerm.value) return operatorAircrafts.value
+  return operatorAircrafts.value.filter(aircraft =>
+    aircraft.immatriculation.toLowerCase().includes(aircraftSearchTerm.value.toLowerCase()) ||
+    aircraft.type?.sigle?.toLowerCase().includes(aircraftSearchTerm.value.toLowerCase()) ||
+    aircraft.type?.name?.toLowerCase().includes(aircraftSearchTerm.value.toLowerCase())
+  )
+})
+
+const filteredAllAircrafts = computed(() => {
+  if (!aircraftSearchTerm.value) return props.aircrafts
+  return props.aircrafts.filter(aircraft =>
+    aircraft.immatriculation.toLowerCase().includes(aircraftSearchTerm.value.toLowerCase()) ||
+    aircraft.type?.sigle?.toLowerCase().includes(aircraftSearchTerm.value.toLowerCase()) ||
+    aircraft.type?.name?.toLowerCase().includes(aircraftSearchTerm.value.toLowerCase()) ||
+    aircraft.operator?.sigle?.toLowerCase().includes(aircraftSearchTerm.value.toLowerCase())
+  )
 })
 
 const selectOperator = async (operator: any) => {
   props.formData.operator_id = operator.id
   emit('update:selectedOperatorLabel', `${operator.name} (${operator.sigle})`)
   operatorPopoverOpen.value = false
+  operatorSearchTerm.value = ''
   
-  // Réinitialiser l'avion sélectionné
+  // Réinitialiser l'avion sélectionné et le mode d'affichage
   props.formData.aircraft_id = 0
   emit('update:selectedAircraftLabel', '')
+  showAllAircrafts.value = false
   
   // Charger les détails de l'opérateur pour récupérer flight_type et flight_nature
   emit('operatorChanged', operator.id)
@@ -225,7 +313,13 @@ const selectAircraft = (aircraft: any) => {
   props.formData.aircraft_id = aircraft.id
   emit('update:selectedAircraftLabel', aircraft.immatriculation)
   aircraftPopoverOpen.value = false
+  aircraftSearchTerm.value = ''
 }
+
+// Réinitialiser showAllAircrafts quand l'opérateur change
+watch(() => props.formData.operator_id, () => {
+  showAllAircrafts.value = false
+})
 </script>
 
 <style scoped>

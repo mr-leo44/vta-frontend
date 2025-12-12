@@ -27,8 +27,10 @@ const handleApiError = (error: any): string => {
 
 export const useAircraftTypesStore = defineStore('aircraft-types', () => {
   const aircraftTypes = ref<AircraftType[]>([])
+  const allAircraftTypes = ref<AircraftType[]>([])
   const currentType = ref<AircraftType | null>(null)
   const loading = ref(false)
+  const loadingAll = ref(false)
   const error = ref<string | null>(null)
   
   // Pagination
@@ -39,6 +41,7 @@ export const useAircraftTypesStore = defineStore('aircraft-types', () => {
   const hasMorePages = computed(() => currentPage.value < lastPage.value)
 
   const typesList = computed(() => aircraftTypes.value)
+  const allTypesList = computed(() => allAircraftTypes.value)
 
   /**
    * Réinitialise la pagination
@@ -48,6 +51,28 @@ export const useAircraftTypesStore = defineStore('aircraft-types', () => {
     lastPage.value = 1
     aircraftTypes.value = []
   }
+
+    /**
+     * Récupère TOUS les types d'aéronefs (sans pagination)
+     * Utilise GET /aircraft-types/all
+     */
+    const fetchAllAircraftTypes = async () => {
+      loadingAll.value = true
+      error.value = null
+      const { apiFetch } = useApi()
+      
+      try {
+        const response = await apiFetch<ApiResponse<AircraftType[]>>('/aircraft-types/all')
+        allAircraftTypes.value = response.data
+        
+        return { success: true, data: response.data }
+      } catch (err: any) {
+        error.value = handleApiError(err)
+        return { success: false, message: error.value }
+      } finally {
+        loadingAll.value = false
+      }
+    }
 
   /**
    * Récupère les types d'aéronefs avec pagination
@@ -458,8 +483,10 @@ export const useAircraftTypesStore = defineStore('aircraft-types', () => {
   return {
     // States
     aircraftTypes,
+    allAircraftTypes,
     currentType,
     loading,
+    loadingAll,
     error,
     currentPage,
     lastPage,
@@ -468,12 +495,14 @@ export const useAircraftTypesStore = defineStore('aircraft-types', () => {
     
     // Computed
     typesList,
+    allTypesList,
     hasMorePages,
     
     // Actions
     resetPagination,
     fetchAircraftTypesPage,
     loadNextPage,
+    fetchAllAircraftTypes,
     fetchAircraftTypes,
     findAircraftType,
     fetchAircraftTypeKPIs,

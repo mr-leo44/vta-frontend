@@ -28,10 +28,6 @@ export interface Operator {
     value: 'regular' | 'non_regular'
     label: string
   }
-  flight_nature: {
-    value: 'commercial' | 'non_commercial'
-    label: string
-  }
   flights?: Flight[]
   aircrafts?: Aircraft[]
   created_at: string | null
@@ -45,7 +41,6 @@ export interface OperatorFormData {
   icao_code?: string | null
   country?: string | null
   flight_type: 'regular' | 'non_regular'
-  flight_nature: 'commercial' | 'non_commercial'
 }
 
 // ==================== AIRCRAFT TYPES ====================
@@ -224,7 +219,9 @@ export interface AircraftUtilization {
 export type FlightStatus = 'qrf' | 'prevu' | 'atteri' | 'annule' | 'detourne'
 export type FlightRegime = 'domestic' | 'international'
 export type FlightType = 'regular' | 'non_regular'
-export type FlightNature = 'commercial' | 'non_commercial'
+export type FlightNature = 'commercial' | 'state' | 'test' | 'humanutare' | 'afreightment' | 'requisition'
+
+
 
 export interface LocationData {
   iata: string
@@ -369,8 +366,12 @@ export const FLIGHT_TYPE_LABELS: Record<FlightType, string> = {
 }
 
 export const FLIGHT_NATURE_LABELS: Record<FlightNature, string> = {
-  commercial: 'Commercial',
-  non_commercial: 'Non commercial'
+  commercial: 'Vol Commercial',
+  humanutare: 'Vol Humanitaire',
+  state: 'Vol d\'Etat',
+  test: 'Vol de Test',
+  afreightment: 'Vol d\'Affretement',
+  requisition: 'Vol de Requisition',
 }
 
 // ==================== FLIGHT JUSTIFICATIONS ====================

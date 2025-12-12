@@ -41,21 +41,6 @@
         </Select>
       </div>
 
-      <!-- Nature du vol -->
-      <div class="space-y-2">
-        <Label>Nature du vol</Label>
-        <Select v-model="localFilters.flight_nature">
-          <SelectTrigger>
-            <SelectValue placeholder="Toutes les natures" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les natures</SelectItem>
-            <SelectItem value="commercial">Vol commercial</SelectItem>
-            <SelectItem value="non_commercial">Vol non commercial</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       <!-- Tri -->
       <div class="space-y-2">
         <Label>Trier par</Label>
@@ -117,7 +102,6 @@ import {
 export interface OperatorFilters {
   country: string
   flight_type: string
-  flight_nature: string
   sort_by: string
   has_active_fleet: boolean
 }
@@ -142,7 +126,6 @@ const hasActiveFilters = computed(() => {
   return (
     localFilters.value.country !== '' ||
     localFilters.value.flight_type !== '' ||
-    localFilters.value.flight_nature !== '' ||
     localFilters.value.sort_by !== '' ||
     localFilters.value.has_active_fleet
   )
@@ -152,7 +135,6 @@ const resetFilters = () => {
   localFilters.value = {
     country: '',
     flight_type: '',
-    flight_nature: '',
     sort_by: '',
     has_active_fleet: false
   }

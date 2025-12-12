@@ -5,10 +5,7 @@
         <DialogTitle class="flex items-center gap-2">
           <Building2 class="h-5 w-5" />
           {{ operator?.name }}
-          <Badge 
-            :variant="operator?.flight_type.value === 'regular' ? 'default' : 'secondary'"
-            class="ml-2"
-          >
+          <Badge :variant="operator?.flight_type.value === 'regular' ? 'default' : 'secondary'" class="ml-2">
             {{ operator?.flight_type.value === 'regular' ? 'Régulier' : 'VNR' }}
           </Badge>
         </DialogTitle>
@@ -66,15 +63,10 @@
                 <p class="text-sm font-mono">{{ operator.icao_code || '—' }}</p>
               </div>
               <div class="space-y-1">
-                <label class="text-xs font-medium text-muted-foreground">Classification</label>
-                <div class="flex gap-2 flex-wrap">
-                  <Badge :variant="operator.flight_type.value === 'regular' ? 'default' : 'secondary'">
-                    {{ operator.flight_type.label }}
-                  </Badge>
-                  <Badge :variant="operator.flight_nature.value === 'commercial' ? 'default' : 'outline'">
-                    {{ operator.flight_nature.label }}
-                  </Badge>
-                </div>
+                <label class="text-xs font-medium text-muted-foreground block">Classification</label>
+                <Badge :variant="operator.flight_type.value === 'regular' ? 'default' : 'secondary'">
+                  {{ operator.flight_type.label }}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -116,18 +108,13 @@
                     <span>{{ kpis.total_flights_previous_year }} en {{ currentYear - 1 }}</span>
                   </div>
                 </div>
-                
+
                 <div class="p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
                   <div class="flex items-center justify-between mb-2">
                     <div class="text-xs font-medium text-muted-foreground">Croissance</div>
-                    <TrendingUp 
-                      v-if="kpis.growth_percentage >= 0" 
-                      class="h-4 w-4 text-green-600 group-hover:scale-110 transition-transform" 
-                    />
-                    <TrendingDown 
-                      v-else 
-                      class="h-4 w-4 text-red-600 group-hover:scale-110 transition-transform" 
-                    />
+                    <TrendingUp v-if="kpis.growth_percentage >= 0"
+                      class="h-4 w-4 text-green-600 group-hover:scale-110 transition-transform" />
+                    <TrendingDown v-else class="h-4 w-4 text-red-600 group-hover:scale-110 transition-transform" />
                   </div>
                   <div class="text-2xl font-bold flex items-center gap-2">
                     <span :class="getGrowthColor(kpis.growth_percentage)">
@@ -140,7 +127,7 @@
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div class="p-4 border rounded-lg hover:bg-muted/50 transition-colors group">
                   <div class="flex items-center justify-between mb-2">
                     <div class="text-xs font-medium text-muted-foreground">Flotte totale</div>
@@ -237,20 +224,18 @@
               </div>
             </CardHeader>
             <CardContent>
-              <div v-if="!operator.aircrafts || operator.aircrafts.length === 0" class="text-center py-8 text-muted-foreground">
+              <div v-if="!operator.aircrafts || operator.aircrafts.length === 0"
+                class="text-center py-8 text-muted-foreground">
                 <Plane class="h-12 w-12 mx-auto mb-2 opacity-20" />
                 <p class="text-sm">Aucun aéronef</p>
               </div>
               <div v-else class="space-y-2 max-h-80 overflow-y-auto pr-2">
-                <div
-                  v-for="aircraft in sortedAircrafts"
-                  :key="aircraft.id"
-                  class="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
-                >
+                <div v-for="aircraft in sortedAircrafts" :key="aircraft.id"
+                  class="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
                   <div :class="[
                     'h-10 w-10 rounded-full flex items-center justify-center transition-all shrink-0',
-                    aircraft.in_activity 
-                      ? 'bg-green-100 text-green-700 group-hover:bg-green-200 group-hover:scale-110' 
+                    aircraft.in_activity
+                      ? 'bg-green-100 text-green-700 group-hover:bg-green-200 group-hover:scale-110'
                       : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'
                   ]">
                     <Plane class="h-5 w-5" />
@@ -267,10 +252,7 @@
                       PMAD: {{ formatWeight(aircraft.pmad) }}
                     </div>
                   </div>
-                  <Badge 
-                    :variant="aircraft.in_activity ? 'default' : 'secondary'"
-                    class="shrink-0 text-xs"
-                  >
+                  <Badge :variant="aircraft.in_activity ? 'default' : 'secondary'" class="shrink-0 text-xs">
                     {{ aircraft.in_activity ? 'Actif' : 'Inactif' }}
                   </Badge>
                 </div>
@@ -292,20 +274,18 @@
                 <p class="text-sm">Aucun vol enregistré</p>
               </div>
               <div v-else class="space-y-2 max-h-80 overflow-y-auto pr-2">
-                <div
-                  v-for="flight in recentFlights"
-                  :key="flight.id"
-                  class="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div class="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                <div v-for="flight in recentFlights" :key="flight.id"
+                  class="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div
+                    class="h-10 w-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
                     <PlaneTakeoff class="h-5 w-5" />
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="font-medium text-sm">{{ flight.flight_number }}</div>
                     <div class="text-xs text-muted-foreground flex items-center gap-1">
-                      <span>{{ flight.departure?.name + " (" + flight.departure?.iata +")" || 'N/A' }}</span>
+                      <span>{{ flight.departure?.name + " (" + flight.departure?.iata + ")" || 'N/A' }}</span>
                       <ArrowRight class="h-3 w-3" />
-                      <span>{{ flight.arrival?.name + " (" + flight.arrival?.iata +")" || 'N/A' }}</span>
+                      <span>{{ flight.arrival?.name + " (" + flight.arrival?.iata + ")" || 'N/A' }}</span>
                     </div>
                   </div>
                   <div class="text-xs text-muted-foreground text-right shrink-0">
@@ -354,12 +334,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { 
-  Pencil, 
-  MapPin, 
-  Building2, 
-  Plane, 
-  TrendingUp, 
+import {
+  Pencil,
+  MapPin,
+  Building2,
+  Plane,
+  TrendingUp,
   TrendingDown,
   PlaneTakeoff,
   Calendar,
@@ -428,11 +408,11 @@ const sortedAircrafts = computed(() => {
   })
 })
 
-const activeAircraftsCount = computed(() => 
+const activeAircraftsCount = computed(() =>
   props.operator?.aircrafts?.filter(a => a.in_activity).length || 0
 )
 
-const inactiveAircraftsCount = computed(() => 
+const inactiveAircraftsCount = computed(() =>
   props.operator?.aircrafts?.filter(a => !a.in_activity).length || 0
 )
 
@@ -447,7 +427,7 @@ const recentFlights = computed(() => {
 // Métriques calculées
 const averageMonthlyFlights = computed(() => {
   if (!kpis.value) return 0
-  return Math.round(kpis.value.total_flights_current_year / currentMonth)  
+  return Math.round(kpis.value.total_flights_current_year / currentMonth)
 })
 
 const activityRate = computed(() => {
@@ -518,11 +498,11 @@ const formatFlightDate = (date: string) => {
   const d = new Date(date)
   const now = new Date()
   const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
-  
+
   if (diffDays === 0) return "Aujourd'hui"
   if (diffDays === 1) return 'Hier'
   if (diffDays < 7) return `Il y a ${diffDays}j`
-  
+
   return d.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: 'short'

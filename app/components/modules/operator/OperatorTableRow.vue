@@ -1,10 +1,10 @@
 <template>
   <div class="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
     <!-- Avatar/Icon -->
-    <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+    <div class="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
       <Building2 class="h-5 w-5 text-primary" />
     </div>
-    
+
     <!-- Informations principales -->
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
@@ -20,17 +20,12 @@
         <span v-if="operator.icao_code">• OACI: {{ operator.icao_code }}</span>
       </div>
     </div>
-    
-    <!-- Type et nature -->
-    <div class="hidden md:flex items-center gap-2 flex-shrink-0">
-      <Badge :variant="operator.flight_type.value === 'regular' ? 'default' : 'outline'" class="text-xs">
-        {{ operator.flight_type.value === 'regular' ? 'Régulier' : 'Non régulier' }}
-      </Badge>
-      <Badge :variant="operator.flight_nature.value === 'commercial' ? 'default' : 'outline'" class="text-xs">
-        {{ operator.flight_nature.value === 'commercial' ? 'Commercial' : 'Non commercial' }}
-      </Badge>
-    </div>
-    
+
+    <!-- Type -->
+    <Badge :variant="operator.flight_type.value === 'regular' ? 'default' : 'outline'" class="text-xs">
+      {{ operator.flight_type.value === 'regular' ? 'Régulier' : 'Non régulier' }}
+    </Badge>
+
     <!-- Actions -->
     <DropdownMenu>
       <DropdownMenuTrigger as-child>

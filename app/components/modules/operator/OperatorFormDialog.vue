@@ -12,7 +12,7 @@
         <div class="grid grid-cols-2 gap-4">
           <!-- Nom -->
           <div class="col-span-2">
-            <Label for="name">Nom complet <span class="text-destructive">*</span></Label>
+            <Label class="mb-1.5" for="name">Nom complet <span class="text-destructive">*</span></Label>
             <Input
               id="name"
               v-model="formData.name"
@@ -24,7 +24,7 @@
 
           <!-- Sigle -->
           <div>
-            <Label for="sigle">Sigle <span class="text-destructive">*</span></Label>
+            <Label class="mb-1.5" for="sigle">Sigle <span class="text-destructive">*</span></Label>
             <Input
               id="sigle"
               v-model="formData.sigle"
@@ -35,9 +35,24 @@
             <p v-if="errors.sigle" class="text-sm text-destructive mt-1">{{ errors.sigle }}</p>
           </div>
 
+          <!-- Type de vol -->
+          <div>
+            <Label class="mb-1.5" for="flight_type">Type de vol <span class="text-destructive">*</span></Label>
+            <Select v-model="formData.flight_type">
+              <SelectTrigger :class="{ 'border-destructive': errors.flight_type }" class="w-full">
+                <SelectValue placeholder="Sélectionner" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="regular">Vol régulier</SelectItem>
+                <SelectItem value="non_regular">Vol non régulier (VNR)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p v-if="errors.flight_type" class="text-sm text-destructive mt-1">{{ errors.flight_type }}</p>
+          </div>
+
           <!-- Code IATA -->
           <div>
-            <Label for="iata_code">Code IATA</Label>
+            <Label class="mb-1.5" for="iata_code">Code IATA</Label>
             <Input
               id="iata_code"
               v-model="formData.iata_code"
@@ -50,7 +65,7 @@
 
           <!-- Code OACI -->
           <div>
-            <Label for="icao_code">Code OACI</Label>
+            <Label class="mb-1.5" for="icao_code">Code OACI</Label>
             <Input
               id="icao_code"
               v-model="formData.icao_code"
@@ -63,7 +78,7 @@
 
           <!-- Pays -->
           <div class="col-span-2">
-            <Label for="country">Pays</Label>
+            <Label class="mb-1.5" for="country">Pays</Label>
             <Input
               id="country"
               v-model="formData.country"
@@ -74,35 +89,7 @@
             <p v-if="errors.country" class="text-sm text-destructive mt-1">{{ errors.country }}</p>
           </div>
 
-          <!-- Type de vol -->
-          <div>
-            <Label for="flight_type">Type de vol <span class="text-destructive">*</span></Label>
-            <Select v-model="formData.flight_type">
-              <SelectTrigger :class="{ 'border-destructive': errors.flight_type }">
-                <SelectValue placeholder="Sélectionner" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="regular">Vol régulier</SelectItem>
-                <SelectItem value="non_regular">Vol non régulier (VNR)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p v-if="errors.flight_type" class="text-sm text-destructive mt-1">{{ errors.flight_type }}</p>
-          </div>
-
-          <!-- Nature du vol -->
-          <div>
-            <Label for="flight_nature">Nature du vol <span class="text-destructive">*</span></Label>
-            <Select v-model="formData.flight_nature">
-              <SelectTrigger :class="{ 'border-destructive': errors.flight_nature }">
-                <SelectValue placeholder="Sélectionner" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="commercial">Vol commercial</SelectItem>
-                <SelectItem value="non_commercial">Vol non commercial</SelectItem>
-              </SelectContent>
-            </Select>
-            <p v-if="errors.flight_nature" class="text-sm text-destructive mt-1">{{ errors.flight_nature }}</p>
-          </div>
+          
         </div>
 
         <DialogFooter>
@@ -173,7 +160,6 @@ const formData = ref<OperatorFormSchema>({
   icao_code: null,
   country: null,
   flight_type: 'regular',
-  flight_nature: 'commercial'
 })
 
 // Initialiser le formulaire
@@ -186,7 +172,6 @@ watch(() => props.operator, (operator) => {
       icao_code: operator.icao_code || null,
       country: operator.country || null,
       flight_type: operator.flight_type.value as 'regular' | 'non_regular',
-      flight_nature: operator.flight_nature.value as 'commercial' | 'non_commercial'
     }
   }
 }, { immediate: true })
@@ -205,7 +190,6 @@ const resetForm = () => {
     icao_code: null,
     country: null,
     flight_type: 'regular',
-    flight_nature: 'commercial'
   }
   errors.value = {}
 }
@@ -229,6 +213,8 @@ const handleSubmit = async () => {
         errors.value[err.path[0] as keyof OperatorFormSchema] = err.message
       }
     })
+    console.log(validation.error.errors);
+    
     showError('Veuillez corriger les erreurs dans le formulaire')
     return
   }

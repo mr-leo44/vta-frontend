@@ -76,20 +76,70 @@
             <p v-if="errors.icao_code" class="text-sm text-destructive mt-1">{{ errors.icao_code }}</p>
           </div>
 
-          <!-- Pays -->
+          <!-- Pays avec Command/Select -->
           <div class="col-span-2">
             <Label class="mb-1.5" for="country">Pays</Label>
-            <Input
-              id="country"
-              v-model="formData.country"
-              placeholder="Ex: France"
-              maxlength="100"
-              :class="{ 'border-destructive': errors.country }"
-            />
+            <Popover v-model:open="countryPopoverOpen">
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  :aria-expanded="countryPopoverOpen"
+                  class="w-full justify-between h-10"
+                  :class="{ 'border-destructive': errors.country }"
+                >
+                  <span :class="{ 'text-muted-foreground': !formData.country }">
+                    {{ formData.country || "Sélectionner un pays..." }}
+                  </span>
+                  <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-full p-0" align="start">
+                <Command>
+                  <CommandInput v-model="countrySearchTerm" placeholder="Rechercher un pays..." />
+                  <CommandEmpty>
+                    <div class="p-4 text-center space-y-2">
+                      <p class="text-sm text-muted-foreground">
+                        {{ countrySearchTerm.trim() ? `"${countrySearchTerm}" n'existe pas dans la liste` : 'Aucun pays trouvé' }}
+                      </p>
+                      <Button 
+                        @click="addNewCountry"
+                        class="w-full gap-2"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Plus class="h-4 w-4" />
+                        Utiliser "{{ countrySearchTerm.trim() }}"
+                      </Button>
+                    </div>
+                  </CommandEmpty>
+                  <CommandGroup class="max-h-64 overflow-y-auto">
+                    <CommandItem
+                      v-for="country in filteredCountries"
+                      :key="country"
+                      :value="country"
+                      @select="selectCountry(country)"
+                    >
+                      <Check
+                        :class="[
+                          'mr-2 h-4 w-4',
+                          formData.country === country ? 'opacity-100' : 'opacity-0'
+                        ]"
+                      />
+                      {{ country }}
+                    </CommandItem>
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <p v-if="errors.country" class="text-sm text-destructive mt-1">{{ errors.country }}</p>
+            <p v-if="allCountries.length === 0" class="text-xs text-muted-foreground mt-1">
+              Aucun pays enregistré. Commencez à taper pour en créer un.
+            </p>
+            <p v-else class="text-xs text-muted-foreground mt-1">
+              {{ allCountries.length }} pays disponible(s)
+            </p>
           </div>
-
-          
         </div>
 
         <DialogFooter>
@@ -107,8 +157,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { Loader2 } from 'lucide-vue-next'
+import { ref, computed, watch, onMounted } from 'vue'
+import { Loader2, ChevronsUpDown, Check, Plus } from 'lucide-vue-next'
 import type { Operator } from '~/types/api'
 import { operatorFormSchema, type OperatorFormSchema } from '~/schemas/operator.schema'
 import {
@@ -129,6 +179,19 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 
 const props = defineProps<{
   operator?: Operator | null
@@ -143,6 +206,13 @@ const emit = defineEmits<{
 const operatorsStore = useOperatorsStore()
 const { success: showSuccess, error: showError } = useToast()
 
+// Charger tous les opérateurs au montage
+onMounted(async () => {
+  if (operatorsStore.allOperators.length === 0) {
+    await operatorsStore.fetchAllOperators()
+  }
+})
+
 const isOpen = computed({
   get: () => props.open,
   set: (value) => emit('update:open', value)
@@ -152,6 +222,31 @@ const isEdit = computed(() => !!props.operator)
 
 const loading = ref(false)
 const errors = ref<Partial<Record<keyof OperatorFormSchema, string>>>({})
+const countryPopoverOpen = ref(false)
+const countrySearchTerm = ref('')
+
+// Liste des pays extraite des opérateurs existants
+const allCountries = computed(() => {
+  // Récupérer tous les pays uniques des opérateurs existants
+  const existingCountries = operatorsStore.allOperators
+    .map(op => op.country)
+    .filter((country): country is string => !!country && country.trim() !== '')
+  
+  // Créer un Set pour avoir uniquement les valeurs uniques, puis trier
+  const uniqueCountries = [...new Set(existingCountries)].sort()
+  
+  return uniqueCountries
+})
+
+const filteredCountries = computed(() => {
+  const term = countrySearchTerm.value.trim().toLowerCase()
+  if (!term) {
+    return allCountries.value
+  }
+  return allCountries.value.filter(country =>
+    country.toLowerCase().includes(term)
+  )
+})
 
 const formData = ref<OperatorFormSchema>({
   name: '',
@@ -161,6 +256,24 @@ const formData = ref<OperatorFormSchema>({
   country: null,
   flight_type: 'regular',
 })
+
+const selectCountry = (country: string) => {
+  formData.value.country = country
+  countryPopoverOpen.value = false
+  countrySearchTerm.value = country
+}
+
+
+const addNewCountry = () => {
+  if (countrySearchTerm.value.trim()) {
+    const newCountry = countrySearchTerm.value.trim()
+    // Simplement remplir le champ country du formulaire
+    // Le pays sera ajouté à la liste globale après création de l'opérateur
+    formData.value.country = newCountry
+    countryPopoverOpen.value = false
+    countrySearchTerm.value = ''
+  }
+}
 
 // Initialiser le formulaire
 watch(() => props.operator, (operator) => {
@@ -192,6 +305,7 @@ const resetForm = () => {
     flight_type: 'regular',
   }
   errors.value = {}
+  countrySearchTerm.value = ''
 }
 
 const handleCancel = () => {
@@ -213,8 +327,6 @@ const handleSubmit = async () => {
         errors.value[err.path[0] as keyof OperatorFormSchema] = err.message
       }
     })
-    console.log(validation.error.errors);
-    
     showError('Veuillez corriger les erreurs dans le formulaire')
     return
   }

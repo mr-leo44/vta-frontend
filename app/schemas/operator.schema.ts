@@ -33,10 +33,6 @@ export const operatorFormSchema = z.object({
   flight_type: z.enum(['regular', 'non_regular'], {
     errorMap: () => ({ message: 'Type de vol invalide' })
   }),
-  
-  flight_nature: z.enum(['commercial', 'non_commercial'], {
-    errorMap: () => ({ message: 'Nature de vol invalide' })
-  })
 })
 
 export type OperatorFormSchema = z.infer<typeof operatorFormSchema>

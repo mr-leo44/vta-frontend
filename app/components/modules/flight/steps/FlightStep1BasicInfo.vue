@@ -6,13 +6,8 @@
         <Plane class="h-4 w-4" />
         Numéro de vol
       </Label>
-      <Input 
-        id="flight_number" 
-        v-model="formData.flight_number" 
-        placeholder="AF1234, BA567, etc."
-        class="text-base" 
-        :class="{ 'border-destructive': errors.flight_number }" 
-      />
+      <Input id="flight_number" v-model="formData.flight_number" placeholder="AF1234, BA567, etc." class="text-base"
+        :class="{ 'border-destructive': errors.flight_number }" />
       <p v-if="errors.flight_number" class="text-xs text-destructive flex items-center gap-1">
         <AlertCircle class="h-3 w-3" />{{ errors.flight_number }}
       </p>
@@ -26,13 +21,8 @@
       </Label>
       <Popover v-model:open="operatorPopoverOpen">
         <PopoverTrigger as-child>
-          <Button 
-            variant="outline" 
-            role="combobox" 
-            :aria-expanded="operatorPopoverOpen"
-            class="w-full justify-between h-10 text-base"
-            :class="{ 'border-destructive': errors.operator_id }"
-          >
+          <Button variant="outline" role="combobox" :aria-expanded="operatorPopoverOpen"
+            class="w-full justify-between h-10 text-base" :class="{ 'border-destructive': errors.operator_id }">
             <span :class="{ 'text-muted-foreground': !selectedOperatorLabel }">
               {{ selectedOperatorLabel || 'Sélectionner un exploitant' }}
             </span>
@@ -45,12 +35,8 @@
             <CommandEmpty>Aucun exploitant trouvé</CommandEmpty>
             <CommandList>
               <CommandGroup class="max-h-64 overflow-y-auto">
-                <CommandItem 
-                  v-for="operator in filteredOperators" 
-                  :key="operator.id" 
-                  :value="operator.id.toString()"
-                  @select="selectOperator(operator)"
-                >
+                <CommandItem v-for="operator in filteredOperators" :key="operator.id" :value="operator.id.toString()"
+                  @select="selectOperator(operator)">
                   <Check :class="[
                     'mr-2 h-4 w-4',
                     formData.operator_id === operator.id ? 'opacity-100' : 'opacity-0'
@@ -77,40 +63,23 @@
           <Plane class="h-4 w-4" />
           Aéronef
         </Label>
-        <Button
-          v-if="formData.operator_id && !showAllAircrafts"
-          type="button"
-          variant="ghost"
-          size="sm"
-          @click="showAllAircrafts = true"
-          class="text-xs h-auto py-1"
-        >
+        <Button v-if="formData.operator_id && !showAllAircrafts" type="button" variant="ghost" size="sm"
+          @click="showAllAircrafts = true" class="text-xs h-auto py-1">
           <Plus class="h-3 w-3 mr-1" />
           Choisir autre aéronef
         </Button>
-        <Button
-          v-if="showAllAircrafts"
-          type="button"
-          variant="ghost"
-          size="sm"
-          @click="showAllAircrafts = false"
-          class="text-xs h-auto py-1"
-        >
+        <Button v-if="showAllAircrafts" type="button" variant="ghost" size="sm" @click="showAllAircrafts = false"
+          class="text-xs h-auto py-1">
           <X class="h-3 w-3 mr-1" />
           Uniquement opérateur
         </Button>
       </div>
-      
+
       <Popover v-model:open="aircraftPopoverOpen">
         <PopoverTrigger as-child>
-          <Button 
-            variant="outline" 
-            role="combobox" 
-            :aria-expanded="aircraftPopoverOpen"
-            class="w-full justify-between h-10 text-base"
-            :class="{ 'border-destructive': errors.aircraft_id }"
-            :disabled="!formData.operator_id"
-          >
+          <Button variant="outline" role="combobox" :aria-expanded="aircraftPopoverOpen"
+            class="w-full justify-between h-10 text-base" :class="{ 'border-destructive': errors.aircraft_id }"
+            :disabled="!formData.operator_id">
             <span :class="{ 'text-muted-foreground': !selectedAircraftLabel }">
               {{ selectedAircraftLabel || 'Sélectionner un aéronef' }}
             </span>
@@ -126,12 +95,8 @@
                 <div class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                   Aéronefs de l'exploitant
                 </div>
-                <CommandItem 
-                  v-for="aircraft in filteredOperatorAircrafts" 
-                  :key="aircraft.id" 
-                  :value="aircraft.id.toString()"
-                  @select="selectAircraft(aircraft)"
-                >
+                <CommandItem v-for="aircraft in filteredOperatorAircrafts" :key="aircraft.id"
+                  :value="aircraft.id.toString()" @select="selectAircraft(aircraft)">
                   <Check :class="[
                     'mr-2 h-4 w-4',
                     formData.aircraft_id === aircraft.id ? 'opacity-100' : 'opacity-0'
@@ -142,17 +107,13 @@
                   </div>
                 </CommandItem>
               </CommandGroup>
-              
+
               <CommandGroup v-if="showAllAircrafts" class="max-h-64 overflow-y-auto">
                 <div class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                   Tous les aéronefs
                 </div>
-                <CommandItem 
-                  v-for="aircraft in filteredAllAircrafts" 
-                  :key="aircraft.id" 
-                  :value="aircraft.id.toString()"
-                  @select="selectAircraft(aircraft)"
-                >
+                <CommandItem v-for="aircraft in filteredAllAircrafts" :key="aircraft.id" :value="aircraft.id.toString()"
+                  @select="selectAircraft(aircraft)">
                   <Check :class="[
                     'mr-2 h-4 w-4',
                     formData.aircraft_id === aircraft.id ? 'opacity-100' : 'opacity-0'
@@ -168,7 +129,7 @@
           </Command>
         </PopoverContent>
       </Popover>
-      
+
       <p v-if="errors.aircraft_id" class="text-xs text-destructive flex items-center gap-1">
         <AlertCircle class="h-3 w-3" />{{ errors.aircraft_id }}
       </p>
@@ -183,20 +144,37 @@
       </p>
     </div>
 
-    <!-- Flight Regime -->
+    <!-- Flight Regime & Flight Nature -->
     <div class="space-y-2">
-      <Label class="text-base font-semibold flex items-center gap-2">
-        Régime du vol
-      </Label>
-      <Select v-model="formData.flight_regime">
-        <SelectTrigger class="h-10">
-          <SelectValue placeholder="Sélectionner un régime" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="domestic">Domestique</SelectItem>
-          <SelectItem value="international">International</SelectItem>
-        </SelectContent>
-      </Select>
+      <div class="flex gap-2 max-w-full">
+        <div class="flex-1">
+          <Label class="text-base font-semibold flex items-center gap-2">
+            Régime du vol
+          </Label>
+          <Select v-model="formData.flight_regime">
+            <SelectTrigger class="h-10 w-full">
+              <SelectValue placeholder="Sélectionner un régime" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="domestic">Domestique</SelectItem>
+              <SelectItem value="international">International</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div class="flex-1">
+          <Label class="text-base font-semibold flex items-center gap-2">
+            Nature du vol
+          </Label>
+          <Select v-model="formData.flight_nature">
+            <SelectTrigger class="h-10 w-full">
+              <SelectValue placeholder="Sélectionner" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="(label,nature) in FLIGHT_NATURE_LABELS" :key="nature" :value="nature">{{ label }}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -228,7 +206,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import type { FlightFormData } from '~/types/api'
+import { FLIGHT_NATURE_LABELS, type FlightFormData } from '~/types/api'
 
 interface Props {
   formData: FlightFormData
@@ -268,7 +246,7 @@ const filteredOperators = computed(() => {
 // Filtrer les avions selon l'opérateur sélectionné
 const operatorAircrafts = computed(() => {
   if (!props.formData.operator_id) return []
-  
+
   return props.aircrafts.filter(aircraft => {
     const aircraftOperatorId = aircraft.operator_id || aircraft.operator?.id
     return aircraftOperatorId === props.formData.operator_id
@@ -299,15 +277,17 @@ const selectOperator = async (operator: any) => {
   emit('update:selectedOperatorLabel', `${operator.name} (${operator.sigle})`)
   operatorPopoverOpen.value = false
   operatorSearchTerm.value = ''
-  
+
   // Réinitialiser l'avion sélectionné et le mode d'affichage
   props.formData.aircraft_id = 0
   emit('update:selectedAircraftLabel', '')
   showAllAircrafts.value = false
-  
+
   // Charger les détails de l'opérateur pour récupérer flight_type et flight_nature
   emit('operatorChanged', operator.id)
 }
+
+const natures = FLIGHT_NATURE_LABELS
 
 const selectAircraft = (aircraft: any) => {
   props.formData.aircraft_id = aircraft.id
@@ -332,6 +312,7 @@ watch(() => props.formData.operator_id, () => {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

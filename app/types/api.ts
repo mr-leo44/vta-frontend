@@ -203,7 +203,7 @@ export interface AircraftUtilization {
 export type FlightStatus = 'qrf' | 'prevu' | 'atteri' | 'annule' | 'detourne'
 export type FlightRegime = 'domestic' | 'international'
 export type FlightType = 'regular' | 'non_regular'
-export type FlightNature = 'commercial' | 'state' | 'test' | 'humanutare' | 'afreightment' | 'requisition'
+export type FlightNature = 'commercial' | 'state' | 'test' | 'humanitare' | 'afreightment' | 'requisition'
 
 export interface LocationData {
   iata: string
@@ -347,10 +347,10 @@ export const FLIGHT_TYPE_LABELS: Record<FlightType, string> = {
 
 export const FLIGHT_NATURE_LABELS: Record<FlightNature, string> = {
   commercial: 'Vol Commercial',
-  humanutare: 'Vol Humanitaire',
+  humanitare: 'Vol Humanitaire',
   state: 'Vol d\'Etat',
   test: 'Vol de Test',
-  afreightment: 'Vol d\'Affretement',
+  afreightment: 'Vol d\'Affrètement',
   requisition: 'Vol de Requisition',
 }
 

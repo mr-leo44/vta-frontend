@@ -143,21 +143,6 @@ export interface AircraftKPIs {
   average_flight_duration: number     // Durée moyenne d'un vol (minutes)
   utilization_rate: number            // Taux d'utilisation (%)
   last_flight_date: string | null     // Date du dernier vol
-
-  // Suggestions pour l'API:
-  // - GET /aircrafts/{id}/kpis pour obtenir ces données
-  // - Ajouter dans la réponse:
-  //   * maintenance_hours?: number
-  //   * next_maintenance_date?: string
-  //   * fuel_consumption?: number
-  //   * destinations_count?: number
-  //   * most_frequent_route?: string
-  //   * flight_status_breakdown?: {
-  //       completed: number
-  //       scheduled: number
-  //       cancelled: number
-  //       diverted: number
-  //     }
 }
 
 // ==================== AIRCRAFTS - FILTERS ====================
@@ -173,7 +158,6 @@ export interface AircraftFilters {
 }
 
 // ==================== AIRCRAFTS - MONTHLY STATS ====================
-// Suggestion pour endpoint: GET /aircrafts/{id}/monthly-stats?year=2025
 export interface AircraftMonthlyStats {
   year: number
   months: Array<{
@@ -220,8 +204,6 @@ export type FlightStatus = 'qrf' | 'prevu' | 'atteri' | 'annule' | 'detourne'
 export type FlightRegime = 'domestic' | 'international'
 export type FlightType = 'regular' | 'non_regular'
 export type FlightNature = 'commercial' | 'state' | 'test' | 'humanutare' | 'afreightment' | 'requisition'
-
-
 
 export interface LocationData {
   iata: string
@@ -273,8 +255,6 @@ export interface Flight {
   remarks: string | null
   statistics?: FlightStatistic
 }
-
-// types/api.ts - Ajout des types manquants
 
 // ==================== FLIGHT FORM DATA ====================
 export interface FlightFormData {

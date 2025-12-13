@@ -19,6 +19,10 @@
               placeholder="0" 
               class="text-base font-semibold" 
             />
+            <p v-if="errors.passengers_count" class="text-xs text-destructive mt-1 flex items-center gap-1">
+            <AlertCircle class="h-3 w-3" />
+            {{ errors.passengers_count }}
+          </p>
           </div>
           <div>
             <Label class="text-sm font-medium mb-2 block">Go Pass Count</Label>
@@ -29,6 +33,10 @@
               placeholder="0"
               class="text-base font-semibold" 
             />
+            <p v-if="errors.go_pass_count" class="text-xs text-destructive mt-1 flex items-center gap-1">
+            <AlertCircle class="h-3 w-3" />
+            {{ errors.go_pass_count }}
+          </p>
           </div>
           <div>
             <Label class="text-sm font-medium mb-2 block">Pax bus</Label>
@@ -39,6 +47,10 @@
               placeholder="0"
               class="text-base" 
             />
+            <p v-if="errors.pax_bus" class="text-xs text-destructive mt-1 flex items-center gap-1">
+            <AlertCircle class="h-3 w-3" />
+            {{ errors.pax_bus }}
+          </p>
           </div>
           <div>
             <Label class="text-sm font-medium mb-2 block">Écart</Label>
@@ -88,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { Users, AlertTriangle } from 'lucide-vue-next'
+import { Users, AlertTriangle, AlertCircle } from 'lucide-vue-next'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

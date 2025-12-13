@@ -78,6 +78,14 @@ export const useFlightForm = () => {
       }
     }
 
+    if (formData.value.statistics.passengers_count < formData.value.statistics.go_pass_count) {
+      errors.value.go_pass_count = "Le nombre de passagers doit être supérieur ou égal au nombre de go pass récoltés"
+    }
+
+    if (formData.value.statistics.passengers_count < formData.value.statistics.pax_bus) {
+      errors.value.pax_bus = "Le nombre de passagers doit être supérieur ou égal au nombre de passagers en bus"
+    }
+
     return Object.keys(errors.value).length === 0
   }
 

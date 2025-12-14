@@ -144,11 +144,11 @@
       </p>
     </div>
 
-    <!-- Flight Regime & Flight Nature -->
+    <!-- Flight Regime, Flight_type & Flight Nature -->
     <div class="space-y-2">
       <div class="flex gap-2 max-w-full">
         <div class="flex-1">
-          <Label class="text-base font-semibold flex items-center gap-2">
+          <Label class="text-sm font-semibold flex items-center gap-2">
             Régime du vol
           </Label>
           <Select v-model="formData.flight_regime">
@@ -162,12 +162,25 @@
           </Select>
         </div>
         <div class="flex-1">
-          <Label class="text-base font-semibold flex items-center gap-2">
+          <Label class="text-sm font-semibold flex items-center gap-2">
+            Type de vol
+          </Label>
+          <Select v-model="formData.flight_type">
+            <SelectTrigger class="h-10 w-full">
+              <SelectValue placeholder="Sélectionner un type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="(label,type) in FLIGHT_TYPE_LABELS" :key="type" :value="type">{{ label }}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div class="flex-1">
+          <Label class="text-sm font-semibold flex items-center gap-2">
             Nature du vol
           </Label>
           <Select v-model="formData.flight_nature">
             <SelectTrigger class="h-10 w-full">
-              <SelectValue placeholder="Sélectionner" />
+              <SelectValue placeholder="Sélectionner une nature" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem v-for="(label,nature) in FLIGHT_NATURE_LABELS" :key="nature" :value="nature">{{ label }}</SelectItem>
@@ -206,7 +219,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { FLIGHT_NATURE_LABELS, type FlightFormData } from '~/types/api'
+import { FLIGHT_NATURE_LABELS, FLIGHT_TYPE_LABELS, type FlightFormData } from '~/types/api'
 
 interface Props {
   formData: FlightFormData
@@ -286,8 +299,6 @@ const selectOperator = async (operator: any) => {
   // Charger les détails de l'opérateur pour récupérer flight_type et flight_nature
   emit('operatorChanged', operator.id)
 }
-
-const natures = FLIGHT_NATURE_LABELS
 
 const selectAircraft = (aircraft: any) => {
   props.formData.aircraft_id = aircraft.id

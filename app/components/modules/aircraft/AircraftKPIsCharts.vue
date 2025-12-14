@@ -149,7 +149,7 @@ const statusChartData = computed(() => {
 
   // Compter les statuts réels des vols
   const statusCount = {
-    atteri: 0,
+    embarque: 0,
     prevu: 0,
     qrf: 0,
     annule: 0,
@@ -163,7 +163,7 @@ const statusChartData = computed(() => {
   })
 
   const total = props.flights.length
-  const completedPercent = Math.round((statusCount.atteri / total) * 100)
+  const completedPercent = Math.round((statusCount.embarque / total) * 100)
   const scheduledPercent = Math.round(((statusCount.prevu + statusCount.qrf) / total) * 100)
   const otherPercent = 100 - completedPercent - scheduledPercent
 

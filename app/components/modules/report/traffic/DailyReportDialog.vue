@@ -289,7 +289,7 @@ const loadData = async () => {
     }
 
     const flights = result.data || []
-    const landedFlights = flights.filter(f => f.status === 'atteri')
+    const landedFlights = flights.filter(f => f.status === 'embarque')
 
     // Séparer par régime et nature
     domesticCommercial.value = landedFlights

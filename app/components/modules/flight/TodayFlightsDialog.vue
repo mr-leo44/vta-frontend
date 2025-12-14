@@ -30,7 +30,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <div class="text-xs text-green-700 dark:text-green-300 font-medium">Atterris</div>
-                <div class="text-2xl font-bold text-green-900 dark:text-green-100">{{ stats.atteri }}</div>
+                <div class="text-2xl font-bold text-green-900 dark:text-green-100">{{ stats.embarque }}</div>
               </div>
               <CheckCircle class="h-8 w-8 text-green-500 dark:text-green-400" />
             </div>
@@ -194,11 +194,11 @@ const formattedDate = computed(() => {
 
 const stats = computed(() => {
   const total = flights.value.length
-  const atteri = flights.value.filter(f => f.status === 'atteri').length
+  const embarque = flights.value.filter(f => f.status === 'embarque').length
   const prevu = flights.value.filter(f => f.status === 'prevu' || f.status === 'qrf').length
   const passengers = flights.value.reduce((sum, f) => sum + (f.statistics?.passengers_count || 0), 0)
   
-  return { total, atteri, prevu, passengers }
+  return { total, embarque, prevu, passengers }
 })
 
 const sortedFlights = computed(() => {
@@ -233,7 +233,7 @@ const getStatusBorderColor = (status: string) => {
   const colors: Record<string, string> = {
     qrf: 'border-l-blue-500',
     prevu: 'border-l-yellow-500',
-    atteri: 'border-l-green-500',
+    embarque: 'border-l-green-500',
     annule: 'border-l-red-500',
     detourne: 'border-l-orange-500'
   }
@@ -244,7 +244,7 @@ const getStatusBackground = (status: string) => {
   const colors: Record<string, string> = {
     qrf: 'bg-gradient-to-br from-blue-500 to-blue-600',
     prevu: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
-    atteri: 'bg-gradient-to-br from-green-500 to-green-600',
+    embarque: 'bg-gradient-to-br from-green-500 to-green-600',
     annule: 'bg-gradient-to-br from-red-500 to-red-600',
     detourne: 'bg-gradient-to-br from-orange-500 to-orange-600'
   }

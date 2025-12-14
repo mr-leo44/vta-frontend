@@ -177,7 +177,7 @@ export const useFlightsStore = defineStore('flights', () => {
       const allFlights = response.data || []
       
       // Filtrer uniquement les vols atterris
-      const landedFlights = allFlights.filter(f => f.status === 'atteri')
+      const landedFlights = allFlights.filter(f => f.status === 'embarque')
       
       // Filtrer par date en utilisant le fuseau horaire de Kinshasa
       const dailyFlights: Flight[] = []

@@ -190,7 +190,7 @@ const getStatusBorderColor = (status: string) => {
   const colors: Record<string, string> = {
     qrf: 'border-l-4 border-l-blue-500',
     prevu: 'border-l-4 border-l-yellow-500',
-    atteri: 'border-l-4 border-l-green-500',
+    embarque: 'border-l-4 border-l-green-500',
     annule: 'border-l-4 border-l-red-500',
     detourne: 'border-l-4 border-l-orange-500'
   }
@@ -201,7 +201,7 @@ const getStatuslinear = (status: string) => {
   const linears: Record<string, string> = {
     qrf: 'from-blue-500/5 to-transparent',
     prevu: 'from-yellow-500/5 to-transparent',
-    atteri: 'from-green-500/5 to-transparent',
+    embarque: 'from-green-500/5 to-transparent',
     annule: 'from-red-500/5 to-transparent',
     detourne: 'from-orange-500/5 to-transparent'
   }
@@ -212,7 +212,7 @@ const getStatusIconClass = (status: string) => {
   const classes: Record<string, string> = {
     qrf: 'bg-linear-to-br from-blue-500 to-blue-600',
     prevu: 'bg-linear-to-br from-yellow-500 to-yellow-600',
-    atteri: 'bg-linear-to-br from-green-500 to-green-600',
+    embarque: 'bg-linear-to-br from-green-500 to-green-600',
     annule: 'bg-linear-to-br from-red-500 to-red-600',
     detourne: 'bg-linear-to-br from-orange-500 to-orange-600'
   }

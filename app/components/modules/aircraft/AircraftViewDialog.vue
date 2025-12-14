@@ -249,7 +249,7 @@ const formatStatus = (status: FlightStatus) => {
   const statusMap: Record<FlightStatus, string> = {
     qrf: 'QRF',
     prevu: 'Prévu',
-    atteri: 'Atterri',
+    embarque: 'Atterri',
     annule: 'Annulé',
     detourne: 'Détourné'
   }
@@ -257,7 +257,7 @@ const formatStatus = (status: FlightStatus) => {
 }
 
 const getStatusVariant = (status: FlightStatus) => {
-  if (status === 'atteri') return 'default'
+  if (status === 'embarque') return 'default'
   if (status === 'annule') return 'destructive'
   if (status === 'detourne') return 'secondary'
   return 'outline'

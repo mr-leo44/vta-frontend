@@ -200,7 +200,7 @@ export interface AircraftUtilization {
   non_revenue_hours?: number
 }
 // ==================== FLIGHTS ====================
-export type FlightStatus = 'qrf' | 'prevu' | 'atteri' | 'annule' | 'detourne'
+export type FlightStatus = 'qrf' | 'prevu' | 'embarque' | 'annule' | 'detourne'
 export type FlightRegime = 'domestic' | 'international'
 export type FlightType = 'regular' | 'non_regular'
 export type FlightNature = 'commercial' | 'state' | 'test' | 'humanitare' | 'afreightment' | 'requisition'
@@ -322,7 +322,7 @@ export interface FlightKPIs {
 export const FLIGHT_STATUS_LABELS: Record<FlightStatus, string> = {
   qrf: 'QRF',
   prevu: 'Prévu',
-  atteri: 'Atterri',
+  embarque: 'Embarqué',
   annule: 'Annulé',
   detourne: 'Détourné'
 }
@@ -330,7 +330,7 @@ export const FLIGHT_STATUS_LABELS: Record<FlightStatus, string> = {
 export const FLIGHT_STATUS_COLORS: Record<FlightStatus, string> = {
   qrf: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   prevu: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-  atteri: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  embarque: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
   annule: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   detourne: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
 }

@@ -87,7 +87,7 @@
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
                 <SelectItem value="prevu">Prévu</SelectItem>
-                <SelectItem value="atteri">Atterri</SelectItem>
+                <SelectItem value="embarque">Embarqué</SelectItem>
                 <SelectItem value="qrf">QRF</SelectItem>
                 <SelectItem value="annule">Annulé</SelectItem>
                 <SelectItem value="detourne">Détourné</SelectItem>
@@ -366,7 +366,7 @@ const kpis = computed(() => ({
   ),
   by_status: {
     prevu: flights.value.filter(f => f.status === 'prevu').length,
-    atteri: flights.value.filter(f => f.status === 'atteri').length,
+    embarque: flights.value.filter(f => f.status === 'embarque').length,
     qrf: flights.value.filter(f => f.status === 'qrf').length,
     annule: flights.value.filter(f => f.status === 'annule').length,
     detourne: flights.value.filter(f => f.status === 'detourne').length
@@ -401,7 +401,7 @@ const kpiCards = computed(() => [
   {
     id: 'landed',
     title: 'Atterris',
-    value: kpis.value.by_status.atteri,
+    value: kpis.value.by_status.embarque,
     subtitle: `${kpis.value.by_status.prevu} prévus`,
     icon: CheckCircle,
     color: '#f97316'

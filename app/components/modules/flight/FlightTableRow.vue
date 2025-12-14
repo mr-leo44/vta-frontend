@@ -104,7 +104,7 @@ const formatStatus = (status: FlightStatus) => {
   const statusMap: Record<FlightStatus, string> = {
     qrf: 'QRF',
     prevu: 'Prévu',
-    atteri: 'Atterri',
+    embarque: 'Embarqué',
     annule: 'Annulé',
     detourne: 'Détourné'
   }
@@ -112,14 +112,14 @@ const formatStatus = (status: FlightStatus) => {
 }
 
 const getStatusVariant = (status: FlightStatus) => {
-  if (status === 'atteri') return 'default'
+  if (status === 'embarque') return 'default'
   if (status === 'annule') return 'destructive'
   if (status === 'detourne') return 'secondary'
   return 'outline'
 }
 
 const getStatusColor = (status: FlightStatus) => {
-  if (status === 'atteri') return 'bg-green-100 text-green-600'
+  if (status === 'embarque') return 'bg-green-100 text-green-600'
   if (status === 'annule') return 'bg-red-100 text-red-600'
   if (status === 'detourne') return 'bg-orange-100 text-orange-600'
   if (status === 'prevu') return 'bg-blue-100 text-blue-600'

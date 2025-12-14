@@ -10,7 +10,7 @@
             <div class="flex items-center gap-2">
               {{ flight?.flight_number }}
               <Badge variant="secondary" class="font-mono">{{ flight?.status }}</Badge>
-              <Badge variant="default" class="font-mono">{{ flight?.flight_nature }}</Badge>
+              <Badge variant="default" class="font-mono">{{ getFlightNature(flight) }}</Badge>
             </div>
             <div class="text-xs text-muted-foreground mt-1">
               {{ formatDateTime(flight?.departure_time) }}
@@ -110,7 +110,7 @@
                 <div class="flex-1 min-w-0">
                   <div class="text-xs text-muted-foreground truncate">Type</div>
                   <div class="font-semibold truncate">
-                    {{ flight.flight_type === 'regular' ? 'Régulier' : 'VNR' }}
+                    {{ flight.flight_type === 'regular' ? 'Régulier' : 'Non Régulier' }}
                   </div>
                 </div>
               </div>
@@ -258,7 +258,7 @@ import {
   Hash,
   X
 } from 'lucide-vue-next'
-import type { Flight } from '~/types/api'
+import { FLIGHT_NATURE_LABELS, type Flight } from '~/types/api'
 import {
   Dialog,
   DialogContent,  
@@ -331,6 +331,28 @@ const formatJustificationValue = (value: any): string => {
     return JSON.stringify(value)
   }
   return String(value)
+}
+
+const getFlightNature = (flight: Flight) => {
+  switch (flight.flight_nature) {
+    case "commercial":
+      return FLIGHT_NATURE_LABELS.commercial
+    case "state":
+      return FLIGHT_NATURE_LABELS.state
+    case "humanitare":
+      return FLIGHT_NATURE_LABELS.humanitare
+    case "afreightment":
+      return FLIGHT_NATURE_LABELS.afreightment
+    case "requisition":
+      return FLIGHT_NATURE_LABELS.requisition
+    case "test":
+      return FLIGHT_NATURE_LABELS.test  
+      break;
+  
+    default:
+      return FLIGHT_NATURE_LABELS.commercial
+      break;
+  }
 }
 
 const handleEdit = () => {

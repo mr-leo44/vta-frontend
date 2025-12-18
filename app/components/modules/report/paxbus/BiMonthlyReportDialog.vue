@@ -2,12 +2,25 @@
   <Dialog v-model:open="isOpen">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Rapport Mensuel de Trafic</DialogTitle>
+        <DialogTitle>Rapport Hebdomadaire (Quinzaine)</DialogTitle>
         <DialogDescription>
-          Sélectionnez le mois et l'année pour générer le rapport
+          Sélectionnez la quinzaine, le mois et l'année pour générer le rapport Paxbus.
         </DialogDescription>
       </DialogHeader>
       <div class="space-y-4 py-4">
+        <div class="space-y-2">
+          <Label for="period">Quinzaine</Label>
+          <Select v-model="localForm.period">
+            <SelectTrigger id="period">
+              <SelectValue placeholder="Choisir la quinzaine" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Q1">Première Quinzaine (Q1)</SelectItem>
+              <SelectItem value="Q2">Deuxième Quinzaine (Q2)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div class="space-y-2">
           <Label for="month">Mois</Label>
           <Select v-model="localForm.month">
@@ -30,6 +43,7 @@
             </SelectContent>
           </Select>
         </div>
+
         <div class="space-y-2">
           <Label for="year">Année</Label>
           <Select v-model="localForm.year">
@@ -88,10 +102,11 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  'generate': [form: { month: string; year: string }]
+  'generate': [form: { period: string; month: string; year: string }]
 }>()
 
 const localForm = ref({
+  period: '',
   month: '',
   year: ''
 })
@@ -106,7 +121,7 @@ const availableYears = computed(() => {
 })
 
 const isValid = computed(() => {
-  return localForm.value.month && localForm.value.year
+  return localForm.value.period && localForm.value.month && localForm.value.year
 })
 
 const isOpen = computed({
@@ -124,13 +139,9 @@ const generate = () => {
   }
 }
 
-// Reset form when dialog closes
 watch(() => props.open, (newValue) => {
   if (!newValue) {
-    localForm.value = {
-      month: '',
-      year: ''
-    }
+    localForm.value = { period: '', month: '', year: '' }
   }
 })
 </script>

@@ -29,7 +29,7 @@
           <CardContent class="p-4">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-xs text-green-700 dark:text-green-300 font-medium">Atterris</div>
+                <div class="text-xs text-green-700 dark:text-green-300 font-medium">Embarqués</div>
                 <div class="text-2xl font-bold text-green-900 dark:text-green-100">{{ stats.embarque }}</div>
               </div>
               <CheckCircle class="h-8 w-8 text-green-500 dark:text-green-400" />

@@ -4,7 +4,7 @@
       <DialogHeader>
         <DialogTitle>Fiche Journalière de Trafic</DialogTitle>
         <DialogDescription>
-          Statistiques des vols atterris pour le {{ formatDisplayDate(selectedDate) }}
+          Statistiques des vols embarqués pour le {{ formatDisplayDate(selectedDate) }}
         </DialogDescription>
       </DialogHeader>
 
@@ -87,7 +87,7 @@
                   :totals="domesticCommercialTotals"
                   total-label="Total Commercial"
                   total-row-class="bg-blue-50"
-                  empty-message="Aucun vol commercial domestique atterri pour cette date"
+                  empty-message="Aucun vol commercial domestique embarqué pour cette date"
                 />
 
                 <DailyFlightTable
@@ -98,7 +98,7 @@
                   :totals="domesticNonCommercialTotals"
                   total-label="Total Non-Commercial"
                   total-row-class="bg-gray-50"
-                  empty-message="Aucun vol non-commercial domestique atterri pour cette date"
+                  empty-message="Aucun vol non-commercial domestique embarqué pour cette date"
                 />
               </div>
             </ScrollArea>
@@ -116,7 +116,7 @@
                   :totals="internationalCommercialTotals"
                   total-label="Total Commercial"
                   total-row-class="bg-blue-50"
-                  empty-message="Aucun vol commercial international atterri pour cette date"
+                  empty-message="Aucun vol commercial international embarqué pour cette date"
                   is-international
                 />
 
@@ -128,7 +128,7 @@
                   :totals="internationalNonCommercialTotals"
                   total-label="Total Non-Commercial"
                   total-row-class="bg-gray-50"
-                  empty-message="Aucun vol non-commercial international atterri pour cette date"
+                  empty-message="Aucun vol non-commercial international embarqué pour cette date"
                   is-international
                 />
               </div>
@@ -342,9 +342,9 @@ const loadData = async () => {
 
     const totalFlights = landedFlights.length
     if (totalFlights === 0) {
-      error('Aucun vol', 'Aucun vol atterri trouvé pour cette date')
+      error('Aucun vol', 'Aucun vol embarqué trouvé pour cette date')
     } else {
-      success('Données chargées', `${totalFlights} vol(s) atterri(s) trouvé(s) pour cette date`)
+      success('Données chargées', `${totalFlights} vol(s) embarqué(s) trouvé(s) pour cette date`)
     }
   } catch (err: any) {
     error('Erreur', err.message || 'Impossible de charger les données')

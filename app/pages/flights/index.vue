@@ -400,7 +400,7 @@ const kpiCards = computed(() => [
   },
   {
     id: 'landed',
-    title: 'Atterris',
+    title: 'Embarqués',
     value: kpis.value.by_status.embarque,
     subtitle: `${kpis.value.by_status.prevu} prévus`,
     icon: CheckCircle,

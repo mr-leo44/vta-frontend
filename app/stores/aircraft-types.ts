@@ -179,9 +179,41 @@ export const useAircraftTypesStore = defineStore('aircraft-types', () => {
     const { apiFetch } = useApi()
     
     try {
-      const response = await apiFetch<AircraftType | null>(`/aircraft-types/find/${encodeURIComponent(query)}`)
-      return { success: true, data: response }
+      const response = await apiFetch<any>(`/aircraft-types/find/${encodeURIComponent(query)}`)
+      
+      console.log('Search API Response:', response)
+      
+      // L'API peut retourner:
+      // 1. { data: AircraftType } - un seul type
+      // 2. { data: [AircraftType] } - un tableau de types
+      // 3. AircraftType - directement le type
+      // 4. [AircraftType] - directement un tableau
+      
+      let resultData = null
+      
+      if (response) {
+        // Cas 1 & 2: { data: ... }
+        if ('data' in response) {
+          resultData = response.data
+        }
+        // Cas 3 & 4: données directes
+        else if ('id' in response || Array.isArray(response)) {
+          resultData = response
+        }
+      }
+      
+      // Si on a un tableau vide ou null, retourner échec
+      if (!resultData || (Array.isArray(resultData) && resultData.length === 0)) {
+        return { success: false, message: 'Aucun résultat trouvé', data: null }
+      }
+      
+      return { success: true, data: resultData }
     } catch (err: any) {
+      // Si 404, c'est juste qu'il n'y a pas de résultat
+      if (err?.statusCode === 404 || err?.status === 404) {
+        return { success: false, message: 'Aucun résultat trouvé', data: null }
+      }
+      
       error.value = handleApiError(err)
       return { success: false, message: error.value, data: null }
     } finally {

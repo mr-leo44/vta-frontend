@@ -77,7 +77,7 @@
 import { ref, nextTick } from 'vue'
 import { Calendar, CalendarDays, ClipboardList, Sparkles } from 'lucide-vue-next'
 import ReportHeader from '@/components/modules/report/traffic/ReportHeader.vue'
-import ReportCardItem from '@/components/modules/report/traffic/ReportCardItem.vue'
+import ReportCardItem from '~/components/modules/report/ReportCardItem.vue'
 import MonthlyReportDialog from '~/components/modules/report/traffic/MonthlyReportDialog.vue'
 import AnnualReportDialog from '~/components/modules/report/traffic/AnnualReportDialog.vue'
 import DailyReportDialog from '~/components/modules/report/traffic/DailyReportDialog.vue'

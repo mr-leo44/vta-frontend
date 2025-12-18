@@ -222,7 +222,7 @@
       </CardHeader>
       <CardContent>
         <!-- Loading -->
-        <div v-if="loading" class="space-y-3">
+        <div v-if="loading && displayedTypes.length === 0" class="space-y-3">
           <div v-if="viewMode === 'grid'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <AircraftTypeCardSkeleton v-for="i in 6" :key="i" />
           </div>
@@ -396,7 +396,7 @@
     </Card>
 
     <!-- Load More Trigger -->
-    <div v-if="hasMorePages && !aircraftTypesStore.loading" ref="loadMoreTrigger" class="flex justify-center py-8">
+    <div v-if="hasMorePages && !aircraftTypesStore.loading && !searchQuery" ref="loadMoreTrigger" class="flex justify-center py-8">
       <Button variant="outline" @click="loadMore" :disabled="aircraftTypesStore.loading" size="lg" class="gap-2">
         <ChevronDown class="h-4 w-4" />
         Charger plus de types
@@ -531,9 +531,7 @@ const viewDialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
 const selectedType = ref<AircraftType | null>(null)
 const typeToDelete = ref<AircraftType | null>(null)
-
-// État pour stocker tous les types chargés initialement
-const allTypesCache = ref<AircraftType[]>([])
+const isSearching = ref(false)
 
 // KPIs calculés
 const kpis = computed(() => {
@@ -565,9 +563,49 @@ const hasActiveFilters = computed(() => searchQuery.value || sortBy.value !== 'a
 
 // Computed
 const loading = computed(() => aircraftTypesStore.loading)
-const displayedTypes = computed(() => aircraftTypesStore.aircraftTypes)
 const hasMorePages = computed(() => aircraftTypesStore.hasMorePages)
 const total = computed(() => aircraftTypesStore.total)
+
+// Computed pour les types affichés avec recherche et tri
+const displayedTypes = computed(() => {
+  let types = [...aircraftTypesStore.aircraftTypes]
+  
+  // Appliquer la recherche locale si une requête existe
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    types = types.filter(type => 
+      type.name.toLowerCase().includes(query) ||
+      type.sigle.toLowerCase().includes(query)
+    )
+  }
+  
+  // Appliquer le tri
+  switch (sortBy.value) {
+    case 'name_asc':
+      types.sort((a, b) => a.name.localeCompare(b.name))
+      break
+    case 'name_desc':
+      types.sort((a, b) => b.name.localeCompare(a.name))
+      break
+    case 'sigle_asc':
+      types.sort((a, b) => a.sigle.localeCompare(b.sigle))
+      break
+    case 'sigle_desc':
+      types.sort((a, b) => b.sigle.localeCompare(a.sigle))
+      break
+    case 'created_desc':
+      types.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+      break
+    case 'created_asc':
+      types.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
+      break
+    case 'usage_desc':
+      types.sort((a, b) => getAircraftCount(b.id) - getAircraftCount(a.id))
+      break
+  }
+  
+  return types
+})
 
 // Intersection Observer
 const loadMoreTrigger = ref<HTMLElement | null>(null)
@@ -579,10 +617,7 @@ const fetchAircraftTypes = async () => {
   aircraftTypesStore.resetPagination()
   const result = await aircraftTypesStore.fetchAircraftTypesPage(1)
 
-  if (result.success) {
-    // Mettre en cache tous les types chargés
-    allTypesCache.value = [...aircraftTypesStore.aircraftTypes]
-  } else {
+  if (!result.success) {
     showError(result.message || 'Erreur lors du chargement des types')
   }
 }
@@ -591,47 +626,56 @@ const fetchAircraftTypes = async () => {
 const loadMore = async () => {
   if (!hasMorePages.value || loading.value) return
   await aircraftTypesStore.loadNextPage()
-  // Mettre à jour le cache après avoir chargé plus de types
-  allTypesCache.value = [...aircraftTypesStore.aircraftTypes]
 }
 
-// Search with debounce
+// Search with debounce - utilise toujours l'API
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(async () => {
     const query = searchQuery.value.trim()
     
-    if (query) {
-      // Recherche locale dans le cache
-      const filtered = allTypesCache.value.filter(type => 
-        type.name.toLowerCase().includes(query.toLowerCase()) ||
-        type.sigle.toLowerCase().includes(query.toLowerCase())
-      )
+    if (!query) {
+      // Si la recherche est vide, recharger tous les types
+      isSearching.value = false
+      await fetchAircraftTypes()
+      return
+    }
+    
+    isSearching.value = true
+    
+    // Toujours chercher via l'API pour avoir les résultats exacts
+    try {
+      const result = await aircraftTypesStore.findAircraftType(query)
       
-      // Si on a des résultats dans le cache, les afficher
-      if (filtered.length > 0) {
-        aircraftTypesStore.aircraftTypes = filtered
-      } else {
-        // Sinon, chercher via l'API
-        const result = await aircraftTypesStore.findAircraftType(query)
-        if (result.success && result.data) {
-          aircraftTypesStore.aircraftTypes = [result.data]
+      if (result.success && result.data) {
+        // L'API retourne un seul type ou un tableau
+        if (Array.isArray(result.data)) {
+          aircraftTypesStore.aircraftTypes = result.data
         } else {
-          aircraftTypesStore.aircraftTypes = []
+          aircraftTypesStore.aircraftTypes = [result.data]
         }
+      } else {
+        // Aucun résultat trouvé
+        aircraftTypesStore.aircraftTypes = []
       }
-    } else {
-      // Restaurer tous les types depuis le cache
-      aircraftTypesStore.aircraftTypes = [...allTypesCache.value]
+    } catch (error) {
+      console.error('Search error:', error)
+      showError('Erreur lors de la recherche')
+      aircraftTypesStore.aircraftTypes = []
+    } finally {
+      isSearching.value = false
     }
   }, 300)
 }
 
-const clearSearch = () => {
+// Réinitialiser la recherche
+const clearSearch = async () => {
   searchQuery.value = ''
   sortBy.value = 'all'
-  // Restaurer depuis le cache au lieu de recharger
-  aircraftTypesStore.aircraftTypes = [...allTypesCache.value]
+  isSearching.value = false
+  
+  // Recharger tous les types
+  await fetchAircraftTypes()
 }
 
 // Setup Intersection Observer for infinite scroll
@@ -640,7 +684,7 @@ const setupIntersectionObserver = () => {
 
   observer = new IntersectionObserver(
     (entries) => {
-      if (entries[0].isIntersecting && hasMorePages.value && !loading.value) {
+      if (entries[0].isIntersecting && hasMorePages.value && !loading.value && !searchQuery.value) {
         loadMore()
       }
     },
@@ -711,18 +755,27 @@ const handleDelete = async () => {
 
 const handleSuccess = async () => {
   await fetchAircraftTypes()
-  // Mettre à jour le cache
-  allTypesCache.value = [...aircraftTypesStore.aircraftTypes]
   dialogOpen.value = false
 }
 
+// Watcher pour le tri
+watch(sortBy, () => {
+  // Le tri est géré par le computed displayedTypes
+  // Pas besoin de recharger les données
+})
+
 // Lifecycle
 onMounted(async () => {
-  await Promise.all([
-    fetchAircraftTypes(),
-    aircraftsStore.fetchAllAircrafts(),
-    operatorsStore.fetchAllOperators()
-  ])
+  try {
+    await Promise.all([
+      fetchAircraftTypes(),
+      aircraftsStore.fetchAllAircrafts(),
+      operatorsStore.fetchAllOperators()
+    ])
+  } catch (error) {
+    console.error('Failed to load initial data:', error)
+    showError('Erreur lors du chargement des données initiales')
+  }
 
   setTimeout(() => {
     setupIntersectionObserver()

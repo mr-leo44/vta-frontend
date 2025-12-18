@@ -102,6 +102,22 @@ const loadingAnnual = ref(false)
 const loadingDailySheet = ref(false)
 const loadingHighlights = ref(false)
 
+// Noms des mois en français
+const MONTH_NAMES: Record<string, string> = {
+  '1': 'JANVIER',
+  '2': 'FEVRIER',
+  '3': 'MARS',
+  '4': 'AVRIL',
+  '5': 'MAI',
+  '6': 'JUIN',
+  '7': 'JUILLET',
+  '8': 'AOUT',
+  '9': 'SEPTEMBRE',
+  '10': 'OCTOBRE',
+  '11': 'NOVEMBRE',
+  '12': 'DECEMBRE'
+}
+
 // Handler pour ouvrir le dialog journalier
 const openDailySheetDialog = async () => {
   dailySheetDialogOpen.value = true
@@ -109,10 +125,11 @@ const openDailySheetDialog = async () => {
 }
 
 // Génération du rapport mensuel
-const generateMonthlyReport = async (form: { month: string; year: string; regime: string }) => {
+const generateMonthlyReport = async (form: { month: string; year: string }) => {
   loadingMonthly.value = true
   try {
-    const url = `/trafic-report/export/${form.month}/${form.year}/${form.regime}`
+    // Utilise l'endpoint API: GET /trafic-report/export/{month}/{year}
+    const url = `/trafic-report/export/${form.month}/${form.year}`
 
     const response = await apiFetch(url, {
       method: 'GET',
@@ -125,8 +142,11 @@ const generateMonthlyReport = async (form: { month: string; year: string; regime
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    const formattedRegime = form.regime === 'domestic' ? 'DOMESTIQUE' : 'INTERNATIONAL'
-    link.download = `TRAFIC_${formattedRegime}_${form.month}-${form.year}.xlsx`
+    
+    // Format: TRAFIC DECEMBRE 2025.xlsx
+    const monthName = MONTH_NAMES[form.month] || 'MOIS'
+    link.download = `TRAFIC ${monthName} ${form.year}.xlsx`
+    
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -135,6 +155,7 @@ const generateMonthlyReport = async (form: { month: string; year: string; regime
     success('Rapport généré', 'Le rapport mensuel a été téléchargé avec succès')
     monthlyDialogOpen.value = false
   } catch (err: any) {
+    console.error('Monthly report error:', err)
     error('Erreur', err.message || 'Impossible de générer le rapport')
   } finally {
     loadingMonthly.value = false
@@ -142,10 +163,11 @@ const generateMonthlyReport = async (form: { month: string; year: string; regime
 }
 
 // Génération du rapport annuel
-const generateAnnualReport = async (form: { year: string; regime: string }) => {
+const generateAnnualReport = async (form: { year: string }) => {
   loadingAnnual.value = true
   try {
-    const url = `/trafic-report/export/${form.year}/${form.regime}`
+    // Utilise l'endpoint API: GET /trafic-report/export/{year}
+    const url = `/trafic-report/export/${form.year}`
 
     const response = await apiFetch(url, {
       method: 'GET',
@@ -158,8 +180,10 @@ const generateAnnualReport = async (form: { year: string; regime: string }) => {
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    const formattedRegime = form.regime === 'domestic' ? 'DOMESTIQUE' : 'INTERNATIONAL'
-    link.download = `TRAFIC_ANNUEL_${formattedRegime}_${form.year}.xlsx`
+    
+    // Format: TRAFIC ANNUEL 2025.xlsx
+    link.download = `TRAFIC ANNUEL ${form.year}.xlsx`
+    
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -168,6 +192,7 @@ const generateAnnualReport = async (form: { year: string; regime: string }) => {
     success('Rapport généré', 'Le rapport annuel a été téléchargé avec succès')
     annualDialogOpen.value = false
   } catch (err: any) {
+    console.error('Annual report error:', err)
     error('Erreur', err.message || 'Impossible de générer le rapport')
   } finally {
     loadingAnnual.value = false
@@ -202,14 +227,24 @@ const exportDailySheet = async (params: { date: string; format: string }) => {
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = `FICHE_JOURNALIERE_${params.date}.${extension}`
+    
+    // Format date pour le nom de fichier
+    const dateObj = new Date(params.date)
+    const day = String(dateObj.getDate()).padStart(2, '0')
+    const month = MONTH_NAMES[String(dateObj.getMonth() + 1)] || 'MOIS'
+    const year = dateObj.getFullYear()
+    
+    link.download = `FICHE JOURNALIERE ${day} ${month} ${year}.${extension}`
+    
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
 
     success('Fiche exportée', 'La fiche journalière a été téléchargée avec succès')
+    dailySheetDialogOpen.value = false
   } catch (err: any) {
+    console.error('Daily sheet error:', err)
     error('Erreur', err.message || 'Impossible d\'exporter la fiche')
   } finally {
     loadingDailySheet.value = false

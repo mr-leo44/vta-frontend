@@ -4,7 +4,7 @@
       <DialogHeader>
         <DialogTitle>Rapport Annuel de Trafic</DialogTitle>
         <DialogDescription>
-          Sélectionnez l'année et le régime pour générer le rapport annuel
+          Sélectionnez l'année pour générer le rapport annuel
         </DialogDescription>
       </DialogHeader>
       <div class="space-y-4 py-4">
@@ -18,18 +18,6 @@
               <SelectItem v-for="year in availableYears" :key="year" :value="String(year)">
                 {{ year }}
               </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div class="space-y-2">
-          <Label for="annual-regime">Régime</Label>
-          <Select v-model="localForm.regime">
-            <SelectTrigger id="annual-regime">
-              <SelectValue placeholder="Sélectionner un régime" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="domestic">Domestique</SelectItem>
-              <SelectItem value="international">International</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -78,12 +66,11 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  'generate': [form: { year: string; regime: string }]
+  'generate': [form: { year: string }]
 }>()
 
 const localForm = ref({
-  year: '',
-  regime: ''
+  year: ''
 })
 
 const availableYears = computed(() => {
@@ -96,7 +83,7 @@ const availableYears = computed(() => {
 })
 
 const isValid = computed(() => {
-  return localForm.value.year && localForm.value.regime
+  return localForm.value.year !== ''
 })
 
 const isOpen = computed({
@@ -118,8 +105,7 @@ const generate = () => {
 watch(() => props.open, (newValue) => {
   if (!newValue) {
     localForm.value = {
-      year: '',
-      regime: ''
+      year: ''
     }
   }
 })

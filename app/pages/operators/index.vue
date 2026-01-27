@@ -338,7 +338,6 @@ const clearSearch = () => {
 const filters = ref<FilterType>({
   country: '',
   flight_type: '',
-  flight_nature: '',
   sort_by: '',
   has_active_fleet: false
 })
@@ -363,9 +362,6 @@ const applyFilters = () => {
     filtered = filtered.filter(o => o.flight_type.value === filters.value.flight_type)
   }
 
-  if (filters.value.flight_nature && filters.value.flight_nature !== 'all') {
-    filtered = filtered.filter(o => o.flight_nature.value === filters.value.flight_nature)
-  }
 
   if (filters.value.has_active_fleet) {
     filtered = filtered.filter(o =>

@@ -284,13 +284,22 @@ const loadMoreTrigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 let searchTimeout: NodeJS.Timeout
 
-// Fetch initial operators
+// Fetch initial operators et sauvegarde la liste complète
 const fetchOperators = async () => {
   operatorsStore.resetPagination()
   const result = await operatorsStore.fetchOperators(1)
 
   if (!result.success) {
     showError(result.message || 'Erreur lors du chargement des exploitants')
+  }
+}
+
+// Récupère TOUS les opérateurs pour le select des filtres (pays)
+const fetchAllOperators = async () => {
+  const result = await operatorsStore.fetchAllOperators()
+  
+  if (result.success && result.data) {
+    allOperatorsBackup.value = [...result.data]
   }
 }
 
@@ -311,6 +320,7 @@ const debouncedSearch = () => {
       const result = await operatorsStore.searchOperators(searchTerm.value)
 
       if (result.success && result.data) {
+        allOperatorsBackup.value = [...result.data]
         operatorsStore.operators = result.data
         operatorsStore.total = result.data.length
       } else {
@@ -331,6 +341,14 @@ const debouncedSearch = () => {
 
 const clearSearch = () => {
   searchTerm.value = ''
+  // Réinitialise aussi les filtres
+  filters.value = {
+    country: '',
+    flight_type: '',
+    sort_by: '',
+    has_active_fleet: false
+  }
+  // Recharge sans recherche
   fetchOperators()
 }
 
@@ -338,14 +356,20 @@ const clearSearch = () => {
 const filters = ref<FilterType>({
   country: '',
   flight_type: '',
-  flight_nature: '',
   sort_by: '',
   has_active_fleet: false
 })
 
-// Liste des pays disponibles
+// Stock de tous les opérateurs avant filtrage
+const allOperatorsBackup = ref<Operator[]>([])
+
+// Liste des pays disponibles - TOUJOURS basée sur la liste complète
 const availableCountries = computed(() => {
-  const countries = operators.value
+  const dataSource = allOperatorsBackup.value.length > 0 
+    ? allOperatorsBackup.value 
+    : operatorsStore.operators
+  
+  const countries = dataSource
     .map(o => o.country)
     .filter((c): c is string => c !== null && c !== '')
   return [...new Set(countries)].sort()
@@ -353,19 +377,20 @@ const availableCountries = computed(() => {
 
 // Fonction pour appliquer les filtres
 const applyFilters = () => {
-  let filtered = [...operatorsStore.operators]
+  // Utilise la liste complète comme base pour que les pays restent disponibles
+  let filtered = allOperatorsBackup.value.length > 0
+    ? [...allOperatorsBackup.value]
+    : [...operatorsStore.operators]
 
-  if (filters.value.country && filters.value.country !== 'all') {
+  // Appliquer les filtres
+  if (filters.value.country && filters.value.country !== '' && filters.value.country !== 'all') {
     filtered = filtered.filter(o => o.country === filters.value.country)
   }
 
-  if (filters.value.flight_type && filters.value.flight_type !== 'all') {
-    filtered = filtered.filter(o => o.flight_type.value === filters.value.flight_type)
+  if (filters.value.flight_type && filters.value.flight_type !== '' && filters.value.flight_type !== 'all') {
+    filtered = filtered.filter(o => o.flight_type?.value === filters.value.flight_type)
   }
 
-  if (filters.value.flight_nature && filters.value.flight_nature !== 'all') {
-    filtered = filtered.filter(o => o.flight_nature.value === filters.value.flight_nature)
-  }
 
   if (filters.value.has_active_fleet) {
     filtered = filtered.filter(o =>
@@ -373,6 +398,7 @@ const applyFilters = () => {
     )
   }
 
+  // Appliquer le tri
   switch (filters.value.sort_by) {
     case 'name_asc':
       filtered.sort((a, b) => a.name.localeCompare(b.name))
@@ -460,6 +486,10 @@ const setupIntersectionObserver = () => {
 
 // Lifecycle
 onMounted(async () => {
+  // Charge TOUS les opérateurs pour les filtres (pays, etc)
+  await fetchAllOperators()
+  
+  // Charge la première page paginée pour l'affichage
   await fetchOperators()
 
   setTimeout(() => {

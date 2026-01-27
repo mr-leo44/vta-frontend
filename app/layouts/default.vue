@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+  <div class="bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
     <!-- Modern Header with linear -->
     <header class="sticky top-0 z-50 border-b bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg shadow-sm">
       <div class="container mx-auto px-4 py-3">
@@ -267,15 +267,15 @@
     </header>
 
     <!-- Main Content with subtle pattern -->
-    <main class="container mx-auto px-4 py-6 relative">
-      <div class="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"></div>
+    <main class="min-h-screen container mx-auto px-4 py-6 md:pb-16 md:pt-10 relative">
+      <div class="absolute inset-0 opacity-5 pointer-events-none"></div>
       <div class="relative">
         <slot />
       </div>
     </main>
 
     <!-- Footer -->
-    <footer class="border-t bg-white/50 dark:bg-gray-950/50 backdrop-blur-sm mt-auto">
+    <footer class="border-t bg-white/50 dark:bg-gray-950/50 backdrop-blur-sm bottom-0 fixed w-full">
       <div class="container mx-auto px-4 py-6">
         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-2 text-sm text-muted-foreground">

@@ -80,6 +80,7 @@ const downloadFile = async (endpoint: string, fileName: string) => {
   loading.value = true
   try {
     // Note: Remplacez par votre logique d'appel API réelle ($fetch ou apiFetch)
+    
     const response = await apiFetch(endpoint, {
       responseType: 'blob',
       method: 'GET',
@@ -130,7 +131,7 @@ const handleGenerateBiMonthly = (form: { period: string; month: string; year: st
 const handleGenerateMonthly = (form: { month: string; year: string }) => {
   const monthName = MONTH_NAMES[form.month] || 'MOIS'
   downloadFile(
-    `/paxbus-report/export/${form.month}/${form.year}`,
+    `/paxbus-report/monthly/export/${form.month}/${form.year}`,
     `RAPPORT MENSUEL PAX BUS ${monthName}_${form.year}.xlsx`
   )
   isMonthlyDialogOpen.value = false
@@ -138,7 +139,7 @@ const handleGenerateMonthly = (form: { month: string; year: string }) => {
 
 const handleGenerateAnnual = (form: { year: string }) => {
   downloadFile(
-    `/paxbus-report/export/${form.year}`,
+    `/paxbus-report/yearly/export/${form.year}`,
     `RAPPORT ANNUEL PAX BUS ${form.year}.xlsx`
   )
   isAnnualDialogOpen.value = false

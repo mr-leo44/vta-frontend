@@ -1,5 +1,5 @@
 <template>
-  <div class="p-8 max-w-7xl mx-auto space-y-8">
+  <div class="space-y-6 h-full md:h-[78vh]">
     <ReportHeader />
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -78,9 +78,7 @@ const isAnnualDialogOpen = ref(false)
  */
 const downloadFile = async (endpoint: string, fileName: string) => {
   loading.value = true
-  try {
-    // Note: Remplacez par votre logique d'appel API réelle ($fetch ou apiFetch)
-    
+  try {    
     const response = await apiFetch(endpoint, {
       responseType: 'blob',
       method: 'GET',

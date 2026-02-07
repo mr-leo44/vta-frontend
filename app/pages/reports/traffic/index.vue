@@ -129,7 +129,7 @@ const generateMonthlyReport = async (form: { month: string; year: string }) => {
   loadingMonthly.value = true
   try {
     // Utilise l'endpoint API: GET /trafic-report/export/{month}/{year}
-    const url = `/trafic-report/export/${form.month}/${form.year}`
+    const url = `/trafic-report/monthly/export/${form.month}/${form.year}`
 
     const response = await apiFetch(url, {
       method: 'GET',
@@ -167,7 +167,7 @@ const generateAnnualReport = async (form: { year: string }) => {
   loadingAnnual.value = true
   try {
     // Utilise l'endpoint API: GET /trafic-report/export/{year}
-    const url = `/trafic-report/export/${form.year}`
+    const url = `/trafic-report/yearly/export/${form.year}`
 
     const response = await apiFetch(url, {
       method: 'GET',

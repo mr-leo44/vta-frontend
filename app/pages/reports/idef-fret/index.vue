@@ -249,10 +249,10 @@ const annualForm = ref({
 const availableYears = computed(() => {
   const currentYear = new Date().getFullYear()
   const years = []
-  for (let i = currentYear; i >= currentYear - 10; i--) {
+  for (let i = 2025; i <= currentYear; i++) {
     years.push(i)
   }
-  return years
+  return years.reverse()
 })
 
 // Validations
@@ -301,7 +301,11 @@ const generateMonthlyReport = async () => {
     success('Rapport généré', 'Le rapport mensuel IDEF-Fret a été téléchargé avec succès')
     monthlyDialogOpen.value = false
   } catch (err: any) {
-    error('Erreur', err.message || 'Impossible de générer le rapport')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l\'année et réessayer.')
+    } else {
+      error('Erreur', err.message || 'Impossible de générer le rapport')
+    }
   } finally {
     loadingMonthly.value = false
   }
@@ -334,7 +338,11 @@ const generateAnnualReport = async () => {
     success('Rapport généré', 'Le rapport annuel IDEF-Fret a été téléchargé avec succès')
     annualDialogOpen.value = false
   } catch (err: any) {
-    error('Erreur', err.message || 'Impossible de générer le rapport')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l\'année et réessayer.')
+    } else {
+      error('Erreur', err.message || 'Impossible de générer le rapport')
+    }
   } finally {
     loadingAnnual.value = false
   }

@@ -155,8 +155,12 @@ const generateMonthlyReport = async (form: { month: string; year: string }) => {
     success('Rapport généré', 'Le rapport mensuel a été téléchargé avec succès')
     monthlyDialogOpen.value = false
   } catch (err: any) {
-    console.error('Monthly report error:', err)
-    error('Erreur', err.message || 'Impossible de générer le rapport')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l\'année et réessayer.')
+    } else {
+      console.error('Monthly report error:', err)
+      error('Erreur', err.message || 'Impossible de générer le rapport')
+    }
   } finally {
     loadingMonthly.value = false
   }
@@ -192,8 +196,12 @@ const generateAnnualReport = async (form: { year: string }) => {
     success('Rapport généré', 'Le rapport annuel a été téléchargé avec succès')
     annualDialogOpen.value = false
   } catch (err: any) {
-    console.error('Annual report error:', err)
-    error('Erreur', err.message || 'Impossible de générer le rapport')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l\'année et réessayer.')
+    } else {
+      console.error('Annual report error:', err)
+      error('Erreur', err.message || 'Impossible de générer le rapport')
+    }
   } finally {
     loadingAnnual.value = false
   }
@@ -244,8 +252,12 @@ const exportDailySheet = async (params: { date: string; format: string }) => {
     success('Fiche exportée', 'La fiche journalière a été téléchargée avec succès')
     dailySheetDialogOpen.value = false
   } catch (err: any) {
-    console.error('Daily sheet error:', err)
-    error('Erreur', err.message || 'Impossible d\'exporter la fiche')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la date sélectionnée. Veuillez vérifier la date et réessayer.')
+    } else {
+      console.error('Daily sheet error:', err)
+      error('Erreur', err.message || 'Impossible d\'exporter la fiche')
+    }
   } finally {
     loadingDailySheet.value = false
   }
@@ -259,7 +271,11 @@ const generateHighlights = async (form: { type: string; month: string; year: str
     success('Faits saillants générés', 'Le rapport a été téléchargé avec succès')
     highlightsDialogOpen.value = false
   } catch (err: any) {
-    error('Erreur', err.message || 'Impossible de générer le rapport')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l\'année et réessayer.')
+    } else {
+      error('Erreur', err.message || 'Impossible de générer le rapport')
+    }
   } finally {
     loadingHighlights.value = false
   }

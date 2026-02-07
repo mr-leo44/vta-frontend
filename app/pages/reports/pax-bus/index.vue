@@ -94,8 +94,13 @@ const downloadFile = async (endpoint: string, fileName: string) => {
     link.remove()
     
     success("Génération réussie", `Le fichier ${fileName} a été téléchargé.` )
-  } catch (error) {
-    error("Erreur", "Une erreur est survenue lors de la génération du rapport.")
+  } catch (err: any) {
+    // Check if it's a 400 error (no data available for this year)
+    if (err.status === 400 || err.response?.status === 400) {
+      error("Données indisponibles", "Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l'année et réessayer.")
+    } else {
+      error("Erreur", err.message || "Une erreur est survenue lors de la génération du rapport.")
+    }
   } finally {
     loading.value = false
   }

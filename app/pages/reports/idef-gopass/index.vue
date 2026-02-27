@@ -1,7 +1,8 @@
 <template>
   <div class="space-y-6 h-[78vh]">
     <!-- Header -->
-    <div class="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-teal-600 to-purple-600 p-8 text-white shadow-2xl">
+    <div
+      class="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-teal-600 to-purple-600 p-8 text-white shadow-2xl">
       <div class="absolute inset-0 bg-black/10"></div>
       <div class="relative z-10">
         <div class="flex items-center gap-3 mb-2">
@@ -9,9 +10,9 @@
             <Package class="h-7 w-7" />
           </div>
           <div>
-            <h1 class="text-4xl font-bold">Rapports IDEF-Fret</h1>
+            <h1 class="text-4xl font-bold">Rapports IDEF-GOPASS</h1>
             <p class="text-white/90 text-sm mt-1">
-              Statistiques des frets et excédents de bagages
+              Statistiques des frets, exonérations et Go-pass
             </p>
           </div>
         </div>
@@ -23,15 +24,17 @@
     <!-- Types de rapports -->
     <div class="grid gap-6 md:grid-cols-2">
       <!-- Rapport Mensuel -->
-      <Card class="group hover:shadow-xl transition-all border-2 hover:border-emerald-500/50 cursor-pointer" @click="openMonthlyDialog">
+      <Card class="group hover:shadow-xl transition-all border-2 hover:border-emerald-500/50 cursor-pointer"
+        @click="openMonthlyDialog">
         <CardHeader>
           <div class="flex items-center justify-between">
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div
+              class="h-12 w-12 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <Calendar class="h-6 w-6 text-white" />
             </div>
             <Badge variant="secondary">Mensuel</Badge>
           </div>
-          <CardTitle class="mt-4">Rapport Mensuel IDEF-Fret</CardTitle>
+          <CardTitle class="mt-4">Rapport Mensuel IDEF-GOPASS</CardTitle>
           <CardDescription>
             Générer le rapport des frets pour un mois spécifique
           </CardDescription>
@@ -45,15 +48,17 @@
       </Card>
 
       <!-- Rapport Annuel -->
-      <Card class="group hover:shadow-xl transition-all border-2 hover:border-teal-500/50 cursor-pointer" @click="openAnnualDialog">
+      <Card class="group hover:shadow-xl transition-all border-2 hover:border-teal-500/50 cursor-pointer"
+        @click="openAnnualDialog">
         <CardHeader>
           <div class="flex items-center justify-between">
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div
+              class="h-12 w-12 rounded-xl bg-linear-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <CalendarDays class="h-6 w-6 text-white" />
             </div>
             <Badge variant="secondary">Annuel</Badge>
           </div>
-          <CardTitle class="mt-4">Rapport Annuel IDEF-Fret</CardTitle>
+          <CardTitle class="mt-4">Rapport Annuel IDEF-GOPASS</CardTitle>
           <CardDescription>
             Générer le rapport des frets pour une année complète
           </CardDescription>
@@ -71,7 +76,7 @@
     <Dialog v-model:open="monthlyDialogOpen">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Rapport Mensuel IDEF-Fret</DialogTitle>
+          <DialogTitle>Rapport Mensuel IDEF-GOPASS</DialogTitle>
           <DialogDescription>
             Sélectionnez le mois, l'année et le régime pour générer le rapport
           </DialogDescription>
@@ -112,18 +117,6 @@
               </SelectContent>
             </Select>
           </div>
-          <div class="space-y-2">
-            <Label for="regime">Régime</Label>
-            <Select v-model="monthlyForm.regime">
-              <SelectTrigger id="regime">
-                <SelectValue placeholder="Sélectionner un régime" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="domestic">Domestique</SelectItem>
-                <SelectItem value="international">International</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" @click="monthlyDialogOpen = false">
@@ -142,7 +135,7 @@
     <Dialog v-model:open="annualDialogOpen">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Rapport Annuel IDEF-Fret</DialogTitle>
+          <DialogTitle>Rapport Annuel IDEF-GPASS</DialogTitle>
           <DialogDescription>
             Sélectionnez l'année et le régime pour générer le rapport annuel
           </DialogDescription>
@@ -158,18 +151,6 @@
                 <SelectItem v-for="year in availableYears" :key="year" :value="String(year)">
                   {{ year }}
                 </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div class="space-y-2">
-            <Label for="annual-regime">Régime</Label>
-            <Select v-model="annualForm.regime">
-              <SelectTrigger id="annual-regime">
-                <SelectValue placeholder="Sélectionner un régime" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="domestic">Domestique</SelectItem>
-                <SelectItem value="international">International</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -218,6 +199,23 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 
+// Noms des mois en français
+const MONTH_NAMES: Record<string, string> = {
+  '1': 'JANVIER',
+  '2': 'FEVRIER',
+  '3': 'MARS',
+  '4': 'AVRIL',
+  '5': 'MAI',
+  '6': 'JUIN',
+  '7': 'JUILLET',
+  '8': 'AOUT',
+  '9': 'SEPTEMBRE',
+  '10': 'OCTOBRE',
+  '11': 'NOVEMBRE',
+  '12': 'DECEMBRE'
+}
+
+
 definePageMeta({
   middleware: 'auth'
 })
@@ -237,12 +235,10 @@ const loadingAnnual = ref(false)
 const monthlyForm = ref({
   month: '',
   year: '',
-  regime: ''
 })
 
 const annualForm = ref({
   year: '',
-  regime: ''
 })
 
 // Années disponibles
@@ -257,11 +253,11 @@ const availableYears = computed(() => {
 
 // Validations
 const isMonthlyFormValid = computed(() => {
-  return monthlyForm.value.month && monthlyForm.value.year && monthlyForm.value.regime
+  return monthlyForm.value.month && monthlyForm.value.year
 })
 
 const isAnnualFormValid = computed(() => {
-  return annualForm.value.year && annualForm.value.regime
+  return annualForm.value.year
 })
 
 // Handlers
@@ -277,28 +273,28 @@ const openAnnualDialog = () => {
 const generateMonthlyReport = async () => {
   loadingMonthly.value = true
   try {
-    // TODO: Implémenter l'endpoint pour le rapport mensuel IDEF-Fret
-    const url = `/idef-fret-report/export/${monthlyForm.value.month}/${monthlyForm.value.year}/${monthlyForm.value.regime}`
-    
+    // TODO: Implémenter l'endpoint pour le rapport mensuel IDEF-GOPASS
+    const url = `/idef-report/monthly/export/${monthlyForm.value.month}/${monthlyForm.value.year}`
+
     const response = await apiFetch(url, {
       method: 'GET',
       responseType: 'blob'
     })
 
-    const blob = new Blob([response], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    const formattedRegime = monthlyForm.value.regime === 'domestic' ? 'DOMESTIQUE' : 'INTERNATIONAL'
-    link.download = `IDEF_FRET_${formattedRegime}_${monthlyForm.value.month}-${monthlyForm.value.year}.xlsx`
+    const monthName = MONTH_NAMES[monthlyForm.value.month] || 'MOIS'
+    link.download = `IDEF ${monthName} ${monthlyForm.value.year}.xlsx`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
 
-    success('Rapport généré', 'Le rapport mensuel IDEF-Fret a été téléchargé avec succès')
+    success('Rapport généré', 'Le rapport mensuel IDEF-GO PASS a été téléchargé avec succès')
     monthlyDialogOpen.value = false
   } catch (err: any) {
     if (err.status === 400 || err.response?.status === 400) {
@@ -314,28 +310,27 @@ const generateMonthlyReport = async () => {
 const generateAnnualReport = async () => {
   loadingAnnual.value = true
   try {
-    // TODO: Implémenter l'endpoint pour le rapport annuel IDEF-Fret
-    const url = `/idef-fret-report/export/${annualForm.value.year}/${annualForm.value.regime}`
-    
+    // TODO: Implémenter l'endpoint pour le rapport annuel IDEF-GOPASS
+    const url = `/idef-report/yearly/export/${annualForm.value.year}`
+
     const response = await apiFetch(url, {
       method: 'GET',
       responseType: 'blob'
     })
 
-    const blob = new Blob([response], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     })
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    const formattedRegime = annualForm.value.regime === 'domestic' ? 'DOMESTIQUE' : 'INTERNATIONAL'
-    link.download = `IDEF_FRET_ANNUEL_${formattedRegime}_${annualForm.value.year}.xlsx`
+    link.download = `IDEF_FRET_ANNUEL_${annualForm.value.year}.xlsx`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
 
-    success('Rapport généré', 'Le rapport annuel IDEF-Fret a été téléchargé avec succès')
+    success('Rapport généré', 'Le rapport annuel IDEF-GOPASS a été téléchargé avec succès')
     annualDialogOpen.value = false
   } catch (err: any) {
     if (err.status === 400 || err.response?.status === 400) {

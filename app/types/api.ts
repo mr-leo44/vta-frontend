@@ -205,9 +205,51 @@ export type FlightRegime = 'domestic' | 'international'
 export type FlightType = 'regular' | 'non_regular'
 export type FlightNature = 'commercial' | 'state' | 'test' | 'humanitare' | 'afreightment' | 'requisition'
 
-export interface LocationData {
+export interface LocationPoint {
   iata: string
   name: string
+}
+
+/**
+ * Structure normalisée de l'API pour departure/arrival
+ * departure.from = aéroport source du tronçon départ
+ * departure.to   = aéroport destination du tronçon départ
+ * La contrainte métier: departure.from ne peut pas être identique à arrival.from
+ */
+export interface LocationData {
+  from: LocationPoint
+  to: LocationPoint
+}
+
+/**
+ * Helper: retourne un LocationPoint valide ou null si le format est incorrect
+ */
+export const parseLocationPoint = (pt: any): LocationPoint | null => {
+  if (pt && typeof pt === 'object' && typeof pt.iata === 'string' && typeof pt.name === 'string') {
+    return { iata: pt.iata, name: pt.name }
+  }
+  return null
+}
+
+/**
+ * Helper: normalise une valeur brute d'API en LocationData | null
+ */
+export const parseLocationData = (raw: any): LocationData | null => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const from = parseLocationPoint(raw.from)
+  const to = parseLocationPoint(raw.to)
+  if (!from || !to) return null
+  return { from, to }
+}
+
+/**
+ * Helper: formate un LocationPoint pour affichage "IATA -> IATA / Nom -> Nom"
+ * Retourne "Lieu introuvable" si le point est invalide
+ */
+export const formatLocationPoint = (pt: any): string => {
+  const parsed = parseLocationPoint(pt)
+  if (!parsed) return 'Lieu introuvable'
+  return `${parsed.iata} — ${parsed.name}`
 }
 
 export interface FreightData {
@@ -261,8 +303,8 @@ export interface FlightFormData {
   flight_number: string
   operator_id: number
   aircraft_id: number
-  departure: LocationData
-  arrival: LocationData
+  departure: LocationData  // { from: {iata, name}, to: {iata, name} }
+  arrival: LocationData    // { from: {iata, name}, to: {iata, name} }
   departure_time: string
   arrival_time: string
   flight_regime?: FlightRegime

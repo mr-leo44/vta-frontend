@@ -343,7 +343,7 @@ const recentActivities = computed(() => {
   recentFlights.forEach(flight => {
     activities.push({
       title: 'Nouveau vol enregistré',
-      description: `${flight.flight_number} ${flight.departure?.iata || ''}-${flight.arrival?.iata || ''}`,
+      description: `${flight.flight_number} ${flight.departure?.from?.iata || ''} → ${flight.departure?.to?.iata || ''}`,
       timeAgo: getTimeAgo(flight.departure_time),
       icon: PlaneTakeoff,
       colorClass: 'bg-blue-100 dark:bg-blue-950',

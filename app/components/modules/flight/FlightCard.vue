@@ -70,31 +70,29 @@
       </CardHeader>
 
       <CardContent class="space-y-3">
-        <!-- Route avec style moderne -->
+        <!-- Route -->
         <div class="relative p-4 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl border-2 border-blue-200/50 dark:border-blue-800/30">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center justify-between gap-2">
             <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <MapPin class="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span class="text-xs text-muted-foreground">Départ</span>
+              <div class="flex items-center gap-1.5 mb-1">
+                <MapPin class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span class="text-xs text-muted-foreground">De</span>
               </div>
-              <span class="font-mono font-bold text-lg">
-                {{ formatLocation(flight.departure) }}
-              </span>
+              <span class="font-mono font-bold text-lg">{{ departureFrom(flight) }}</span>
+              <div class="text-xs text-muted-foreground truncate">{{ departureFromName(flight) }}</div>
             </div>
-            
-            <div class="flex flex-col items-center">
-              <ArrowRight class="h-6 w-6 text-primary animate-pulse" />
+
+            <div class="flex flex-col items-center gap-0.5">
+              <ArrowRight class="h-5 w-5 text-primary" />
             </div>
-            
+
             <div class="flex-1 text-right">
-              <div class="flex items-center justify-end gap-2 mb-1">
-                <span class="text-xs text-muted-foreground">Arrivée</span>
-                <MapPin class="h-4 w-4 text-green-600 dark:text-green-400" />
+              <div class="flex items-center justify-end gap-1.5 mb-1">
+                <span class="text-xs text-muted-foreground">Vers</span>
+                <MapPin class="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <span class="font-mono font-bold text-lg">
-                {{ formatLocation(flight.arrival) }}
-              </span>
+              <span class="font-mono font-bold text-lg">{{ departureTo(flight) }}</span>
+              <div class="text-xs text-muted-foreground truncate">{{ departureToName(flight) }}</div>
             </div>
           </div>
         </div>
@@ -228,21 +226,8 @@ const formatTime = (datetime: string) => {
   })
 }
 
-const formatLocation = (location: any): string => {
-  if (!location) return 'N/A'
-  
-  if (typeof location === 'object' && location.iata && location.name) {
-    return location.iata
-  }
-  
-  if (Array.isArray(location) && location.length > 0) {
-    const loc = location[0]
-    if (typeof loc === 'object' && loc.iata && loc.name) {
-      return loc.iata
-    }
-    return loc
-  }
-  
-  return location
-}
+const departureFrom = (flight: any): string => flight.departure?.from?.iata || '???'
+const departureFromName = (flight: any): string => flight.departure?.from?.name || ''
+const departureTo = (flight: any): string => flight.departure?.to?.iata || '???'
+const departureToName = (flight: any): string => flight.departure?.to?.name || ''
 </script>

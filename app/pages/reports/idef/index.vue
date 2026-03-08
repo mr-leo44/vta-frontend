@@ -25,7 +25,7 @@
     <div class="grid gap-6 md:grid-cols-2">
       <!-- Rapport Mensuel -->
       <Card class="group hover:shadow-xl transition-all border-2 hover:border-emerald-500/50 cursor-pointer"
-        @click="openMonthlyDialog">
+        @click="monthlyDialogOpen = true">
         <CardHeader>
           <div class="flex items-center justify-between">
             <div
@@ -49,7 +49,7 @@
 
       <!-- Rapport Annuel -->
       <Card class="group hover:shadow-xl transition-all border-2 hover:border-teal-500/50 cursor-pointer"
-        @click="openAnnualDialog">
+        @click="annualDialogOpen = true">
         <CardHeader>
           <div class="flex items-center justify-between">
             <div
@@ -72,132 +72,45 @@
       </Card>
     </div>
 
-    <!-- Dialog Rapport Mensuel -->
-    <Dialog v-model:open="monthlyDialogOpen">
-      <DialogContent class="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Rapport Mensuel IDEF-GOPASS</DialogTitle>
-          <DialogDescription>
-            Sélectionnez le mois, l'année et le régime pour générer le rapport
-          </DialogDescription>
-        </DialogHeader>
-        <div class="space-y-4 py-4">
-          <div class="space-y-2">
-            <Label for="month">Mois</Label>
-            <Select v-model="monthlyForm.month">
-              <SelectTrigger id="month">
-                <SelectValue placeholder="Sélectionner un mois" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Janvier</SelectItem>
-                <SelectItem value="2">Février</SelectItem>
-                <SelectItem value="3">Mars</SelectItem>
-                <SelectItem value="4">Avril</SelectItem>
-                <SelectItem value="5">Mai</SelectItem>
-                <SelectItem value="6">Juin</SelectItem>
-                <SelectItem value="7">Juillet</SelectItem>
-                <SelectItem value="8">Août</SelectItem>
-                <SelectItem value="9">Septembre</SelectItem>
-                <SelectItem value="10">Octobre</SelectItem>
-                <SelectItem value="11">Novembre</SelectItem>
-                <SelectItem value="12">Décembre</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div class="space-y-2">
-            <Label for="year">Année</Label>
-            <Select v-model="monthlyForm.year">
-              <SelectTrigger id="year">
-                <SelectValue placeholder="Sélectionner une année" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="year in availableYears" :key="year" :value="String(year)">
-                  {{ year }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" @click="monthlyDialogOpen = false">
-            Annuler
-          </Button>
-          <Button @click="generateMonthlyReport" :disabled="!isMonthlyFormValid || loadingMonthly">
-            <Loader2 v-if="loadingMonthly" class="mr-2 h-4 w-4 animate-spin" />
-            <Download v-else class="mr-2 h-4 w-4" />
-            Générer
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <!-- Dialogs -->
+    <GenericMonthlyReportDialog
+      v-model:open="monthlyDialogOpen"
+      :loading="loadingMonthly"
+      title="Rapport Mensuel IDEF-GOPASS"
+      description="Sélectionnez le mois, l'année pour générer le rapport"
+      @generate="generateMonthlyReport"
+    />
 
-    <!-- Dialog Rapport Annuel -->
-    <Dialog v-model:open="annualDialogOpen">
-      <DialogContent class="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Rapport Annuel IDEF-GPASS</DialogTitle>
-          <DialogDescription>
-            Sélectionnez l'année et le régime pour générer le rapport annuel
-          </DialogDescription>
-        </DialogHeader>
-        <div class="space-y-4 py-4">
-          <div class="space-y-2">
-            <Label for="annual-year">Année</Label>
-            <Select v-model="annualForm.year">
-              <SelectTrigger id="annual-year">
-                <SelectValue placeholder="Sélectionner une année" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="year in availableYears" :key="year" :value="String(year)">
-                  {{ year }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" @click="annualDialogOpen = false">
-            Annuler
-          </Button>
-          <Button @click="generateAnnualReport" :disabled="!isAnnualFormValid || loadingAnnual">
-            <Loader2 v-if="loadingAnnual" class="mr-2 h-4 w-4 animate-spin" />
-            <Download v-else class="mr-2 h-4 w-4" />
-            Générer
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <GenericAnnualReportDialog
+      v-model:open="annualDialogOpen"
+      :loading="loadingAnnual"
+      title="Rapport Annuel IDEF-GOPASS"
+      description="Sélectionnez l'année pour générer le rapport annuel"
+      @generate="generateAnnualReport"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import {
   Package,
   Calendar,
   CalendarDays,
-  Download,
-  Loader2
+  Download
 } from 'lucide-vue-next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
+import GenericMonthlyReportDialog from '~/components/modules/report/GenericMonthlyReportDialog.vue'
+import GenericAnnualReportDialog from '~/components/modules/report/GenericAnnualReportDialog.vue'
+
+definePageMeta({
+  middleware: 'auth'
+})
+
+const { success, error } = useToast()
+const { apiFetch } = useApi()
 
 // Noms des mois en français
 const MONTH_NAMES: Record<string, string> = {
@@ -215,14 +128,6 @@ const MONTH_NAMES: Record<string, string> = {
   '12': 'DECEMBRE'
 }
 
-
-definePageMeta({
-  middleware: 'auth'
-})
-
-const { success, error } = useToast()
-const { apiFetch } = useApi()
-
 // États des dialogs
 const monthlyDialogOpen = ref(false)
 const annualDialogOpen = ref(false)
@@ -231,51 +136,11 @@ const annualDialogOpen = ref(false)
 const loadingMonthly = ref(false)
 const loadingAnnual = ref(false)
 
-// Formulaires
-const monthlyForm = ref({
-  month: '',
-  year: '',
-})
-
-const annualForm = ref({
-  year: '',
-})
-
-// Années disponibles
-const availableYears = computed(() => {
-  const currentYear = new Date().getFullYear()
-  const years = []
-  for (let i = 2025; i <= currentYear; i++) {
-    years.push(i)
-  }
-  return years.reverse()
-})
-
-// Validations
-const isMonthlyFormValid = computed(() => {
-  return monthlyForm.value.month && monthlyForm.value.year
-})
-
-const isAnnualFormValid = computed(() => {
-  return annualForm.value.year
-})
-
-// Handlers
-const openMonthlyDialog = () => {
-  monthlyDialogOpen.value = true
-}
-
-const openAnnualDialog = () => {
-  annualDialogOpen.value = true
-}
-
 // Génération des rapports
-const generateMonthlyReport = async () => {
+const generateMonthlyReport = async (form: { month: string; year: string }) => {
   loadingMonthly.value = true
   try {
-    // TODO: Implémenter l'endpoint pour le rapport mensuel IDEF-GOPASS
-    const url = `/idef-report/monthly/export/${monthlyForm.value.month}/${monthlyForm.value.year}`
-
+    const url = `/idef-report/monthly/export/${form.month}/${form.year}`
     const response = await apiFetch(url, {
       method: 'GET',
       responseType: 'blob'
@@ -287,14 +152,14 @@ const generateMonthlyReport = async () => {
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    const monthName = MONTH_NAMES[monthlyForm.value.month] || 'MOIS'
-    link.download = `IDEF ${monthName} ${monthlyForm.value.year}.xlsx`
+    const monthName = MONTH_NAMES[form.month] || 'MOIS'
+    link.download = `IDEF ${monthName} ${form.year}.xlsx`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     window.URL.revokeObjectURL(downloadUrl)
 
-    success('Rapport généré', 'Le rapport mensuel IDEF-GO PASS a été téléchargé avec succès')
+    success('Rapport généré', 'Le rapport mensuel IDEF-GOPASS a été téléchargé avec succès')
     monthlyDialogOpen.value = false
   } catch (err: any) {
     if (err.status === 400 || err.response?.status === 400) {
@@ -307,12 +172,10 @@ const generateMonthlyReport = async () => {
   }
 }
 
-const generateAnnualReport = async () => {
+const generateAnnualReport = async (form: { year: string }) => {
   loadingAnnual.value = true
   try {
-    // TODO: Implémenter l'endpoint pour le rapport annuel IDEF-GOPASS
-    const url = `/idef-report/yearly/export/${annualForm.value.year}`
-
+    const url = `/idef-report/yearly/export/${form.year}`
     const response = await apiFetch(url, {
       method: 'GET',
       responseType: 'blob'
@@ -324,7 +187,7 @@ const generateAnnualReport = async () => {
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = `IDEF_FRET_ANNUEL_${annualForm.value.year}.xlsx`
+    link.download = `RAPPORT ANNUEL IDEF ${form.year}.xlsx`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

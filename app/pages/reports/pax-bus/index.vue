@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 h-full md:h-[78vh]">
+  <div class="space-y-6 h-[78vh]">
     <ReportHeader />
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

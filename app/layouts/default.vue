@@ -111,9 +111,9 @@
                         </NuxtLink>
                       </DropdownMenuItem>
                       <DropdownMenuItem as-child>
-                        <NuxtLink to="/reports/idef-gopass" class="cursor-pointer flex items-center">
+                        <NuxtLink to="/reports/idef" class="cursor-pointer flex items-center">
                           <Package class="mr-2 h-4 w-4" />
-                          <span>IDEF-GOPASS</span>
+                          <span>IDEF</span>
                         </NuxtLink>
                       </DropdownMenuItem>
                     </DropdownMenuSubContent>

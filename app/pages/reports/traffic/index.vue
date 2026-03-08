@@ -47,15 +47,19 @@
     </div>
 
     <!-- Dialogs -->
-    <MonthlyReportDialog
+    <GenericMonthlyReportDialog
       v-model:open="monthlyDialogOpen"
       :loading="loadingMonthly"
+      title="Rapport Mensuel de Trafic"
+      description="Sélectionnez le mois et l'année pour générer le rapport"
       @generate="generateMonthlyReport"
     />
 
-    <AnnualReportDialog
+    <GenericAnnualReportDialog
       v-model:open="annualDialogOpen"
       :loading="loadingAnnual"
+      title="Rapport Annuel de Trafic"
+      description="Sélectionnez l'année pour générer le rapport annuel"
       @generate="generateAnnualReport"
     />
 
@@ -74,12 +78,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 import { Calendar, CalendarDays, ClipboardList, Sparkles } from 'lucide-vue-next'
 import ReportHeader from '@/components/modules/report/traffic/ReportHeader.vue'
 import ReportCardItem from '~/components/modules/report/ReportCardItem.vue'
-import MonthlyReportDialog from '~/components/modules/report/traffic/MonthlyReportDialog.vue'
-import AnnualReportDialog from '~/components/modules/report/traffic/AnnualReportDialog.vue'
+import GenericMonthlyReportDialog from '~/components/modules/report/GenericMonthlyReportDialog.vue'
+import GenericAnnualReportDialog from '~/components/modules/report/GenericAnnualReportDialog.vue'
 import DailyReportDialog from '~/components/modules/report/traffic/DailyReportDialog.vue'
 import HighlightsDialog from '~/components/modules/report/traffic/HighlightsDialog.vue'
 
@@ -118,18 +122,11 @@ const MONTH_NAMES: Record<string, string> = {
   '12': 'DECEMBRE'
 }
 
-// Handler pour ouvrir le dialog journalier
-const openDailySheetDialog = async () => {
-  dailySheetDialogOpen.value = true
-  await nextTick()
-}
-
 // Génération du rapport mensuel
 const generateMonthlyReport = async (form: { month: string; year: string }) => {
   loadingMonthly.value = true
   try {
-    // Utilise l'endpoint API: GET /trafic-report/export/{month}/{year}
-    const url = `/trafic-report/export/${form.month}/${form.year}`
+    const url = `/trafic-report/monthly/export/${form.month}/${form.year}`
 
     const response = await apiFetch(url, {
       method: 'GET',
@@ -142,11 +139,8 @@ const generateMonthlyReport = async (form: { month: string; year: string }) => {
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    
-    // Format: TRAFIC DECEMBRE 2025.xlsx
     const monthName = MONTH_NAMES[form.month] || 'MOIS'
     link.download = `TRAFIC ${monthName} ${form.year}.xlsx`
-    
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -155,8 +149,11 @@ const generateMonthlyReport = async (form: { month: string; year: string }) => {
     success('Rapport généré', 'Le rapport mensuel a été téléchargé avec succès')
     monthlyDialogOpen.value = false
   } catch (err: any) {
-    console.error('Monthly report error:', err)
-    error('Erreur', err.message || 'Impossible de générer le rapport')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l\'année et réessayer.')
+    } else {
+      error('Erreur', err.message || 'Impossible de générer le rapport')
+    }
   } finally {
     loadingMonthly.value = false
   }
@@ -166,8 +163,7 @@ const generateMonthlyReport = async (form: { month: string; year: string }) => {
 const generateAnnualReport = async (form: { year: string }) => {
   loadingAnnual.value = true
   try {
-    // Utilise l'endpoint API: GET /trafic-report/export/{year}
-    const url = `/trafic-report/export/${form.year}`
+    const url = `/trafic-report/yearly/export/${form.year}`
 
     const response = await apiFetch(url, {
       method: 'GET',
@@ -180,10 +176,7 @@ const generateAnnualReport = async (form: { year: string }) => {
     const downloadUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = downloadUrl
-    
-    // Format: TRAFIC ANNUEL 2025.xlsx
     link.download = `TRAFIC ANNUEL ${form.year}.xlsx`
-    
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -192,8 +185,11 @@ const generateAnnualReport = async (form: { year: string }) => {
     success('Rapport généré', 'Le rapport annuel a été téléchargé avec succès')
     annualDialogOpen.value = false
   } catch (err: any) {
-    console.error('Annual report error:', err)
-    error('Erreur', err.message || 'Impossible de générer le rapport')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l\'année et réessayer.')
+    } else {
+      error('Erreur', err.message || 'Impossible de générer le rapport')
+    }
   } finally {
     loadingAnnual.value = false
   }
@@ -244,8 +240,12 @@ const exportDailySheet = async (params: { date: string; format: string }) => {
     success('Fiche exportée', 'La fiche journalière a été téléchargée avec succès')
     dailySheetDialogOpen.value = false
   } catch (err: any) {
-    console.error('Daily sheet error:', err)
-    error('Erreur', err.message || 'Impossible d\'exporter la fiche')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la date sélectionnée. Veuillez vérifier la date et réessayer.')
+    } else {
+      console.error('Daily sheet error:', err)
+      error('Erreur', err.message || 'Impossible d\'exporter la fiche')
+    }
   } finally {
     loadingDailySheet.value = false
   }
@@ -259,7 +259,11 @@ const generateHighlights = async (form: { type: string; month: string; year: str
     success('Faits saillants générés', 'Le rapport a été téléchargé avec succès')
     highlightsDialogOpen.value = false
   } catch (err: any) {
-    error('Erreur', err.message || 'Impossible de générer le rapport')
+    if (err.status === 400 || err.response?.status === 400) {
+      error('Données indisponibles', 'Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l\'année et réessayer.')
+    } else {
+      error('Erreur', err.message || 'Impossible de générer le rapport')
+    }
   } finally {
     loadingHighlights.value = false
   }

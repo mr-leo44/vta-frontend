@@ -111,9 +111,9 @@
                         </NuxtLink>
                       </DropdownMenuItem>
                       <DropdownMenuItem as-child>
-                        <NuxtLink to="/reports/idef-fret" class="cursor-pointer flex items-center">
+                        <NuxtLink to="/reports/idef" class="cursor-pointer flex items-center">
                           <Package class="mr-2 h-4 w-4" />
-                          <span>IDEF-Fret</span>
+                          <span>IDEF</span>
                         </NuxtLink>
                       </DropdownMenuItem>
                     </DropdownMenuSubContent>
@@ -250,10 +250,10 @@
               <span>Pax-Bus</span>
             </NuxtLink>
 
-            <NuxtLink to="/reports/idef-fret" @click="mobileMenuOpen = false"
+            <NuxtLink to="/reports/idef-gopass" @click="mobileMenuOpen = false"
               class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all hover:bg-muted ml-4">
               <Package class="h-4 w-4" />
-              <span>IDEF-Fret</span>
+              <span>IDEF-GOPASS</span>
             </NuxtLink>
 
             <NuxtLink to="/permissions" @click="mobileMenuOpen = false"

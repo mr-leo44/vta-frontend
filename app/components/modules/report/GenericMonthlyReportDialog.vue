@@ -2,9 +2,9 @@
   <Dialog v-model:open="isOpen">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Rapport Mensuel de Trafic</DialogTitle>
+        <DialogTitle>{{ title }}</DialogTitle>
         <DialogDescription>
-          Sélectionnez le mois et l'année pour générer le rapport
+          {{ description }}
         </DialogDescription>
       </DialogHeader>
       <div class="space-y-4 py-4">
@@ -32,16 +32,41 @@
         </div>
         <div class="space-y-2">
           <Label for="year">Année</Label>
-          <Select v-model="localForm.year">
-            <SelectTrigger id="year">
-              <SelectValue placeholder="Sélectionner une année" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem v-for="year in availableYears" :key="year" :value="String(year)">
-                {{ year }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover v-model:open="yearOpen">
+            <PopoverTrigger as-child>
+              <Button variant="outline" class="w-full justify-between">
+                {{ localForm.year || 'Sélectionner une année' }}
+                <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent class="w-[200px] p-0" side="top">
+              <Command>
+                <CommandInput placeholder="Rechercher année..." />
+                <CommandEmpty>Aucune année trouvée.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    <CommandItem
+                      v-for="year in availableYears"
+                      :key="year"
+                      :value="String(year)"
+                      @select="() => {
+                        localForm.year = String(year)
+                        yearOpen = false
+                      }"
+                    >
+                      <Check
+                        :class="cn(
+                          'mr-2 h-4 w-4',
+                          localForm.year === String(year) ? 'opacity-100' : 'opacity-0',
+                        )"
+                      />
+                      {{ year }}
+                    </CommandItem>
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       <DialogFooter>
@@ -69,19 +94,35 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Download, Loader2 } from 'lucide-vue-next'
+import { Download, Loader2, Check, ChevronsUpDown } from 'lucide-vue-next'
+import { cn } from '@/lib/utils'
 
 interface Props {
   open: boolean
   loading?: boolean
+  title: string
+  description: string
 }
 
 const props = defineProps<Props>()
@@ -96,13 +137,15 @@ const localForm = ref({
   year: ''
 })
 
+const yearOpen = ref(false)
+
 const availableYears = computed(() => {
   const currentYear = new Date().getFullYear()
   const years = []
-  for (let i = currentYear; i >= currentYear - 10; i--) {
+  for (let i = 2025; i <= currentYear; i++) {
     years.push(i)
   }
-  return years
+  return years.reverse()
 })
 
 const isValid = computed(() => {

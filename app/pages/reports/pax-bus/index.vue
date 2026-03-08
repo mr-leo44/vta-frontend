@@ -1,5 +1,5 @@
 <template>
-  <div class="p-8 max-w-7xl mx-auto space-y-8">
+  <div class="space-y-6 h-[78vh]">
     <ReportHeader />
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -40,15 +40,19 @@
       @generate="handleGenerateBiMonthly"
     />
 
-    <MonthlyReportDialog
+    <GenericMonthlyReportDialog
       v-model:open="isMonthlyDialogOpen"
       :loading="loading"
+      title="Rapport Mensuel Paxbus"
+      description="Choisissez le mois et l'année pour le rapport récapitulatif mensuel"
       @generate="handleGenerateMonthly"
     />
 
-    <AnnualReportDialog
+    <GenericAnnualReportDialog
       v-model:open="isAnnualDialogOpen"
       :loading="loading"
+      title="Rapport Annuel Paxbus"
+      description="Sélectionnez l'année de référence pour le rapport annuel"
       @generate="handleGenerateAnnual"
     />
   </div>
@@ -57,11 +61,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { CalendarDays, CalendarRange, BarChart3 } from 'lucide-vue-next'
-import { useToast } from '~/composables/useToast'
 import ReportHeader from '@/components/modules/report/paxbus/ReportHeader.vue'
 import ReportCardItem from '@/components/modules/report/ReportCardItem.vue'
-import MonthlyReportDialog from '@/components/modules/report/paxbus/MonthlyReportDIalog.vue'
-import AnnualReportDialog from '@/components/modules/report/paxbus/AnnualReportDialog.vue'
+import GenericMonthlyReportDialog from '@/components/modules/report/GenericMonthlyReportDialog.vue'
+import GenericAnnualReportDialog from '@/components/modules/report/GenericAnnualReportDialog.vue'
 import BiMonthlyReportDialog from '@/components/modules/report/paxbus/BiMonthlyReportDialog.vue'
 
 const { success, error } = useToast()
@@ -78,13 +81,10 @@ const isAnnualDialogOpen = ref(false)
  */
 const downloadFile = async (endpoint: string, fileName: string) => {
   loading.value = true
-  try {
-    // Note: Remplacez par votre logique d'appel API réelle ($fetch ou apiFetch)
-    
+  try {    
     const response = await apiFetch(endpoint, {
       responseType: 'blob',
-      method: 'GET',
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      method: 'GET'
     })
     
     const url = window.URL.createObjectURL(new Blob([response as any]))
@@ -96,8 +96,12 @@ const downloadFile = async (endpoint: string, fileName: string) => {
     link.remove()
     
     success("Génération réussie", `Le fichier ${fileName} a été téléchargé.` )
-  } catch (error) {
-    error("Erreur", "Une erreur est survenue lors de la génération du rapport.")
+  } catch (err: any) {
+    if (err.status === 400 || err.response?.status === 400) {
+      error("Données indisponibles", "Aucune donnée disponible pour la période sélectionnée. Veuillez vérifier l'année et réessayer.")
+    } else {
+      error("Erreur", err.message || "Une erreur est survenue lors de la génération du rapport.")
+    }
   } finally {
     loading.value = false
   }

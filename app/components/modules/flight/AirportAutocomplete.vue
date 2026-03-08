@@ -28,7 +28,7 @@
         <!-- Dropdown suggestions -->
         <div
           v-if="open && suggestions.length > 0"
-          class="absolute z-[200] top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg overflow-hidden"
+          class="absolute z-200 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg overflow-hidden"
         >
           <ul class="max-h-52 overflow-y-auto py-1">
             <li
@@ -47,7 +47,7 @@
         <!-- Aucun résultat -->
         <div
           v-else-if="open && query.length > 0 && suggestions.length === 0"
-          class="absolute z-[200] top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md"
+          class="absolute z-200 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md"
         >
           <button
             v-if="isValid3(query)"

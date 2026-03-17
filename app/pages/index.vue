@@ -206,7 +206,7 @@
 
         <Button variant="outline"
           class="h-28 flex-col gap-3 group hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all"
-          @click="navigateTo('/reports/traffic')">
+          @click="navigateTo('/reports')">
           <div
             class="h-12 w-12 rounded-xl bg-orange-100 dark:bg-orange-950 flex items-center justify-center group-hover:scale-110 transition-transform">
             <FileText class="h-6 w-6 text-orange-600 dark:text-orange-400" />

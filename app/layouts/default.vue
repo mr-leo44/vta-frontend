@@ -99,6 +99,12 @@
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent class="w-48">
                       <DropdownMenuItem as-child>
+                        <NuxtLink to="/reports" class="cursor-pointer flex items-center">
+                          <BarChart3 class="mr-2 h-4 w-4" />
+                          <span>Tous les Rapports</span>
+                        </NuxtLink>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem as-child>
                         <NuxtLink to="/reports/traffic" class="cursor-pointer flex items-center">
                           <PlaneTakeoff class="mr-2 h-4 w-4" />
                           <span>Trafic</span>
@@ -305,6 +311,7 @@
 import { ref } from 'vue'
 import AppToaster from '@/components/modules/toaster/AppToaster.vue'
 import {
+  BarChart3,
   User,
   LogOut,
   Settings,

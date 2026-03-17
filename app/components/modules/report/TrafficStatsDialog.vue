@@ -352,8 +352,8 @@ async function exportData() {
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
     link.download = periodType.value === 'monthly'
-      ? `TRAFIC_${MONTHS.find(m => m.value === selectedMonth.value)?.label.toUpperCase()}_${selectedYear.value}.xlsx`
-      : `TRAFIC_ANNUEL_${selectedYear.value}.xlsx`
+      ? `EVOLUTION DE TRAFIC ${MONTHS.find(m => m.value === selectedMonth.value)?.label.toUpperCase()} ${selectedYear.value}.xlsx`
+      : `EVOLUTION DE TRAFIC ${selectedYear.value}.xlsx`
     link.click()
     success('Export réussi', 'Le fichier Excel a été téléchargé')
   } catch (err: any) {

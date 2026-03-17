@@ -159,12 +159,24 @@ import { cn } from '@/lib/utils'
 import { useReportStore } from '~/stores/reports'
 import type { OperatorMetric } from '~/stores/reports'
 
-// ── Inline sub-component for operator freight table ───────────────────────────
+// ─── Operator row type ────────────────────────────────────────────────────────
+
+interface OperatorRow {
+  sigle:     string
+  fret_dep:  number
+  fret_arr:  number
+  exced_dep: number
+  exced_arr: number
+  total:     number // grand total = fret_dep + fret_arr + exced_dep + exced_arr
+}
+
+// ─── Inline sub-component ─────────────────────────────────────────────────────
+
 const FreightOperatorTable = defineComponent({
   props: {
-    title:         { type: String,  required: true },
-    color:         { type: String,  default: 'emerald' },
-    operators:     { type: Array as () => OperatorRow[], required: true },
+    title:          { type: String,  required: true },
+    color:          { type: String,  default: 'emerald' },
+    operators:      { type: Array as () => OperatorRow[], required: true },
     isInternational:{ type: Boolean, default: false },
   },
   setup(props) {
@@ -172,6 +184,7 @@ const FreightOperatorTable = defineComponent({
     const totalFretArr  = computed(() => props.operators.reduce((s, r) => s + r.fret_arr,  0))
     const totalExcedDep = computed(() => props.operators.reduce((s, r) => s + r.exced_dep, 0))
     const totalExcedArr = computed(() => props.operators.reduce((s, r) => s + r.exced_arr, 0))
+    const totalGrand    = computed(() => props.operators.reduce((s, r) => s + r.total,      0))
 
     function pct(val: number, total: number) {
       if (!total) return '0,00%'
@@ -179,24 +192,31 @@ const FreightOperatorTable = defineComponent({
     }
     function fmt(n: number) { return n.toLocaleString('fr-FR') }
 
-    const headerColor: Record<string, string> = {
+    const headerBg: Record<string, string> = {
       emerald: 'bg-emerald-600',
       amber:   'bg-amber-600',
     }
 
     return () => {
       if (!props.operators.length) return null
+      const hc = headerBg[props.color] ?? 'bg-slate-600'
 
-      const hc = headerColor[props.color] ?? 'bg-slate-600'
+      // td helpers
+      const tdNum  = (v: number)  => h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono' }, fmt(v))
+      const tdPct  = (v: number, tot: number) => h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-muted-foreground text-[11px]' }, pct(v, tot))
+      const tdTot  = (v: number)  => h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono font-semibold bg-blue-50/60 dark:bg-blue-950/20' }, fmt(v))
+      const tdTotP = (v: number, tot: number) => h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-[11px] bg-blue-50/60 dark:bg-blue-950/20' }, pct(v, tot))
 
       return h('div', { class: 'space-y-1' }, [
         h('p', { class: `text-xs font-semibold uppercase tracking-wider text-${props.color}-700 mb-2` }, props.title),
         h('div', { class: 'overflow-x-auto rounded-lg border' }, [
           h('table', { class: 'w-full text-xs border-collapse' }, [
+            // ── THEAD ──────────────────────────────────────────────────────
             h('thead', [
+              // Row 1: group headers
               h('tr', { class: `${hc} text-white` }, [
-                h('th', { rowspan: 2, class: 'border border-white/20 px-3 py-2 text-left font-semibold min-w-20' }, 'Ordre'),
-                h('th', { rowspan: 2, class: 'border border-white/20 px-3 py-2 text-left font-semibold min-w-20' }, 'CIE'),
+                h('th', { rowspan: 2, class: 'border border-white/20 px-3 py-2 text-left font-semibold min-w-[2rem]' }, 'N°'),
+                h('th', { rowspan: 2, class: 'border border-white/20 px-3 py-2 text-left font-semibold min-w-[3.5rem]' }, 'CIE'),
                 h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold' }, 'Fret Départ'),
                 ...(props.isInternational ? [
                   h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold' }, 'Fret Arrivée'),
@@ -205,13 +225,25 @@ const FreightOperatorTable = defineComponent({
                 ...(props.isInternational ? [
                   h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold' }, 'Excédents Arrivée'),
                 ] : []),
+                // TOTAL GÉNÉRAL header — blue accent
+                h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold bg-blue-700' }, 'TOTAL GÉNÉRAL'),
               ]),
+              // Row 2: Qté / % sub-labels
               h('tr', { class: `bg-${props.color}-500 text-white` }, [
-                ...['Qté', '%', ...(props.isInternational ? ['Qté', '%'] : []), 'Qté', '%', ...(props.isInternational ? ['Qté', '%'] : [])].map(lbl =>
-                  h('th', { class: 'border border-white/20 px-2 py-1 text-center font-medium' }, lbl)
-                ),
-              ]),
+                'Qté', '%',
+                ...(props.isInternational ? ['Qté', '%'] : []),
+                'Qté', '%',
+                ...(props.isInternational ? ['Qté', '%'] : []),
+                'Qté', '%', // TOTAL GÉNÉRAL sub-labels
+              ].map(lbl =>
+                h('th', {
+                  class: lbl === 'Qté' || lbl === '%'
+                    ? 'border border-white/20 px-2 py-1 text-center font-medium'
+                    : 'border border-white/20 px-2 py-1 text-center font-medium bg-blue-600',
+                }, lbl)
+              )),
             ]),
+            // ── TBODY ──────────────────────────────────────────────────────
             h('tbody', [
               ...props.operators.map((row, i) =>
                 h('tr', {
@@ -219,21 +251,24 @@ const FreightOperatorTable = defineComponent({
                 }, [
                   h('td', { class: 'border border-border px-3 py-1.5 text-center font-mono text-muted-foreground' }, i + 1),
                   h('td', { class: 'border border-border px-3 py-1.5 font-semibold' }, row.sigle),
-                  h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono' }, fmt(row.fret_dep)),
-                  h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-muted-foreground text-[11px]' }, pct(row.fret_dep, totalFretDep.value)),
+                  tdNum(row.fret_dep),
+                  tdPct(row.fret_dep, totalFretDep.value),
                   ...(props.isInternational ? [
-                    h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono' }, fmt(row.fret_arr)),
-                    h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-muted-foreground text-[11px]' }, pct(row.fret_arr, totalFretArr.value)),
+                    tdNum(row.fret_arr),
+                    tdPct(row.fret_arr, totalFretArr.value),
                   ] : []),
-                  h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono' }, fmt(row.exced_dep)),
-                  h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-muted-foreground text-[11px]' }, pct(row.exced_dep, totalExcedDep.value)),
+                  tdNum(row.exced_dep),
+                  tdPct(row.exced_dep, totalExcedDep.value),
                   ...(props.isInternational ? [
-                    h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono' }, fmt(row.exced_arr)),
-                    h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-muted-foreground text-[11px]' }, pct(row.exced_arr, totalExcedArr.value)),
+                    tdNum(row.exced_arr),
+                    tdPct(row.exced_arr, totalExcedArr.value),
                   ] : []),
+                  // TOTAL GÉNÉRAL — blue tint
+                  tdTot(row.total),
+                  tdTotP(row.total, totalGrand.value),
                 ])
               ),
-              // Total row
+              // ── TOTAL row ────────────────────────────────────────────────
               h('tr', { class: `bg-${props.color}-600/10 font-bold border-t-2 border-${props.color}-500` }, [
                 h('td', { colspan: 2, class: 'border border-border px-3 py-2 font-bold' }, 'TOTAL'),
                 h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold' }, fmt(totalFretDep.value)),
@@ -248,6 +283,9 @@ const FreightOperatorTable = defineComponent({
                   h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold' }, fmt(totalExcedArr.value)),
                   h('td', { class: 'border border-border px-2 py-2 text-right font-mono' }, '100%'),
                 ] : []),
+                // TOTAL GÉNÉRAL on TOTAL row
+                h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold bg-blue-100/60 dark:bg-blue-900/20' }, fmt(totalGrand.value)),
+                h('td', { class: 'border border-border px-2 py-2 text-right font-mono bg-blue-100/60 dark:bg-blue-900/20' }, '100%'),
               ]),
             ]),
           ]),
@@ -257,13 +295,7 @@ const FreightOperatorTable = defineComponent({
   },
 })
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface OperatorRow {
-  sigle: string
-  fret_dep: number; fret_arr: number
-  exced_dep: number; exced_arr: number
-}
+// ─── Page logic ───────────────────────────────────────────────────────────────
 
 const props = defineProps<{ open: boolean }>()
 const emit  = defineEmits<{ 'update:open': [boolean] }>()
@@ -291,7 +323,7 @@ const MONTHS = [
 
 const now = new Date()
 const availableYears = computed(() => {
-  const years = []
+  const years: number[] = []
   for (let i = 2025; i <= now.getFullYear() + 1; i++) years.push(i)
   return years.reverse()
 })
@@ -313,23 +345,33 @@ async function load() {
   }
 }
 
+// Build operator rows and sort by grand total descending
 function toOperatorRows(
-  group: Record<string, OperatorMetric> | undefined,
-  excedGroup: Record<string, OperatorMetric> | undefined,
+  group:        Record<string, OperatorMetric> | undefined,
+  excedGroup:   Record<string, OperatorMetric> | undefined,
   fretArrGroup?: Record<string, OperatorMetric>,
-  excedArrGroup?: Record<string, OperatorMetric>
+  excedArrGroup?:Record<string, OperatorMetric>
 ): OperatorRow[] {
   const sigles = new Set([
-    ...Object.keys(group ?? {}),
+    ...Object.keys(group      ?? {}),
     ...Object.keys(excedGroup ?? {}),
   ])
-  return Array.from(sigles).sort().map(sigle => ({
-    sigle,
-    fret_dep:  group?.[sigle]?.traffic  ?? 0,
-    fret_arr:  fretArrGroup?.[sigle]?.traffic  ?? 0,
-    exced_dep: excedGroup?.[sigle]?.traffic ?? 0,
-    exced_arr: excedArrGroup?.[sigle]?.traffic ?? 0,
-  }))
+  return Array.from(sigles)
+    .map(sigle => {
+      const fret_dep  = group?.[sigle]?.traffic        ?? 0
+      const fret_arr  = fretArrGroup?.[sigle]?.traffic  ?? 0
+      const exced_dep = excedGroup?.[sigle]?.traffic    ?? 0
+      const exced_arr = excedArrGroup?.[sigle]?.traffic ?? 0
+      return {
+        sigle,
+        fret_dep,
+        fret_arr,
+        exced_dep,
+        exced_arr,
+        total: fret_dep + fret_arr + exced_dep + exced_arr,
+      }
+    })
+    .sort((a, b) => b.total - a.total)
 }
 
 const domesticCommercial = computed(() => {
@@ -363,8 +405,8 @@ async function exportData() {
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
     link.download = periodType.value === 'monthly'
-      ? `SYNTH_FRET_${MONTHS.find(m => m.value === selectedMonth.value)?.label.toUpperCase()}_${selectedYear.value}.xlsx`
-      : `SYNTH_FRET_ANNUEL_${selectedYear.value}.xlsx`
+      ? `TABLEAU SYNTHESE DE FRET ${MONTHS.find(m => m.value === selectedMonth.value)?.label.toUpperCase()} ${selectedYear.value}.xlsx`
+      : `TABLEAU SYNTHESE DE FRET ${selectedYear.value}.xlsx`
     link.click()
     success('Export réussi', 'Le fichier Excel a été téléchargé')
   } catch (err: any) {

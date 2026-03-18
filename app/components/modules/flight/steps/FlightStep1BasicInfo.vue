@@ -32,9 +32,23 @@
         <PopoverContent class="w-full p-0">
           <Command v-model:search-term="operatorSearchTerm">
             <CommandInput placeholder="Chercher exploitant..." />
-            <CommandEmpty>Aucun exploitant trouvé</CommandEmpty>
+            <CommandEmpty>
+              <div class="py-2 px-1 text-center space-y-2">
+                <p class="text-sm text-muted-foreground">Aucun exploitant trouvé</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  class="w-full border-dashed text-blue-600 border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950"
+                  @click="openCreateOperator"
+                >
+                  <Plus class="h-3 w-3 mr-1" />
+                  Créer « {{ operatorSearchTerm }} »
+                </Button>
+              </div>
+            </CommandEmpty>
             <CommandList>
-              <CommandGroup class="max-h-64 overflow-y-auto">
+              <CommandGroup class="max-h-56 overflow-y-auto">
                 <CommandItem v-for="operator in filteredOperators" :key="operator.id" :value="operator.id.toString()"
                   @select="selectOperator(operator)">
                   <Check :class="[
@@ -47,6 +61,19 @@
                   </div>
                 </CommandItem>
               </CommandGroup>
+              <!-- Bouton créer toujours visible en bas -->
+              <div class="border-t px-1 py-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  class="w-full justify-start text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
+                  @click="openCreateOperator"
+                >
+                  <Plus class="h-3 w-3 mr-1" />
+                  Créer un nouvel exploitant
+                </Button>
+              </div>
             </CommandList>
           </Command>
         </PopoverContent>
@@ -63,16 +90,18 @@
           <Plane class="h-4 w-4" />
           Aéronef
         </Label>
-        <Button v-if="formData.operator_id && !showAllAircrafts" type="button" variant="ghost" size="sm"
-          @click="showAllAircrafts = true" class="text-xs h-auto py-1">
-          <Plus class="h-3 w-3 mr-1" />
-          Choisir autre aéronef
-        </Button>
-        <Button v-if="showAllAircrafts" type="button" variant="ghost" size="sm" @click="showAllAircrafts = false"
-          class="text-xs h-auto py-1">
-          <X class="h-3 w-3 mr-1" />
-          Uniquement opérateur
-        </Button>
+        <div class="flex items-center gap-1">
+          <Button v-if="formData.operator_id && !showAllAircrafts" type="button" variant="ghost" size="sm"
+            @click="showAllAircrafts = true" class="text-xs h-auto py-1">
+            <Plus class="h-3 w-3 mr-1" />
+            Choisir autre aéronef
+          </Button>
+          <Button v-if="showAllAircrafts" type="button" variant="ghost" size="sm" @click="showAllAircrafts = false"
+            class="text-xs h-auto py-1">
+            <X class="h-3 w-3 mr-1" />
+            Uniquement opérateur
+          </Button>
+        </div>
       </div>
 
       <Popover v-model:open="aircraftPopoverOpen">
@@ -89,9 +118,23 @@
         <PopoverContent class="w-full p-0">
           <Command v-model:search-term="aircraftSearchTerm">
             <CommandInput placeholder="Chercher aéronef..." />
-            <CommandEmpty>Aucun aéronef trouvé</CommandEmpty>
+            <CommandEmpty>
+              <div class="py-2 px-1 text-center space-y-2">
+                <p class="text-sm text-muted-foreground">Aucun aéronef trouvé</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  class="w-full border-dashed text-indigo-600 border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950"
+                  @click="openCreateAircraft"
+                >
+                  <Plus class="h-3 w-3 mr-1" />
+                  Créer l'aéronef « {{ aircraftSearchTerm }} »
+                </Button>
+              </div>
+            </CommandEmpty>
             <CommandList>
-              <CommandGroup v-if="!showAllAircrafts && operatorAircrafts.length > 0" class="max-h-64 overflow-y-auto">
+              <CommandGroup v-if="!showAllAircrafts && operatorAircrafts.length > 0" class="max-h-56 overflow-y-auto">
                 <div class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                   Aéronefs de l'exploitant
                 </div>
@@ -108,7 +151,7 @@
                 </CommandItem>
               </CommandGroup>
 
-              <CommandGroup v-if="showAllAircrafts" class="max-h-64 overflow-y-auto">
+              <CommandGroup v-if="showAllAircrafts" class="max-h-56 overflow-y-auto">
                 <div class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                   Tous les aéronefs
                 </div>
@@ -125,6 +168,20 @@
                   </div>
                 </CommandItem>
               </CommandGroup>
+
+              <!-- Bouton créer aéronef toujours visible en bas -->
+              <div class="border-t px-1 py-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  class="w-full justify-start text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950"
+                  @click="openCreateAircraft"
+                >
+                  <Plus class="h-3 w-3 mr-1" />
+                  Créer un nouvel aéronef
+                </Button>
+              </div>
             </CommandList>
           </Command>
         </PopoverContent>
@@ -140,7 +197,8 @@
         Affichage de tous les aéronefs disponibles
       </p>
       <p v-else-if="operatorAircrafts.length === 0" class="text-xs text-amber-600 dark:text-amber-400">
-        Aucun aéronef trouvé pour cet exploitant
+        Aucun aéronef trouvé pour cet exploitant —
+        <button type="button" class="underline font-medium" @click="openCreateAircraft">créer un aéronef</button>
       </p>
     </div>
 
@@ -190,6 +248,20 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Modaux de création rapide ─────────────────────────────── -->
+  <QuickCreateOperatorModal
+    v-model:open="createOperatorOpen"
+    :prefill-name="operatorSearchTerm"
+    @created="onOperatorCreated"
+  />
+
+  <QuickCreateAircraftModal
+    v-model:open="createAircraftOpen"
+    :preselected-operator-id="formData.operator_id || undefined"
+    :preselected-operator-label="selectedOperatorLabel || undefined"
+    @created="onAircraftCreated"
+  />
 </template>
 
 <script setup lang="ts">
@@ -220,6 +292,8 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { FLIGHT_NATURE_LABELS, FLIGHT_TYPE_LABELS, type FlightFormData } from '~/types/api'
+import QuickCreateOperatorModal from '@/components/modules/operator/QuickCreateOperatorModal.vue'
+import QuickCreateAircraftModal from '@/components/modules/aircraft/QuickCreateAircraftModal.vue'
 
 interface Props {
   formData: FlightFormData
@@ -234,18 +308,25 @@ interface Emits {
   (e: 'update:selectedOperatorLabel', value: string): void
   (e: 'update:selectedAircraftLabel', value: string): void
   (e: 'operatorChanged', operatorId: number): void
+  (e: 'refreshOperators'): void
+  (e: 'refreshAircrafts'): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const operatorsStore = useOperatorsStore()
+const aircraftsStore = useAircraftsStore()
 
 const operatorPopoverOpen = ref(false)
 const aircraftPopoverOpen = ref(false)
 const operatorSearchTerm = ref('')
 const aircraftSearchTerm = ref('')
 const showAllAircrafts = ref(false)
+
+// Modaux de création rapide
+const createOperatorOpen = ref(false)
+const createAircraftOpen = ref(false)
 
 // Filtered operators
 const filteredOperators = computed(() => {
@@ -305,6 +386,34 @@ const selectAircraft = (aircraft: any) => {
   emit('update:selectedAircraftLabel', aircraft.immatriculation)
   aircraftPopoverOpen.value = false
   aircraftSearchTerm.value = ''
+}
+
+// ── Ouverture des modaux ─────────────────────────────────────────
+const openCreateOperator = () => {
+  operatorPopoverOpen.value = false
+  createOperatorOpen.value = true
+}
+
+const openCreateAircraft = () => {
+  aircraftPopoverOpen.value = false
+  createAircraftOpen.value = true
+}
+
+// ── Callbacks après création ─────────────────────────────────────
+const onOperatorCreated = async (operator: any) => {
+  // Rafraîchir la liste des opérateurs dans le store parent
+  await operatorsStore.fetchAllOperators()
+  emit('refreshOperators')
+  // Auto-sélectionner le nouvel opérateur
+  await selectOperator(operator)
+}
+
+const onAircraftCreated = async (aircraft: any) => {
+  // Rafraîchir la liste des aéronefs
+  await aircraftsStore.fetchAllAircrafts()
+  emit('refreshAircrafts')
+  // Auto-sélectionner le nouvel aéronef
+  selectAircraft(aircraft)
 }
 
 // Réinitialiser showAllAircrafts quand l'opérateur change

@@ -6,12 +6,12 @@
       <DialogHeader class="px-6 py-4 border-b shrink-0">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="h-9 w-9 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
-              <Package class="h-4.5 w-4.5 text-white" />
+            <div class="h-9 w-9 rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+              <Users class="h-4.5 w-4.5 text-white" />
             </div>
             <div>
-              <DialogTitle class="text-base font-semibold leading-tight">Synthèse des frets</DialogTitle>
-              <p class="text-xs text-muted-foreground mt-0.5">Répartition par compagnie · Quantités & %</p>
+              <DialogTitle class="text-base font-semibold leading-tight">Synthèse PAX</DialogTitle>
+              <p class="text-xs text-muted-foreground mt-0.5">Trafic passagers par compagnie · Quantités & %</p>
             </div>
           </div>
 
@@ -101,22 +101,22 @@
             <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
           <div v-else-if="!hasData" class="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-2">
-            <Package class="h-10 w-10 opacity-20" />
+            <Users class="h-10 w-10 opacity-20" />
             <p class="text-sm">Sélectionnez une période et cliquez sur Charger</p>
           </div>
 
           <template v-else>
             <!-- DOMESTIC -->
             <TabsContent value="domestic" class="flex-1 overflow-auto mt-0 px-4 pb-4 space-y-6">
-              <FreightOperatorTable
+              <PaxOperatorTable
                 title="Commerciaux"
-                color="emerald"
+                color="blue"
                 :operators="domesticCommercial"
                 :is-international="false"
               />
-              <FreightOperatorTable
+              <PaxOperatorTable
                 title="Non Commerciaux"
-                color="amber"
+                color="violet"
                 :operators="domesticNonCommercial"
                 :is-international="false"
               />
@@ -124,15 +124,15 @@
 
             <!-- INTERNATIONAL -->
             <TabsContent value="international" class="flex-1 overflow-auto mt-0 px-4 pb-4 space-y-6">
-              <FreightOperatorTable
+              <PaxOperatorTable
                 title="Commerciaux"
-                color="emerald"
+                color="blue"
                 :operators="internationalCommercial"
                 :is-international="true"
               />
-              <FreightOperatorTable
+              <PaxOperatorTable
                 title="Non Commerciaux"
-                color="amber"
+                color="violet"
                 :operators="internationalNonCommercial"
                 :is-international="true"
               />
@@ -147,7 +147,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, defineComponent, h } from 'vue'
 import {
-  Package, Loader2, Search, Download,
+  Users, Loader2, Search, Download,
   ChevronsUpDown, Check,
 } from 'lucide-vue-next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -157,34 +157,28 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
 import { useReportStore } from '~/stores/reports'
-import type { OperatorMetric } from '~/types/api'
+import type { OperatorPax } from '~/types/api'
 
-// ─── Operator row type ────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-interface OperatorRow {
-  sigle:     string
-  fret_dep:  number
-  fret_arr:  number
-  exced_dep: number
-  exced_arr: number
-  total:     number // grand total = fret_dep + fret_arr + exced_dep + exced_arr
+interface PaxRow {
+  sigle:   string
+  traffic: number
+  total:   number // always = traffic (paxbus excluded per spec)
 }
 
 // ─── Inline sub-component ─────────────────────────────────────────────────────
 
-const FreightOperatorTable = defineComponent({
+const PaxOperatorTable = defineComponent({
   props: {
     title:          { type: String,  required: true },
-    color:          { type: String,  default: 'emerald' },
-    operators:      { type: Array as () => OperatorRow[], required: true },
+    color:          { type: String,  default: 'blue' },
+    operators:      { type: Array as () => PaxRow[], required: true },
     isInternational:{ type: Boolean, default: false },
   },
   setup(props) {
-    const totalFretDep  = computed(() => props.operators.reduce((s, r) => s + r.fret_dep,  0))
-    const totalFretArr  = computed(() => props.operators.reduce((s, r) => s + r.fret_arr,  0))
-    const totalExcedDep = computed(() => props.operators.reduce((s, r) => s + r.exced_dep, 0))
-    const totalExcedArr = computed(() => props.operators.reduce((s, r) => s + r.exced_arr, 0))
-    const totalGrand    = computed(() => props.operators.reduce((s, r) => s + r.total,      0))
+    const totalTraffic = computed(() => props.operators.reduce((s, r) => s + r.traffic, 0))
+    const totalGrand   = computed(() => props.operators.reduce((s, r) => s + r.total,   0))
 
     function pct(val: number, total: number) {
       if (!total) return '0,00%'
@@ -193,97 +187,58 @@ const FreightOperatorTable = defineComponent({
     function fmt(n: number) { return n.toLocaleString('fr-FR') }
 
     const headerBg: Record<string, string> = {
-      emerald: 'bg-emerald-600',
-      amber:   'bg-amber-600',
+      blue:   'bg-blue-600',
+      violet: 'bg-violet-600',
     }
 
     return () => {
       if (!props.operators.length) return null
       const hc = headerBg[props.color] ?? 'bg-slate-600'
 
-      // td helpers
-      const tdNum  = (v: number)  => h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono' }, fmt(v))
-      const tdPct  = (v: number, tot: number) => h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-muted-foreground text-[11px]' }, pct(v, tot))
-      const tdTot  = (v: number)  => h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono font-semibold bg-blue-50/60 dark:bg-blue-950/20' }, fmt(v))
-      const tdTotP = (v: number, tot: number) => h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-[11px] bg-blue-50/60 dark:bg-blue-950/20' }, pct(v, tot))
+      const tdNum  = (v: number) =>
+        h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono' }, fmt(v))
+      const tdPct  = (v: number, tot: number) =>
+        h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-muted-foreground text-[11px]' }, pct(v, tot))
+      const tdTot  = (v: number) =>
+        h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono font-semibold bg-blue-50/60 dark:bg-blue-950/20' }, fmt(v))
+      const tdTotP = (v: number, tot: number) =>
+        h('td', { class: 'border border-border px-2 py-1.5 text-right font-mono text-[11px] bg-blue-50/60 dark:bg-blue-950/20' }, pct(v, tot))
 
       return h('div', { class: 'space-y-1' }, [
         h('p', { class: `text-xs font-semibold uppercase tracking-wider text-${props.color}-700 mb-2` }, props.title),
         h('div', { class: 'overflow-x-auto rounded-lg border' }, [
           h('table', { class: 'w-full text-xs border-collapse' }, [
-            // ── THEAD ──────────────────────────────────────────────────────
+            // ── THEAD ─────────────────────────────────────────────────────
             h('thead', [
-              // Row 1: group headers
               h('tr', { class: `${hc} text-white` }, [
                 h('th', { rowspan: 2, class: 'border border-white/20 px-3 py-2 text-left font-semibold min-w-[2rem]' }, 'N°'),
                 h('th', { rowspan: 2, class: 'border border-white/20 px-3 py-2 text-left font-semibold min-w-[3.5rem]' }, 'CIE'),
-                h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold' }, 'Fret Départ'),
-                ...(props.isInternational ? [
-                  h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold' }, 'Fret Arrivée'),
-                ] : []),
-                h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold' }, 'Excédents Départ'),
-                ...(props.isInternational ? [
-                  h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold' }, 'Excédents Arrivée'),
-                ] : []),
-                // TOTAL GÉNÉRAL header — blue accent
-                h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold bg-blue-700' }, 'TOTAL GÉNÉRAL'),
+                h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold' }, 'Trafic'),
+                h('th', { colspan: 2, class: 'border border-white/20 px-3 py-1.5 text-center font-semibold bg-indigo-700' }, 'TOTAL'),
               ]),
-              // Row 2: Qté / % sub-labels
               h('tr', { class: `bg-${props.color}-500 text-white` }, [
-                'Qté', '%',
-                ...(props.isInternational ? ['Qté', '%'] : []),
-                'Qté', '%',
-                ...(props.isInternational ? ['Qté', '%'] : []),
-                'Qté', '%', // TOTAL GÉNÉRAL sub-labels
-              ].map(lbl =>
-                h('th', {
-                  class: lbl === 'Qté' || lbl === '%'
-                    ? 'border border-white/20 px-2 py-1 text-center font-medium'
-                    : 'border border-white/20 px-2 py-1 text-center font-medium bg-blue-600',
-                }, lbl)
-              )),
+                'Qté', '%', 'Qté', '%',
+              ].map(lbl => h('th', { class: 'border border-white/20 px-2 py-1 text-center font-medium' }, lbl))),
             ]),
-            // ── TBODY ──────────────────────────────────────────────────────
+            // ── TBODY ─────────────────────────────────────────────────────
             h('tbody', [
               ...props.operators.map((row, i) =>
                 h('tr', {
-                  class: [i % 2 === 0 ? 'bg-background' : 'bg-muted/30', 'hover:bg-emerald-50/30 transition-colors'],
+                  class: [i % 2 === 0 ? 'bg-background' : 'bg-muted/30', `hover:bg-${props.color}-50/30 transition-colors`],
                 }, [
                   h('td', { class: 'border border-border px-3 py-1.5 text-center font-mono text-muted-foreground' }, i + 1),
                   h('td', { class: 'border border-border px-3 py-1.5 font-semibold' }, row.sigle),
-                  tdNum(row.fret_dep),
-                  tdPct(row.fret_dep, totalFretDep.value),
-                  ...(props.isInternational ? [
-                    tdNum(row.fret_arr),
-                    tdPct(row.fret_arr, totalFretArr.value),
-                  ] : []),
-                  tdNum(row.exced_dep),
-                  tdPct(row.exced_dep, totalExcedDep.value),
-                  ...(props.isInternational ? [
-                    tdNum(row.exced_arr),
-                    tdPct(row.exced_arr, totalExcedArr.value),
-                  ] : []),
-                  // TOTAL GÉNÉRAL — blue tint
+                  tdNum(row.traffic),
+                  tdPct(row.traffic, totalTraffic.value),
                   tdTot(row.total),
                   tdTotP(row.total, totalGrand.value),
                 ])
               ),
-              // ── TOTAL row ────────────────────────────────────────────────
+              // ── TOTAL row ─────────────────────────────────────────────
               h('tr', { class: `bg-${props.color}-600/10 font-bold border-t-2 border-${props.color}-500` }, [
                 h('td', { colspan: 2, class: 'border border-border px-3 py-2 font-bold' }, 'TOTAL'),
-                h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold' }, fmt(totalFretDep.value)),
+                h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold' }, fmt(totalTraffic.value)),
                 h('td', { class: 'border border-border px-2 py-2 text-right font-mono' }, '100%'),
-                ...(props.isInternational ? [
-                  h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold' }, fmt(totalFretArr.value)),
-                  h('td', { class: 'border border-border px-2 py-2 text-right font-mono' }, '100%'),
-                ] : []),
-                h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold' }, fmt(totalExcedDep.value)),
-                h('td', { class: 'border border-border px-2 py-2 text-right font-mono' }, '100%'),
-                ...(props.isInternational ? [
-                  h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold' }, fmt(totalExcedArr.value)),
-                  h('td', { class: 'border border-border px-2 py-2 text-right font-mono' }, '100%'),
-                ] : []),
-                // TOTAL GÉNÉRAL on TOTAL row
                 h('td', { class: 'border border-border px-2 py-2 text-right font-mono font-bold bg-blue-100/60 dark:bg-blue-900/20' }, fmt(totalGrand.value)),
                 h('td', { class: 'border border-border px-2 py-2 text-right font-mono bg-blue-100/60 dark:bg-blue-900/20' }, '100%'),
               ]),
@@ -329,6 +284,7 @@ const availableYears = computed(() => {
 })
 const selectedMonthLabel = computed(() => MONTHS.find(m => m.value === selectedMonth.value)?.label ?? '')
 
+// PAX uses the same by-operators endpoint as freight
 const loading = computed(() =>
   periodType.value === 'monthly' ? store.loadingMonthlyOps : store.loadingYearlyOps
 )
@@ -345,58 +301,40 @@ async function load() {
   }
 }
 
-// Build operator rows and sort by grand total descending
-function toOperatorRows(
-  group:        Record<string, OperatorMetric> | undefined,
-  excedGroup:   Record<string, OperatorMetric> | undefined,
-  fretArrGroup?: Record<string, OperatorMetric>,
-  excedArrGroup?:Record<string, OperatorMetric>
-): OperatorRow[] {
-  const sigles = new Set([
-    ...Object.keys(group      ?? {}),
-    ...Object.keys(excedGroup ?? {}),
-  ])
-  return Array.from(sigles)
-    .map(sigle => {
-      const fret_dep  = group?.[sigle]?.traffic        ?? 0
-      const fret_arr  = fretArrGroup?.[sigle]?.traffic  ?? 0
-      const exced_dep = excedGroup?.[sigle]?.traffic    ?? 0
-      const exced_arr = excedArrGroup?.[sigle]?.traffic ?? 0
-      return {
-        sigle,
-        fret_dep,
-        fret_arr,
-        exced_dep,
-        exced_arr,
-        total: fret_dep + fret_arr + exced_dep + exced_arr,
-      }
+// Map OperatorPax records → PaxRow[], filter zero-traffic, sort by total desc
+function toPaxRows(
+  paxGroup: Record<string, OperatorPax> | undefined,
+  _isInternational: boolean
+): PaxRow[] {
+  if (!paxGroup) return []
+  return Object.entries(paxGroup)
+    .map(([sigle, d]) => {
+      const traffic = d.traffic ?? 0
+      return { sigle, traffic, total: traffic }
     })
+    .filter(r => r.traffic > 0)
     .sort((a, b) => b.total - a.total)
 }
 
-const domesticCommercial = computed(() => {
-  const d = data.value?.domestic.commercial
-  return toOperatorRows(d?.fret, d?.excedents)
-})
-const domesticNonCommercial = computed(() => {
-  const d = data.value?.domestic.non_commercial
-  return toOperatorRows(d?.fret, d?.excedents)
-})
-const internationalCommercial = computed(() => {
-  const d = data.value?.international.commercial
-  return toOperatorRows(d?.fret_depart, d?.exced_depart, d?.fret_arrivee, d?.exced_arrivee)
-})
-const internationalNonCommercial = computed(() => {
-  const d = data.value?.international.non_commercial
-  return toOperatorRows(d?.fret_depart, d?.exced_depart, d?.fret_arrivee, d?.exced_arrivee)
-})
+const domesticCommercial = computed(() =>
+  toPaxRows(data.value?.domestic.commercial?.pax, false)
+)
+const domesticNonCommercial = computed(() =>
+  toPaxRows(data.value?.domestic.non_commercial?.pax, false)
+)
+const internationalCommercial = computed(() =>
+  toPaxRows(data.value?.international.commercial?.pax, true)
+)
+const internationalNonCommercial = computed(() =>
+  toPaxRows(data.value?.international.non_commercial?.pax, true)
+)
 
 async function exportData() {
   exporting.value = true
   try {
     const url = periodType.value === 'monthly'
-      ? `/report/monthly/${selectedMonth.value}/${selectedYear.value}/by-operators/export`
-      : `/report/yearly/${selectedYear.value}/by-operators/export`
+      ? `/report/monthly/${selectedMonth.value}/${selectedYear.value}/pax-by-operators/export`
+      : `/report/yearly/${selectedYear.value}/pax-by-operators/export`
 
     const response = await apiFetch(url, { method: 'GET', responseType: 'blob' })
     const blob = new Blob([response], {
@@ -405,8 +343,8 @@ async function exportData() {
     const link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)
     link.download = periodType.value === 'monthly'
-      ? `TABLEAU SYNTHESE DE FRET ${MONTHS.find(m => m.value === selectedMonth.value)?.label.toUpperCase()} ${selectedYear.value}.xlsx`
-      : `TABLEAU SYNTHESE DE FRET ${selectedYear.value}.xlsx`
+      ? `SYNTHESE PAX ${MONTHS.find(m => m.value === selectedMonth.value)?.label.toUpperCase()} ${selectedYear.value}.xlsx`
+      : `SYNTHESE PAX ${selectedYear.value}.xlsx`
     link.click()
     success('Export réussi', 'Le fichier Excel a été téléchargé')
   } catch (err: any) {

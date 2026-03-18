@@ -115,7 +115,7 @@
         <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Statistiques rapides</h2>
       </div>
 
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid gap-4 sm:grid-cols-3">
 
         <!-- Card : Évolution du trafic -->
         <Card
@@ -153,6 +153,42 @@
           </CardContent>
         </Card>
 
+        <!-- Card : Synthèse PAX -->
+        <Card
+          class="group relative overflow-hidden hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-500/60 cursor-pointer"
+          @click="paxDialogOpen = true"
+        >
+          <div class="absolute inset-0 bg-linear-to-br from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 transition-all duration-300" />
+          <CardContent class="relative p-6">
+            <div class="flex items-start gap-4">
+              <div class="h-12 w-12 rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shrink-0 group-hover:scale-110 transition-transform duration-300">
+                <Users class="h-6 w-6 text-white" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                  <h3 class="font-semibold text-base group-hover:text-blue-600 transition-colors">
+                    Synthèse PAX
+                  </h3>
+                  <Badge class="bg-blue-100 text-blue-700 border-0 text-[10px]">Par exploitants</Badge>
+                </div>
+                <p class="text-xs text-muted-foreground leading-relaxed">
+                  Répartition du trafic passagers par compagnie avec quantités et pourcentages.
+                  Séparation commerciaux / non-commerciaux.
+                </p>
+                <div class="flex items-center gap-3 mt-3">
+                  <span class="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Building2 class="h-3 w-3" /> Par opérateur
+                  </span>
+                  <span class="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <FileSpreadsheet class="h-3 w-3" /> Export Excel
+                  </span>
+                </div>
+              </div>
+              <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-blue-600 shrink-0 transition-colors" />
+            </div>
+          </CardContent>
+        </Card>
+
         <!-- Card : Synthèse des frets -->
         <Card
           class="group relative overflow-hidden hover:shadow-xl transition-all duration-300 border-2 hover:border-emerald-500/60 cursor-pointer"
@@ -169,7 +205,7 @@
                   <h3 class="font-semibold text-base group-hover:text-emerald-600 transition-colors">
                     Synthèse des frets
                   </h3>
-                  <Badge class="bg-emerald-100 text-emerald-700 border-0 text-[10px]">By operators</Badge>
+                  <Badge class="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Par exploitants</Badge>
                 </div>
                 <p class="text-xs text-muted-foreground leading-relaxed">
                   Répartition du fret et des excédents par compagnie avec quantités et pourcentages.
@@ -193,8 +229,9 @@
     </div>
 
     <!-- ── Dialogs ──────────────────────────────────────────────────────────── -->
-    <TrafficStatsDialog  v-model:open="trafficDialogOpen" />
-    <FreightSynthDialog  v-model:open="freightDialogOpen" />
+    <TrafficStatsDialog v-model:open="trafficDialogOpen" />
+    <PaxSynthDialog     v-model:open="paxDialogOpen" />
+    <FreightSynthDialog v-model:open="freightDialogOpen" />
 
   </div>
 </template>
@@ -204,16 +241,18 @@ import { ref, computed } from 'vue'
 import {
   BarChart3, CalendarDays, Package, Bus,
   TrendingUp, ArrowRight, ChevronRight,
-  Globe, FileSpreadsheet, Building2,
+  Globe, FileSpreadsheet, Building2, Users,
 } from 'lucide-vue-next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import TrafficStatsDialog from '~/components/modules/report/TrafficStatsDialog.vue'
+import PaxSynthDialog     from '~/components/modules/report/PAXSynthDialog.vue'
 import FreightSynthDialog from '~/components/modules/report/FreightSynthDialog.vue'
 
 definePageMeta({ middleware: 'auth' })
 
 const trafficDialogOpen = ref(false)
+const paxDialogOpen     = ref(false)
 const freightDialogOpen = ref(false)
 
 const currentPeriodLabel = computed(() => {

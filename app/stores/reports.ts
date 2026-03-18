@@ -1,76 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface PaxRow {
-  DATE?: string
-  MOIS?: string
-  traffic: number
-  gopass: number
-  paxbus: number
-}
-
-export interface MetricRow {
-  DATE?: string
-  MOIS?: string
-  traffic: number
-  idef: number
-}
-
-export interface DomesticRegime {
-  pax: PaxRow[]
-  fret: MetricRow[]
-  excedents: MetricRow[]
-}
-
-export interface InternationalRegime {
-  pax: PaxRow[]
-  fret_depart: MetricRow[]
-  fret_arrivee: MetricRow[]
-  exced_depart: MetricRow[]
-  exced_arrivee: MetricRow[]
-}
-
-export interface IdefFretRow {
-  DATE?: string
-  MOIS?: string
-  usd: number
-  cdf: number
-  rate?: number
-}
-
-export interface ReportData {
-  domestic: DomesticRegime
-  international: InternationalRegime
-  idef_fret: IdefFretRow[]
-  monthly_rate?: number | null
-}
-
-export interface OperatorMetric { traffic: number; idef: number }
-export interface OperatorPax    { traffic: number; gopass: number; paxbus: number }
-
-export interface OperatorGroup {
-  pax:           Record<string, OperatorPax>
-  fret?:         Record<string, OperatorMetric>
-  excedents?:    Record<string, OperatorMetric>
-  fret_depart?:  Record<string, OperatorMetric>
-  fret_arrivee?: Record<string, OperatorMetric>
-  exced_depart?: Record<string, OperatorMetric>
-  exced_arrivee?:Record<string, OperatorMetric>
-}
-
-export interface ByOperatorsRegime {
-  commercial:     OperatorGroup
-  non_commercial: OperatorGroup
-}
-
-export interface ReportByOperatorsData {
-  domestic:      ByOperatorsRegime
-  international: ByOperatorsRegime
-  idef_fret:     IdefFretRow[]
-  monthly_rate?: number | null
-}
+import type {
+  ReportData,
+  ReportByOperatorsData,
+} from '~/types/api'
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 

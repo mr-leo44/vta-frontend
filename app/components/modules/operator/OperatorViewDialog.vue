@@ -283,10 +283,10 @@
                   <div class="flex-1 min-w-0">
                     <div class="font-medium text-sm">{{ flight.flight_number }}</div>
                     <div class="text-xs text-muted-foreground flex items-center gap-1">
-                      <span>{{ flight.departure?.name + " (" + flight.departure?.iata + ")" || 'N/A' }}</span>
-                      <ArrowRight class="h-3 w-3" />
-                      <span>{{ flight.arrival?.name + " (" + flight.arrival?.iata + ")" || 'N/A' }}</span>
-                    </div>
+                        <span>{{ flight.departure?.from?.iata || 'Lieu introuvable' }}</span>
+                        <ArrowRight class="h-3 w-3" />
+                        <span>{{ flight.departure?.to?.iata || 'Lieu introuvable' }}</span>
+                      </div>
                   </div>
                   <div class="text-xs text-muted-foreground text-right shrink-0">
                     {{ formatFlightDate(flight.departure_time) }}

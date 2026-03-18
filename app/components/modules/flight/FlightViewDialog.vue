@@ -28,7 +28,7 @@
           <CardContent class="p-6">
             <div class="flex items-center justify-between">
               <div class="flex-1">
-                <div class="text-sm text-muted-foreground mb-1">Aéroport de départ</div>
+                <div class="text-sm text-muted-foreground mb-1">Départ</div>
                 <div class="text-3xl font-bold text-sky-900 dark:text-sky-100">{{ formatLocationIata(flight.departure) }}</div>
                 <div class="text-sm text-muted-foreground mt-2">{{ formatLocationName(flight.departure) }}</div>
                 <div class="text-xs font-medium text-sky-700 dark:text-sky-400 mt-3">
@@ -44,7 +44,7 @@
               </div>
               
               <div class="flex-1 text-right">
-                <div class="text-sm text-muted-foreground mb-1">Aéroport d'arrivée</div>
+                <div class="text-sm text-muted-foreground mb-1">Arrivée</div>
                 <div class="text-3xl font-bold text-sky-900 dark:text-sky-100">{{ formatLocationIata(flight.arrival) }}</div>
                 <div class="text-sm text-muted-foreground mt-2">{{ formatLocationName(flight.arrival) }}</div>
                 <div class="text-xs font-medium text-sky-700 dark:text-sky-400 mt-3">
@@ -286,12 +286,30 @@ const isOpen = computed({
   set: (value) => emit('update:open', value)
 })
 
-const formatLocationIata = (location: any) => {
-  return location?.iata || location?.[0] || '???'
+const formatLocationIata = (location: any): string => {
+  if (!location) return 'Lieu introuvable'
+  // Nouvelle structure: { from: {iata, name}, to: {iata, name} }
+  if (location.from && location.to) {
+    const fromIata = location.from?.iata
+    const toIata = location.to?.iata
+    if (fromIata && toIata) return `${fromIata} → ${toIata}`
+    return fromIata || toIata || 'Lieu introuvable'
+  }
+  // Ancienne structure
+  return location?.iata || location?.[0] || 'Lieu introuvable'
 }
 
-const formatLocationName = (location: any) => {
-  return location?.name || 'Aéroport inconnu'
+const formatLocationName = (location: any): string => {
+  if (!location) return 'Lieu introuvable'
+  // Nouvelle structure: { from: {iata, name}, to: {iata, name} }
+  if (location.from && location.to) {
+    const fromName = location.from?.name
+    const toName = location.to?.name
+    if (fromName && toName) return `${fromName} → ${toName}`
+    return fromName || toName || 'Lieu introuvable'
+  }
+  // Ancienne structure
+  return location?.name || 'Lieu introuvable'
 }
 
 const formatTime = (dateTime: string) => {

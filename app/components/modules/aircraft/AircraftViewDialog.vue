@@ -125,7 +125,7 @@
                   <div>
                     <div class="font-medium">{{ flight.flight_number }}</div>
                     <div class="text-sm text-muted-foreground">
-                      {{ formatFlightRoute(flight.departure, flight.arrival) }}
+                      {{ formatFlightRoute(flight.departure) }}
                     </div>
                   </div>
                 </div>
@@ -239,10 +239,14 @@ const formatDate = (date: string | null) => {
   })
 }
 
-const formatFlightRoute = (departure: any[], arrival: any[]) => {
-  const dep = departure?.name + ' (' + departure.iata + ')' || '???'
-  const arr = arrival?.name + ' (' + arrival.iata + ')' || '???'
-  return `${dep} → ${arr}`
+const formatFlightRoute = (departure: any) => {
+  const fromIata = departure?.from?.iata
+  const toIata = departure?.to?.iata
+  const fromName = departure?.from?.name
+  const toName = departure?.to?.name
+  if (fromIata && toIata) return `${fromIata} (${fromName || '?'}) → ${toIata} (${toName || '?'})`
+  if (fromIata) return `${fromIata} (${fromName || '?'})`
+  return 'Lieu introuvable'
 }
 
 const formatStatus = (status: FlightStatus) => {

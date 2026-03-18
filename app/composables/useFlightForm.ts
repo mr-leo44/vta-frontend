@@ -1,13 +1,19 @@
 import { ref, computed } from 'vue'
-import type { FlightFormData, Flight } from '~/types/api'
+import type { FlightFormData, Flight, LocationData } from '~/types/api'
+import { parseLocationData, parseLocationPoint } from '~/types/api'
+
+const emptyLocation = (): LocationData => ({
+  from: { iata: '', name: '' },
+  to: { iata: '', name: '' }
+})
 
 export const useFlightForm = () => {
   const formData = ref<FlightFormData>({
     flight_number: '',
     operator_id: 0,
     aircraft_id: 0,
-    departure: { iata: '', name: '' },
-    arrival: { iata: '', name: '' },
+    departure: emptyLocation(),
+    arrival: emptyLocation(),
     departure_time: '',
     arrival_time: '',
     flight_regime: 'domestic',
@@ -49,17 +55,38 @@ export const useFlightForm = () => {
     if (!formData.value.flight_regime) {
       errors.value.flight_regime = 'Le régime du vol est requis'
     }
-    if (!formData.value.departure.iata) {
-      errors.value['departure.iata'] = 'Code IATA de départ requis'
+    if (!formData.value.departure.from?.iata) {
+      errors.value['departure.from.iata'] = 'Code IATA de départ (from) requis'
     }
-    if (!formData.value.departure.name) {
-      errors.value['departure.name'] = "Nom de l'aéroport de départ requis"
+    if (!formData.value.departure.from?.name) {
+      errors.value['departure.from.name'] = "Nom de l'aéroport de départ (from) requis"
     }
-    if (!formData.value.arrival.iata) {
-      errors.value['arrival.iata'] = "Code IATA d'arrivée requis"
+    if (!formData.value.departure.to?.iata) {
+      errors.value['departure.to.iata'] = 'Code IATA de départ (to) requis'
     }
-    if (!formData.value.arrival.name) {
-      errors.value['arrival.name'] = "Nom de l'aéroport d'arrivée requis"
+    if (!formData.value.departure.to?.name) {
+      errors.value['departure.to.name'] = "Nom de l'aéroport de départ (to) requis"
+    }
+    if (!formData.value.arrival.from?.iata) {
+      errors.value['arrival.from.iata'] = "Code IATA d'arrivée (from) requis"
+    }
+    if (!formData.value.arrival.from?.name) {
+      errors.value['arrival.from.name'] = "Nom de l'aéroport d'arrivée (from) requis"
+    }
+    if (!formData.value.arrival.to?.iata) {
+      errors.value['arrival.to.iata'] = "Code IATA d'arrivée (to) requis"
+    }
+    if (!formData.value.arrival.to?.name) {
+      errors.value['arrival.to.name'] = "Nom de l'aéroport d'arrivée (to) requis"
+    }
+
+    // Contrainte métier: departure.from ne peut pas être identique à arrival.from
+    if (
+      formData.value.departure.from?.iata &&
+      formData.value.arrival.from?.iata &&
+      formData.value.departure.from.iata === formData.value.arrival.from.iata
+    ) {
+      errors.value['arrival.from.iata'] = "L'aéroport de départ (from) ne peut pas être identique à l'aéroport d'arrivée (from)"
     }
     if (!formData.value.departure_time) {
       errors.value.departure_time = 'Heure de départ requise'
@@ -74,7 +101,7 @@ export const useFlightForm = () => {
       const arrivalDate = new Date(formData.value.arrival_time)
       
       if (departureDate <= arrivalDate) {
-        errors.value.arrival_time = "L'heure de départ doit être postérieure à l'heure d'arrivée"
+        errors.value.arrival_time = "L'heure de départ doit être postérieure à l'heure de d'arrivée"
       }
     }
 
@@ -94,8 +121,8 @@ export const useFlightForm = () => {
       flight_number: '',
       operator_id: 0,
       aircraft_id: 0,
-      departure: { iata: '', name: '' },
-      arrival: { iata: '', name: '' },
+      departure: emptyLocation(),
+      arrival: emptyLocation(),
       departure_time: '',
       arrival_time: '',
       flight_regime: 'domestic',
@@ -127,8 +154,8 @@ export const useFlightForm = () => {
       flight_number: flight.flight_number,
       operator_id: flight.operator?.id || 0,
       aircraft_id: flight.aircraft?.id || 0,
-      departure: flight.departure || { iata: '', name: '' },
-      arrival: flight.arrival || { iata: '', name: '' },
+      departure: parseLocationData(flight.departure) ?? emptyLocation(),
+      arrival: parseLocationData(flight.arrival) ?? emptyLocation(),
       departure_time: formatDateTimeForInput(flight.departure_time),
       arrival_time: formatDateTimeForInput(flight.arrival_time),
       flight_regime: flight.flight_regime,

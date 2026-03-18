@@ -91,6 +91,14 @@
                     </NuxtLink>
                   </DropdownMenuItem>
 
+                  <DropdownMenuItem as-child>
+                    <NuxtLink to="/imports" class="cursor-pointer flex items-center">
+                      <Upload class="mr-2 h-4 w-4" />
+                      <span>Imports</span>
+                    </NuxtLink>
+                  </DropdownMenuItem>
+
+
                   <!-- Reports Dropdown -->
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger class="cursor-pointer">
@@ -242,6 +250,14 @@
               <Badge variant="secondary" class="ml-auto text-xs">Bientôt</Badge>
             </NuxtLink>
 
+            <NuxtLink to="/imports" @click="mobileMenuOpen = false"
+              class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all hover:bg-muted"
+              :class="$route.path.startsWith('/imports') ? 'bg-muted text-primary' : ''">
+              <Upload class="h-4 w-4" />
+              <span>Imports</span>
+            </NuxtLink>
+
+
             <div class="px-4 py-2 text-xs font-semibold text-muted-foreground">RAPPORTS</div>
 
             <NuxtLink to="/reports/traffic" @click="mobileMenuOpen = false"
@@ -327,7 +343,8 @@ import {
   MoreHorizontal,
   Menu,
   X,
-  Package
+  Package,
+  Upload
 } from 'lucide-vue-next'
 import {
   DropdownMenu,

@@ -185,13 +185,13 @@
         </Button>
 
         <Button variant="outline"
-          class="h-28 flex-col gap-3 group hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/20 transition-all"
-          @click="navigateTo('/aircrafts/types')">
+          class="h-28 flex-col gap-3 group hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950/20 transition-all"
+          @click="navigateTo('/imports')">
           <div
-            class="h-12 w-12 rounded-xl bg-green-100 dark:bg-green-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Layers class="h-6 w-6 text-green-600 dark:text-green-400" />
+            class="h-12 w-12 rounded-xl bg-teal-100 dark:bg-teal-950 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Upload class="h-6 w-6 text-teal-600 dark:text-teal-400" />
           </div>
-          <span class="font-semibold">Types d'aéronefs</span>
+          <span class="font-semibold">Imports</span>
         </Button>
 
         <Button variant="outline" class="h-28 flex-col gap-3 opacity-60 cursor-not-allowed" disabled>
@@ -252,7 +252,7 @@
             <Activity class="h-10 w-10 text-muted-foreground opacity-50" />
           </div>
           <p class="text-lg font-medium mb-2">Aucune activité récente</p>
-          <p class="text-sm text-muted-foreground">Les activités apparaîtront ici une fois que vous commencerez à 
+          <p class="text-sm text-muted-foreground">Les activités apparaîtront ici une fois que vous commencerez à
             utiliser le système</p>
         </div>
       </CardContent>
@@ -261,7 +261,7 @@
 </template>
 
 <script setup lang="ts">
-import { Building2, Plane, Users, FileText, Layers, PlaneTakeoff, TrendingUp, TrendingDown, AlertCircle, Zap, Activity } from 'lucide-vue-next'
+import { Building2, Plane, Users, FileText, Upload, PlaneTakeoff, TrendingUp, TrendingDown, AlertCircle, Zap, Activity } from 'lucide-vue-next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import LoadingScreen from '~/components/LoadingScreen.vue'

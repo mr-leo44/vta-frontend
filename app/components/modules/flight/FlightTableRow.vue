@@ -26,12 +26,14 @@
       <!-- Route & Horaires -->
       <div class="flex items-center gap-2 text-sm">
         <div>
-          <div class="font-medium">{{ formatLocation(flight.departure) }}</div>
+          <div class="font-mono font-semibold">{{ departureFrom(flight) }}</div>
+          <div class="text-xs text-muted-foreground truncate max-w-20">{{ departureFromName(flight) }}</div>
           <div class="text-xs text-muted-foreground">{{ formatTime(flight.departure_time) }}</div>
         </div>
-        <ArrowRight class="h-4 w-4 text-muted-foreground" />
+        <ArrowRight class="h-4 w-4 text-muted-foreground shrink-0" />
         <div>
-          <div class="font-medium">{{ formatLocation(flight.arrival) }}</div>
+          <div class="font-mono font-semibold">{{ departureTo(flight) }}</div>
+          <div class="text-xs text-muted-foreground truncate max-w-20">{{ departureToName(flight) }}</div>
           <div class="text-xs text-muted-foreground">{{ formatTime(flight.arrival_time) }}</div>
         </div>
       </div>
@@ -126,25 +128,10 @@ const getStatusColor = (status: FlightStatus) => {
   return 'bg-gray-100 text-gray-600'
 }
 
-const formatLocation = (location: any): string => {
-  if (!location) return 'N/A'
-  
-  // Si c'est un objet avec iata et name
-  if (typeof location === 'object' && !Array.isArray(location) && location.iata && location.name) {
-    return `${location.iata} (${location.name})`
-  }
-  
-  // Si c'est un array
-  if (Array.isArray(location) && location.length > 0) {
-    const loc = location[0]
-    if (typeof loc === 'object' && loc.iata && loc.name) {
-      return `${loc.iata} (${loc.name})`
-    }
-    return loc
-  }
-  
-  return location
-}
+const departureFrom = (flight: any): string => flight.departure?.from?.iata || '???'
+const departureFromName = (flight: any): string => flight.departure?.from?.name || ''
+const departureTo = (flight: any): string => flight.departure?.to?.iata || '???'
+const departureToName = (flight: any): string => flight.departure?.to?.name || ''
 
 const formatTime = (dateTime: string) => {
   return new Date(dateTime).toLocaleTimeString('fr-FR', {

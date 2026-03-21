@@ -6,14 +6,90 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string
-  user: User
+  expires_at: string
+  user: AuthUser
 }
 
-export interface User {
+export interface AuthUser {
   id: number
+  name: string
   username: string
-  email?: string
-  name?: string
+  function: string | null
+  role: 'admin' | 'manager' | 'agent' | null
+  permissions: string[]
+  overrides?: PermissionOverride[]
+}
+
+// ==================== PERMISSION OVERRIDES ====================
+export interface PermissionOverride {
+  permission: string
+  type: 'grant' | 'revoke'
+  reason: string | null
+  granted_by: string | null
+  created_at: string
+}
+
+export interface UserPermissionsDetail {
+  user: {
+    id: number
+    name: string
+    role: string | null
+    function: string | null
+  }
+  role_permissions: string[]
+  effective_permissions: string[]
+  overrides: PermissionOverride[]
+}
+
+// ==================== USERS (admin) ====================
+export interface UserListItem {
+  id: number
+  name: string
+  username: string
+  role: string | null
+  function: {
+    value: string
+    label: string | null
+    start_date: string
+  } | null
+  created_at: string | null
+}
+
+// ==================== AUDIT ====================
+export type AuditEvent =
+  | 'created'
+  | 'updated'
+  | 'deleted'
+  | 'restored'
+  | 'function_assigned'
+  | 'permission_granted'
+  | 'permission_revoked'
+
+export interface AuditLogEntry {
+  id: number
+  event: AuditEvent
+  event_label: string
+  model: string
+  model_id: number
+  actor: {
+    id: number
+    name: string
+    username: string
+  } | null
+  actor_ip: string | null
+  old_values: Record<string, any> | null
+  new_values: Record<string, any> | null
+  created_at: string
+}
+
+export interface AuditStats {
+  total: number
+  today: number
+  this_week: number
+  this_month: number
+  by_event: Record<string, number>
+  by_model: Record<string, number>
+  top_actors: Array<{ actor: string; total: number }>
 }
 
 // ==================== OPERATORS ====================
@@ -53,29 +129,6 @@ export interface AircraftType {
   updated_at: string | null
 }
 
-export interface AircraftTypeKPIs {
-  total_aircrafts: number              // Nombre total d'aéronefs de ce type
-  active_aircrafts: number             // Nombre d'aéronefs actifs
-  inactive_aircrafts: number           // Nombre d'aéronefs inactifs
-  total_operators: number              // Nombre d'opérateurs utilisant ce type
-  total_flights: number                // Nombre total de vols (tous temps)
-  total_flights_current_year: number   // Nombre de vols cette année
-  average_pmad: number                 // PMAD moyen des aéronefs de ce type
-  flights_per_aircraft: number         // Vols par aéronef actif (cette année)
-  utilization_rate: number             // Taux d'utilisation (% actifs)
-}
-
-export interface OperatorWithAircraftCount {
-  id: number
-  name: string
-  sigle: string
-  iata_code: string | null
-  icao_code: string | null
-  country: string | null
-  aircrafts_count: number              // Nombre d'aéronefs de ce type
-  active_aircrafts_count: number       // Nombre d'aéronefs actifs de ce type
-}
-
 export interface AircraftTypeFormData {
   name: string
   sigle: string
@@ -102,18 +155,8 @@ export interface AircraftResource {
   immatriculation: string
   pmad: number | null
   in_activity: number
-  type: {
-    id: number
-    name: string
-    sigle: string
-  }
-  operator: {
-    id: number
-    name: string
-    sigle: string
-    iata_code: string
-    icao_code: string
-  }
+  type: { id: number; name: string; sigle: string }
+  operator: { id: number; name: string; sigle: string; iata_code: string; icao_code: string }
   flights: Flight[]
   created_at: string | null
   updated_at: string | null
@@ -127,78 +170,6 @@ export interface AircraftFormData {
   operator_id: number
 }
 
-// ==================== AIRCRAFTS - KPIs ====================
-export interface AircraftKPIs {
-  // Vols
-  total_flights_current_year: number
-  total_flights_current_month: number
-  average_flights_per_month: number
-
-  // Statut
-  is_active: boolean
-  pmad: number | null
-
-  // Performance (données génériques - à implémenter côté API)
-  total_flight_hours: number          // Total heures de vol
-  average_flight_duration: number     // Durée moyenne d'un vol (minutes)
-  utilization_rate: number            // Taux d'utilisation (%)
-  last_flight_date: string | null     // Date du dernier vol
-}
-
-// ==================== AIRCRAFTS - FILTERS ====================
-export interface AircraftFilters {
-  operator_id?: number | null
-  aircraft_type_id?: number | null
-  in_activity?: boolean | null
-  pmad_min?: number | null
-  pmad_max?: number | null
-  has_flights?: boolean
-  sort_by?: 'immatriculation' | 'created_at' | 'pmad' | 'operator' | 'type'
-  sort_order?: 'asc' | 'desc'
-}
-
-// ==================== AIRCRAFTS - MONTHLY STATS ====================
-export interface AircraftMonthlyStats {
-  year: number
-  months: Array<{
-    month: number
-    flights_count: number
-    flight_hours: number
-    destinations_count: number
-    average_passengers?: number
-    cancelled_count?: number
-  }>
-}
-
-// ==================== AIRCRAFTS - MAINTENANCE ====================
-// Suggestion pour tracking de maintenance
-export interface AircraftMaintenance {
-  id: number
-  aircraft_id: number
-  maintenance_type: 'routine' | 'repair' | 'inspection' | 'overhaul'
-  scheduled_date: string
-  completed_date: string | null
-  duration_hours: number
-  cost?: number
-  description?: string
-  next_maintenance_date?: string
-  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled'
-}
-
-// ==================== AIRCRAFTS - UTILIZATION ====================
-// Suggestion pour suivi d'utilisation détaillé
-export interface AircraftUtilization {
-  aircraft_id: number
-  period: 'daily' | 'weekly' | 'monthly' | 'yearly'
-  start_date: string
-  end_date: string
-  total_flights: number
-  total_hours: number
-  available_hours: number
-  utilization_rate: number // Pourcentage
-  revenue_hours?: number
-  non_revenue_hours?: number
-}
 // ==================== FLIGHTS ====================
 export type FlightStatus = 'qrf' | 'prevu' | 'embarque' | 'annule' | 'detourne'
 export type FlightRegime = 'domestic' | 'international'
@@ -210,20 +181,11 @@ export interface LocationPoint {
   name: string
 }
 
-/**
- * Structure normalisée de l'API pour departure/arrival
- * departure.from = aéroport source du tronçon départ
- * departure.to   = aéroport destination du tronçon départ
- * La contrainte métier: departure.from ne peut pas être identique à arrival.from
- */
 export interface LocationData {
   from: LocationPoint
   to: LocationPoint
 }
 
-/**
- * Helper: retourne un LocationPoint valide ou null si le format est incorrect
- */
 export const parseLocationPoint = (pt: any): LocationPoint | null => {
   if (pt && typeof pt === 'object' && typeof pt.iata === 'string' && typeof pt.name === 'string') {
     return { iata: pt.iata, name: pt.name }
@@ -231,9 +193,6 @@ export const parseLocationPoint = (pt: any): LocationPoint | null => {
   return null
 }
 
-/**
- * Helper: normalise une valeur brute d'API en LocationData | null
- */
 export const parseLocationData = (raw: any): LocationData | null => {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
   const from = parseLocationPoint(raw.from)
@@ -242,20 +201,13 @@ export const parseLocationData = (raw: any): LocationData | null => {
   return { from, to }
 }
 
-/**
- * Helper: formate un LocationPoint pour affichage "IATA -> IATA / Nom -> Nom"
- * Retourne "Lieu introuvable" si le point est invalide
- */
 export const formatLocationPoint = (pt: any): string => {
   const parsed = parseLocationPoint(pt)
   if (!parsed) return 'Lieu introuvable'
   return `${parsed.iata} — ${parsed.name}`
 }
 
-export interface FreightData {
-  departure: number
-  arrival: number
-}
+export interface FreightData { departure: number; arrival: number }
 
 export interface FlightStatistic {
   id?: number
@@ -275,16 +227,8 @@ export interface FlightStatistic {
 export interface Flight {
   id: number
   flight_number: string
-  operator: {
-    name: string
-    sigle: string
-    id?: number
-  } | null
-  aircraft: {
-    immatriculation: String
-    type: String
-    id?: number
-  }
+  operator: { name: string; sigle: string; id?: number } | null
+  aircraft: { immatriculation: String; type: String; id?: number }
   aircraft_id?: number
   flight_regime: FlightRegime
   flight_type: FlightType
@@ -298,13 +242,12 @@ export interface Flight {
   statistics?: FlightStatistic
 }
 
-// ==================== FLIGHT FORM DATA ====================
 export interface FlightFormData {
   flight_number: string
   operator_id: number
   aircraft_id: number
-  departure: LocationData  // { from: {iata, name}, to: {iata, name} }
-  arrival: LocationData    // { from: {iata, name}, to: {iata, name} }
+  departure: LocationData
+  arrival: LocationData
   departure_time: string
   arrival_time: string
   flight_regime?: FlightRegime
@@ -326,86 +269,10 @@ export interface FlightStatisticsFormData {
   justification: Record<string, any>
 }
 
-export interface FlightJustification {
-  id: number
-  name: string
-}
-
-// ==================== FLIGHT FILTERS ====================
-export interface FlightFilters {
-  operator_id?: number | null
-  aircraft_id?: number | null
-  status?: FlightStatus | null
-  regime?: FlightRegime | null
-  type?: FlightType | null
-  nature?: FlightNature | null
-  date_from?: string | null
-  date_to?: string | null
-  search?: string | null
-}
-
-// ==================== FLIGHT KPIs ====================
-export interface FlightKPIs {
-  total_flights: number
-  total_today: number
-  total_this_week: number
-  total_this_month: number
-  by_status: Record<FlightStatus, number>
-  by_regime: Record<FlightRegime, number>
-  by_type: Record<FlightType, number>
-  by_nature: Record<FlightNature, number>
-  total_passengers: number
-  average_passengers: number
-  top_operators: Array<{ id: number; name: string; count: number }>
-  top_routes: Array<{ route: string; count: number }>
-}
-
-// ==================== FLIGHT STATUS LABELS ====================
-export const FLIGHT_STATUS_LABELS: Record<FlightStatus, string> = {
-  qrf: 'QRF',
-  prevu: 'Prévu',
-  embarque: 'Embarqué',
-  annule: 'Annulé',
-  detourne: 'Détourné'
-}
-
-export const FLIGHT_STATUS_COLORS: Record<FlightStatus, string> = {
-  qrf: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  prevu: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-  embarque: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
-  annule: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  detourne: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-}
-
-export const FLIGHT_REGIME_LABELS: Record<FlightRegime, string> = {
-  domestic: 'Domestique',
-  international: 'International'
-}
-
-export const FLIGHT_TYPE_LABELS: Record<FlightType, string> = {
-  regular: 'Régulier',
-  non_regular: 'Non régulier'
-}
-
-export const FLIGHT_NATURE_LABELS: Record<FlightNature, string> = {
-  commercial: 'Vol Commercial',
-  humanitare: 'Vol Humanitaire',
-  state: 'Vol d\'Etat',
-  test: 'Vol de Test',
-  afreightment: 'Vol d\'Affrètement',
-  requisition: 'Vol de Requisition',
-}
-
-// ==================== FLIGHT JUSTIFICATIONS ====================
-export interface FlightJustification {
-  id: number
-  name: string
-}
+export interface FlightJustification { id: number; name: string }
 
 // ==================== API RESPONSES ====================
-export interface ApiResponse<T> {
-  data: T
-}
+export interface ApiResponse<T> { data: T }
 
 export interface PaginatedResponse<T> {
   data: T[]
@@ -419,11 +286,7 @@ export interface PaginatedResponse<T> {
     current_page: number
     from: number | null
     last_page: number
-    links: Array<{
-      url: string | null
-      label: string
-      active: boolean
-    }>
+    links: Array<{ url: string | null; label: string; active: boolean }>
     path: string | null
     per_page: number
     to: number | null
@@ -431,120 +294,46 @@ export interface PaginatedResponse<T> {
   }
 }
 
-export interface ValidationError {
-  message: string
-  errors: Record<string, string[]>
-}
-
 export interface ApiError {
   message: string
   errors?: Record<string, string[]>
 }
 
-// ==================== REPORTS ====================
-
-export interface PaxRow {
-  DATE?: string
-  MOIS?: string
-  traffic: number
-  gopass: number
-  paxbus: number
+// ==================== FLIGHT LABELS ====================
+export const FLIGHT_STATUS_LABELS: Record<FlightStatus, string> = {
+  qrf: 'QRF', prevu: 'Prévu', embarque: 'Embarqué', annule: 'Annulé', detourne: 'Détourné',
 }
 
-export interface MetricRow {
-  DATE?: string
-  MOIS?: string
-  traffic: number
-  idef: number
+export const FLIGHT_STATUS_COLORS: Record<FlightStatus, string> = {
+  qrf: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  prevu: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+  embarque: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  annule: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+  detourne: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
 }
 
-export interface DomesticRegime {
-  pax: PaxRow[]
-  fret: MetricRow[]
-  excedents: MetricRow[]
+export const FLIGHT_REGIME_LABELS: Record<FlightRegime, string> = {
+  domestic: 'Domestique', international: 'International',
 }
 
+export const FLIGHT_TYPE_LABELS: Record<FlightType, string> = {
+  regular: 'Régulier', non_regular: 'Non régulier',
+}
+
+export const FLIGHT_NATURE_LABELS: Record<FlightNature, string> = {
+  commercial: 'Vol Commercial', humanitare: 'Vol Humanitaire', state: "Vol d'Etat",
+  test: 'Vol de Test', afreightment: "Vol d'Affrètement", requisition: 'Vol de Requisition',
+}
+
+// ==================== REPORTS (inchangé) ====================
+export interface PaxRow { DATE?: string; MOIS?: string; traffic: number; gopass: number; paxbus: number }
+export interface MetricRow { DATE?: string; MOIS?: string; traffic: number; idef: number }
+export interface DomesticRegime { pax: PaxRow[]; fret: MetricRow[]; excedents: MetricRow[] }
 export interface InternationalRegime {
-  pax: PaxRow[]
-  fret_depart: MetricRow[]
-  fret_arrivee: MetricRow[]
-  exced_depart: MetricRow[]
-  exced_arrivee: MetricRow[]
+  pax: PaxRow[]; fret_depart: MetricRow[]; fret_arrivee: MetricRow[]
+  exced_depart: MetricRow[]; exced_arrivee: MetricRow[]
 }
-
-export interface IdefFretRow {
-  DATE?: string
-  MOIS?: string
-  usd: number
-  cdf: number
-  rate?: number
-}
-
 export interface ReportData {
-  domestic: DomesticRegime
-  international: InternationalRegime
-  idef_fret: IdefFretRow[]
-  monthly_rate?: number | null
-}
-
-export interface OperatorMetric { traffic: number; idef: number }
-export interface OperatorPax    { traffic: number; gopass: number; paxbus: number }
-
-export interface OperatorGroup {
-  pax:            Record<string, OperatorPax>
-  fret?:          Record<string, OperatorMetric>
-  excedents?:     Record<string, OperatorMetric>
-  fret_depart?:   Record<string, OperatorMetric>
-  fret_arrivee?:  Record<string, OperatorMetric>
-  exced_depart?:  Record<string, OperatorMetric>
-  exced_arrivee?: Record<string, OperatorMetric>
-}
-
-export interface ByOperatorsRegime {
-  commercial:     OperatorGroup
-  non_commercial: OperatorGroup
-}
-
-export interface ReportByOperatorsData {
-  domestic:      ByOperatorsRegime
-  international: ByOperatorsRegime
-  idef_fret:     IdefFretRow[]
-  monthly_rate?: number | null
-}
-
-export interface OperatorKPIs {
-  // Vols
-  total_flights_current_year: number
-  total_flights_previous_year: number
-  growth_percentage: number
-
-  // Flotte
-  active_aircrafts_count: number
-  inactive_aircrafts_count: number
-  total_aircrafts: number
-  fleet_average_age?: number
-
-  // Performance
-  on_time_performance?: number  // % de vols à l'heure
-  cancellation_rate?: number     // % de vols annulés
-  avg_delay_minutes?: number     // Délai moyen en minutes
-
-  // Passagers
-  avg_passengers_per_flight?: number
-  total_passengers_current_year?: number
-  load_factor?: number  // Taux de remplissage en %
-
-  // Réseau
-  total_destinations?: number
-  domestic_routes_count?: number
-  international_routes_count?: number
-  most_frequent_destination?: string
-
-  // Types d'appareils
-  most_used_aircraft_type?: string
-  aircraft_types_count?: number
-
-  // Comparaison
-  market_share?: number  // Part de marché en %
-  ranking?: number       // Classement parmi les opérateurs
+  domestic: DomesticRegime; international: InternationalRegime
+  idef_fret: any[]; monthly_rate?: number | null
 }

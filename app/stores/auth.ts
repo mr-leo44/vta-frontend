@@ -1,89 +1,133 @@
 import { defineStore } from 'pinia'
-import type { User, LoginRequest, LoginResponse } from '~/types/api'
 import { ref, computed } from 'vue'
-// import { useApi } from '@/composables/useApi'
+import type { AuthUser, LoginRequest, LoginResponse } from '~/types/api'
 
 export const useAuthStore = defineStore('auth', () => {
-    const token = ref<string | null>(null)
-    const user = ref<User | null>(null)
+  const token = ref<string | null>(null)
+  const user  = ref<AuthUser | null>(null)
 
-    const isAuthenticated = computed(() => !!token.value)
-    const currentUser = computed(() => user.value)
+  // ─────────────────────────────────────────────────────────────────────
+  // Computed
+  // ─────────────────────────────────────────────────────────────────────
 
-    /**
-     * Logs in a user
-     * @param {LoginRequest} credentials - The credentials to log in with
-     * @returns {Promise<{success: boolean, message?: string}>} - A promise that resolves to an object with a success boolean and an optional error message
-     */
-    const login = async (credentials: LoginRequest) => {
-        const { apiFetch } = useApi()
+  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const currentUser     = computed(() => user.value)
+  const isAdmin         = computed(() => user.value?.role === 'admin')
+  const isManager       = computed(() => user.value?.role === 'manager')
+  const isAgent         = computed(() => user.value?.role === 'agent')
 
-        try {
-            const response = await apiFetch<LoginResponse>('/login', {
-                method: 'POST',
-                body: credentials
-            })
+  /**
+   * Vérifie une ou plusieurs permissions.
+   * Accepte un string ou un tableau — retourne true si AU MOINS UNE correspond.
+   *
+   * Usage : authStore.can('flight.create')
+   *         authStore.can(['flight.updateOwn', 'flight.updateAny'])
+   */
+  const can = computed(() => (permission: string | string[]): boolean => {
+    if (!user.value) return false
+    const perms = Array.isArray(permission) ? permission : [permission]
+    return perms.some(p => user.value!.permissions.includes(p))
+  })
 
-            token.value = response.data?.token
-            user.value = response.data?.user
+  /**
+   * Vérifie que TOUTES les permissions listées sont présentes.
+   */
+  const canAll = computed(() => (permissions: string[]): boolean => {
+    if (!user.value) return false
+    return permissions.every(p => user.value!.permissions.includes(p))
+  })
 
-            return { success: true }
-        } catch (error: any) {
-            console.error('Login failed:', error)
+  // ─────────────────────────────────────────────────────────────────────
+  // Actions
+  // ─────────────────────────────────────────────────────────────────────
 
-            let message = 'Échec de la connexion'
+  const login = async (credentials: LoginRequest): Promise<{ success: boolean; message?: string }> => {
+    const { apiFetch } = useApi()
 
-            if (error?.data?.message) {
-                message = error.data.message
-            } else if (error?.data?.errors) {
-                const firstError = Object.values(error.data.errors)[0]
-                if (Array.isArray(firstError) && firstError.length > 0) {
-                    message = firstError[0] as string
-                }
-            }
+    try {
+      const response = await apiFetch<LoginResponse>('/login', {
+        method: 'POST',
+        body: credentials,
+      })
 
-            return { success: false, message }
-        }
+      token.value = response.token
+      user.value  = response.user
+
+      return { success: true }
+    } catch (error: any) {
+      const message = extractErrorMessage(error)
+      return { success: false, message }
     }
-    const logout = async () => {
-        const { apiFetch } = useApi()
+  }
 
-        try {
-            if (token) {
-                await apiFetch('/logout', { method: 'POST' })
-            }
-        } catch (error) {
-            console.error('Logout failed:', error)
-        } finally {
-            clearAuth()
-            navigateTo('/login')
-        }
-    }
+  const logout = async (): Promise<void> => {
+    const { apiFetch } = useApi()
 
-    const clearAuth = () => {
-        token.value = null
-        user.value = null
+    try {
+      if (token.value) {
+        await apiFetch('/logout', { method: 'POST' })
+      }
+    } catch {
+      // Silencieux — on nettoie quoi qu'il arrive
+    } finally {
+      clearAuth()
+      await navigateTo('/login')
     }
-    const checkAuth = async (): Promise<boolean> => {
-        return !!token.value
-    }
+  }
 
-    return {
-        token,
-        user,
-        isAuthenticated,
-        currentUser,
-        login,
-        logout,
-        checkAuth,
-        clearAuth,
+  /**
+   * Rafraîchit le profil + permissions depuis l'API.
+   * Appelé au démarrage (plugin auth.client.ts) et après assignFunction / grant / revoke.
+   */
+  const refreshMe = async (): Promise<void> => {
+    const { apiFetch } = useApi()
+
+    try {
+      const data = await apiFetch<AuthUser>('/user')
+      user.value = data
+    } catch {
+      clearAuth()
+      await navigateTo('/login')
     }
+  }
+
+  const clearAuth = (): void => {
+    token.value = null
+    user.value  = null
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Helpers internes
+  // ─────────────────────────────────────────────────────────────────────
+
+  const extractErrorMessage = (error: any): string => {
+    if (error?.data?.errors) {
+      const first = Object.values(error.data.errors)[0]
+      if (Array.isArray(first) && first.length > 0) return first[0] as string
+    }
+    return error?.data?.message ?? 'Échec de la connexion'
+  }
+
+  return {
+    token,
+    user,
+    isAuthenticated,
+    currentUser,
+    isAdmin,
+    isManager,
+    isAgent,
+    can,
+    canAll,
+    login,
+    logout,
+    refreshMe,
+    clearAuth,
+  }
 },
-    {
-        // 🔥 PERSISTANCE AUTOMATIQUE
-        persist: {
-            key: 'vta-auth',
-            storage: persistedState.localStorage,
-            paths: ['token', 'user'],
-        } as any
-    })
+{
+  persist: {
+    key: 'vta-auth',
+    storage: persistedState.localStorage,
+    paths: ['token', 'user'],
+  } as any,
+})

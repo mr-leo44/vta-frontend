@@ -87,7 +87,6 @@
           </div>
         </div>
       </DialogHeader>
-      {{ regimeTab }}
 
       <!-- Content -->
       <div class="flex-1 overflow-hidden flex flex-col min-h-0">

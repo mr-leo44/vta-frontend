@@ -15,10 +15,10 @@ export function usePermission() {
 
   return {
     /** Vrai si l'utilisateur a AU MOINS UNE des permissions listées. */
-    can: (permission: string | string[]) => auth.can.value(permission),
+    can: (permission: string | string[]) => auth.can(permission),
 
     /** Vrai si l'utilisateur a TOUTES les permissions listées. */
-    canAll: (permissions: string[]) => auth.canAll.value(permissions),
+    canAll: (permissions: string[]) => auth.canAll(permissions),
 
     isAdmin:   computed(() => auth.isAdmin),
     isManager: computed(() => auth.isManager),

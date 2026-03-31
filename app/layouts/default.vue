@@ -84,10 +84,9 @@
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" class="w-56 border-2">
                   <DropdownMenuItem as-child>
-                    <NuxtLink to="/agents" class="cursor-pointer flex items-center">
+                    <NuxtLink to="/agents/" class="cursor-pointer flex items-center">
                       <Users class="mr-2 h-4 w-4" />
                       <span>Agents</span>
-                      <Badge variant="secondary" class="ml-auto text-xs">Bientôt</Badge>
                     </NuxtLink>
                   </DropdownMenuItem>
 
@@ -243,11 +242,10 @@
 
             <div class="px-4 py-2 text-xs font-semibold text-muted-foreground">AUTRES</div>
 
-            <NuxtLink to="/agents" @click="mobileMenuOpen = false"
+            <NuxtLink to="/agents/" @click="mobileMenuOpen = false"
               class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all hover:bg-muted">
               <Users class="h-4 w-4" />
               <span>Agents</span>
-              <Badge variant="secondary" class="ml-auto text-xs">Bientôt</Badge>
             </NuxtLink>
 
             <NuxtLink to="/imports" @click="mobileMenuOpen = false"

@@ -16,26 +16,31 @@ export const useAuthStore = defineStore('auth', () => {
   const isManager       = computed(() => user.value?.role === 'manager')
   const isAgent         = computed(() => user.value?.role === 'agent')
 
+  // ─────────────────────────────────────────────────────────────────────
+  // Vérification des permissions — fonctions simples, PAS des computed.
+  //
+  // Un computed retournant une fonction oblige les consommateurs à écrire
+  // auth.can.value('perm') au lieu de auth.can('perm') → TypeError.
+  // ─────────────────────────────────────────────────────────────────────
+
   /**
-   * Vérifie une ou plusieurs permissions.
-   * Accepte un string ou un tableau — retourne true si AU MOINS UNE correspond.
-   *
+   * Retourne true si AU MOINS UNE des permissions est présente.
    * Usage : authStore.can('flight.create')
    *         authStore.can(['flight.updateOwn', 'flight.updateAny'])
    */
-  const can = computed(() => (permission: string | string[]): boolean => {
+  const can = (permission: string | string[]): boolean => {
     if (!user.value) return false
     const perms = Array.isArray(permission) ? permission : [permission]
     return perms.some(p => user.value!.permissions.includes(p))
-  })
+  }
 
   /**
-   * Vérifie que TOUTES les permissions listées sont présentes.
+   * Retourne true si TOUTES les permissions listées sont présentes.
    */
-  const canAll = computed(() => (permissions: string[]): boolean => {
+  const canAll = (permissions: string[]): boolean => {
     if (!user.value) return false
     return permissions.every(p => user.value!.permissions.includes(p))
-  })
+  }
 
   // ─────────────────────────────────────────────────────────────────────
   // Actions
@@ -55,8 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       return { success: true }
     } catch (error: any) {
-      const message = extractErrorMessage(error)
-      return { success: false, message }
+      return { success: false, message: extractErrorMessage(error) }
     }
   }
 
@@ -76,15 +80,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Rafraîchit le profil + permissions depuis l'API.
-   * Appelé au démarrage (plugin auth.client.ts) et après assignFunction / grant / revoke.
+   * Rafraîchit le profil + permissions depuis GET /api/user.
+   * À appeler après assignFunction / grant / revoke.
    */
   const refreshMe = async (): Promise<void> => {
     const { apiFetch } = useApi()
 
     try {
-      const data = await apiFetch<AuthUser>('/user')
-      user.value = data
+      user.value = await apiFetch<AuthUser>('/user')
     } catch {
       clearAuth()
       await navigateTo('/login')
@@ -95,10 +98,6 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     user.value  = null
   }
-
-  // ─────────────────────────────────────────────────────────────────────
-  // Helpers internes
-  // ─────────────────────────────────────────────────────────────────────
 
   const extractErrorMessage = (error: any): string => {
     if (error?.data?.errors) {

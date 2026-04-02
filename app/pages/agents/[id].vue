@@ -3,7 +3,7 @@
 
     <!-- Header -->
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" @click="navigateTo('/agents')">
+      <Button variant="ghost" size="sm" @click="navigateTo('/users/')">
         <ArrowLeft class="h-4 w-4 mr-1" />
         Retour
       </Button>
@@ -284,7 +284,7 @@ const availableToRevoke = computed(() => {
 const fetchDetail = async () => {
   loading.value = true
   try {
-    detail.value = await apiFetch<UserPermissionsDetail>(`/agents/${userId}/permissions`)
+    detail.value = await apiFetch<UserPermissionsDetail>(`/users/${userId}/permissions`)
   } catch {
     showError('Impossible de charger les permissions')
   } finally {
@@ -295,7 +295,7 @@ const fetchDetail = async () => {
 const submitGrant = async () => {
   saving.value.grant = true
   try {
-    await apiFetch(`/agents/${userId}/permissions/grant`, {
+    await apiFetch(`/users/${userId}/permissions/grant`, {
       method: 'POST',
       body: { permission: grantForm.value.permission, reason: grantForm.value.reason || undefined },
     })
@@ -312,7 +312,7 @@ const submitGrant = async () => {
 const submitRevoke = async () => {
   saving.value.revoke = true
   try {
-    await apiFetch(`/agents/${userId}/permissions/revoke`, {
+    await apiFetch(`/users/${userId}/permissions/revoke`, {
       method: 'POST',
       body: { permission: revokeForm.value.permission, reason: revokeForm.value.reason || undefined },
     })
@@ -328,7 +328,7 @@ const submitRevoke = async () => {
 
 const deleteOverride = async (permission: string) => {
   try {
-    await apiFetch(`/agents/${userId}/permissions/${permission}`, { method: 'DELETE' })
+    await apiFetch(`/users/${userId}/permissions/${permission}`, { method: 'DELETE' })
     showSuccess('Override supprimé')
     await fetchDetail()
   } catch (e: any) {

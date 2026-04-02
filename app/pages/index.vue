@@ -128,7 +128,7 @@
           <div class="text-3xl font-bold bg-linear-to-br from-green-600 to-green-800 bg-clip-text text-transparent">
             {{ stats.users.active }}
           </div>
-          <p class="text-xs text-muted-foreground mt-2">
+          <p v-if="stats.users.active == 0" class="text-xs text-muted-foreground mt-2">
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
               <AlertCircle class="h-3 w-3" />
@@ -194,14 +194,10 @@
           <span class="font-semibold">Imports</span>
         </Button>
 
-        <Button variant="outline" class="h-28 flex-col gap-3 opacity-60 cursor-not-allowed" disabled>
-          <div class="h-12 w-12 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-            <Users class="h-6 w-6 text-gray-400" />
-          </div>
-          <div class="text-center">
-            <span class="font-semibold block">Gérer les agents</span>
-            <span class="text-xs text-muted-foreground">(Bientôt disponible)</span>
-          </div>
+        <Button v-if="can('user.viewAny')" variant="outline" class="h-28 flex-col gap-3 ..."
+          @click="navigateTo('/agents')">
+          <Users class="h-6 w-6 text-teal-600 dark:text-teal-400" />
+          <span>Gérer les utilisateurs</span>
         </Button>
 
         <Button variant="outline"
@@ -276,6 +272,9 @@ const authStore = useAuthStore()
 const operatorsStore = useOperatorsStore()
 const aircraftsStore = useAircraftsStore()
 const flightsStore = useFlightsStore()
+const usersStore = useUsersStore()
+const { can } = usePermission()
+const { apiFetch } = useApi()
 
 const { success: showSuccess, error: showError } = useToast()
 
@@ -326,7 +325,7 @@ const stats = computed(() => {
       trend: monthlyFlights - lastMonthFlights
     },
     users: {
-      active: 0
+      active: usersStore.allUsers.length || 0,
     }
   }
 })
@@ -400,12 +399,12 @@ const getTimeAgo = (dateString: string): string => {
 // Chargement des données au montage
 onMounted(async () => {
   loading.value = true
-
   try {
     await Promise.all([
       operatorsStore.fetchAllOperators(),
       aircraftsStore.fetchAllAircrafts(),
-      flightsStore.fetchFlights(1)
+      flightsStore.fetchFlights(1),
+      usersStore.fetchAllUsers()
     ])
   } catch (error) {
     showError('Erreur lors du chargement des données du dashboard:', error)

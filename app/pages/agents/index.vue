@@ -41,13 +41,15 @@
                 <div class="text-xs text-muted-foreground">{{ u.username }}</div>
               </td>
               <td class="px-6 py-4">
-                <span v-if="u.function" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary text-xs font-medium">
+                <span v-if="u.function"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary text-xs font-medium">
                   {{ u.function.label ?? u.function.value }}
                 </span>
                 <span v-else class="text-muted-foreground text-xs italic">Aucune fonction</span>
               </td>
               <td class="px-6 py-4">
-                <span :class="roleClass(u.role)" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium">
+                <span :class="roleClass(u.role)"
+                  class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium">
                   {{ roleLabel(u.role) }}
                 </span>
               </td>
@@ -63,6 +65,7 @@
                     Fonction
                   </Button>
                   <Button
+                    v-if="can('user.viewAny')"
                     variant="ghost"
                     size="sm"
                     @click="navigateTo(`/agents/${u.id}`)"
@@ -83,10 +86,14 @@
           {{ meta.total }} utilisateur{{ meta.total > 1 ? 's' : '' }}
         </span>
         <div class="flex gap-2">
-          <Button variant="outline" size="sm" :disabled="meta.current_page === 1" @click="fetchUsers(meta.current_page - 1)">
+          <Button variant="outline" size="sm"
+            :disabled="meta.current_page === 1"
+            @click="fetchUsers(meta.current_page - 1)">
             Précédent
           </Button>
-          <Button variant="outline" size="sm" :disabled="meta.current_page === meta.last_page" @click="fetchUsers(meta.current_page + 1)">
+          <Button variant="outline" size="sm"
+            :disabled="meta.current_page === meta.last_page"
+            @click="fetchUsers(meta.current_page + 1)">
             Suivant
           </Button>
         </div>
@@ -113,7 +120,7 @@
               <SelectContent>
                 <SelectItem v-for="fn in functionOptions" :key="fn.value" :value="fn.value">
                   <div class="flex items-center justify-between gap-6 w-full">
-                    <span>{{ fn.label }}</span> | 
+                    <span>{{ fn.label }}</span> |
                     <span class="text-xs text-muted-foreground">{{ fn.role }}</span>
                   </div>
                 </SelectItem>
@@ -130,9 +137,17 @@
           <!-- Aperçu du rôle résultant -->
           <div v-if="assignModal.function" class="rounded-lg border bg-muted/40 p-3 text-sm">
             <span class="text-muted-foreground">Rôle résultant : </span>
-            <span :class="roleClass(functionRole(assignModal.function))" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ml-1">
+            <span
+              :class="roleClass(functionRole(assignModal.function))"
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ml-1">
               {{ roleLabel(functionRole(assignModal.function)) }}
             </span>
+          </div>
+
+          <!-- Avertissement si on change la fonction de l'utilisateur connecté -->
+          <div v-if="isSelfAssign" class="rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 p-3 text-sm text-yellow-800 dark:text-yellow-300 flex items-start gap-2">
+            <AlertTriangle class="h-4 w-4 mt-0.5 shrink-0" />
+            <span>Vous modifiez votre propre fonction. Vos permissions seront mises à jour immédiatement après la sauvegarde.</span>
           </div>
         </div>
 
@@ -153,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Users, UserCog, Shield } from 'lucide-vue-next'
+import { Plus, Users, UserCog, Shield, AlertTriangle } from 'lucide-vue-next'
 import { ref, computed, onMounted } from 'vue'
 import {
   Card, CardContent,
@@ -170,6 +185,7 @@ definePageMeta({ middleware: 'auth' })
 const { can } = usePermission()
 const { apiFetch } = useApi()
 const { success: showSuccess, error: showError } = useToast()
+const authStore = useAuthStore()
 
 // ─────────────────────────────────────────────────────────────────────
 // State
@@ -181,7 +197,7 @@ const meta    = ref<any>(null)
 const today   = new Date().toISOString().split('T')[0]
 
 // ─────────────────────────────────────────────────────────────────────
-// Données statiques des fonctions (depuis l'enum backend)
+// Fonctions disponibles (miroir de UserFunction.php)
 // ─────────────────────────────────────────────────────────────────────
 
 const functionOptions = [
@@ -197,10 +213,10 @@ const functionOptions = [
   { value: 'CB-PAXBUS ai', label: 'CB-PAXBUS ai',  role: 'manager' },
   { value: 'CQ',           label: 'Québec',        role: 'manager' },
   { value: 'CQA',          label: 'Québec Alpha',  role: 'manager' },
+  { value: 'VTA-Trafic',   label: 'VTA-Trafic',   role: 'permanent' },
+  { value: 'VTA-IDEF',     label: 'VTA-IDEF',     role: 'permanent' },
+  { value: 'VTA-PAXBUS',   label: 'VTA-PAXBUS',   role: 'permanent' },
   { value: 'VTA',          label: 'VTA',           role: 'agent' },
-  { value: 'VTA-Trafic',   label: 'VTA-Trafic',   role: 'agent' },
-  { value: 'VTA-IDEF',     label: 'VTA-IDEF',     role: 'agent' },
-  { value: 'VTA-PAXBUS',   label: 'VTA-PAXBUS',   role: 'agent' },
 ]
 
 const functionRole = (value: string) =>
@@ -217,6 +233,11 @@ const assignModal = ref({
   startDate: '',
   saving:    false,
 })
+
+/** Vrai si l'admin est en train de modifier sa propre fonction */
+const isSelfAssign = computed(() =>
+  assignModal.value.user?.id === authStore.user?.id
+)
 
 const openAssignModal = (u: UserListItem) => {
   assignModal.value = {
@@ -254,7 +275,7 @@ const submitAssign = async () => {
 
   assignModal.value.saving = true
   try {
-    await apiFetch(`/agents/${assignModal.value.user.id}/assign-function`, {
+    await apiFetch(`/users/${assignModal.value.user.id}/assign-function`, {
       method: 'POST',
       body: {
         function:   assignModal.value.function,
@@ -264,9 +285,26 @@ const submitAssign = async () => {
 
     showSuccess('Fonction assignée avec succès')
     assignModal.value.open = false
+
+    // Recharge la liste pour afficher le nouveau rôle/fonction
     await fetchUsers()
+
+    /**
+     * Si l'admin a modifié sa PROPRE fonction, on rafraîchit le store auth
+     * pour que ses permissions soient immédiatement à jour dans tout le front
+     * (nav, can(), canAll(), etc.) sans avoir à recharger la page.
+     *
+     * Si c'est un autre utilisateur, on fait un refresh silencieux au cas où
+     * des overrides affecteraient l'admin — en pratique c'est un no-op mais
+     * ça garantit la cohérence.
+     */
+    if (isSelfAssign.value) {
+      await authStore.refreshMe()
+    } else {
+      await authStore.refreshMeSilent()
+    }
   } catch (e: any) {
-    showError(e?.data?.message ?? 'Erreur lors de l\'assignation')
+    showError(e?.data?.message ?? "Erreur lors de l'assignation")
   } finally {
     assignModal.value.saving = false
   }
@@ -277,15 +315,17 @@ const submitAssign = async () => {
 // ─────────────────────────────────────────────────────────────────────
 
 const roleLabel = (role: string | null) => ({
-  admin:   'Administrateur',
-  manager: 'Manager',
-  agent:   'Agent',
+  admin:     'Administrateur',
+  manager:   'Manager',
+  permanent: 'Permanent',
+  agent:     'Agent',
 }[role ?? ''] ?? '—')
 
 const roleClass = (role: string | null) => ({
-  admin:   'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-  manager: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  agent:   'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  admin:     'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  manager:   'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  permanent: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  agent:     'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
 }[role ?? ''] ?? 'bg-gray-100 text-gray-600')
 
 // ─────────────────────────────────────────────────────────────────────

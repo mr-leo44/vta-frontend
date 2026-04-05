@@ -123,16 +123,11 @@ export function usePermission() {
   }))
 
   return {
-    // Génériques
-    can,
-    canAll,
+    /** Vrai si l'utilisateur a AU MOINS UNE des permissions listées. */
+    can: (permission: string | string[]) => auth.can(permission),
 
-    // Rôles
-    isAdmin,
-    isManager,
-    isPermanent,
-    isAgent,
-    isSupervisor,
+    /** Vrai si l'utilisateur a TOUTES les permissions listées. */
+    canAll: (permissions: string[]) => auth.canAll(permissions),
 
     // Infos utilisateur
     role,

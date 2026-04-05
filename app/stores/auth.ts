@@ -17,30 +17,31 @@ export const useAuthStore = defineStore('auth', () => {
   const isPermanent     = computed(() => user.value?.role === 'permanent')
   const isAgent         = computed(() => user.value?.role === 'agent')
 
-  /**
-   * Vérifie une ou plusieurs permissions (AU MOINS UNE).
-   *
-   * Retourne une fonction — Vue détecte la dépendance sur user.value
-   * et réévalue les composants dès que les permissions changent
-   * (ex: après grant/revoke ou changement de fonction).
-   *
-   * Usage :
-   *   auth.can.value('flight.create')
-   *   auth.can.value(['flight.updateOwn', 'flight.updateAny'])
-   */
-  const can = computed(() => (permission: string | string[]): boolean => {
-    if (!user.value?.permissions) return false
-    const perms = Array.isArray(permission) ? permission : [permission]
-    return perms.some(p => user.value!.permissions.includes(p))
-  })
+  // ─────────────────────────────────────────────────────────────────────
+  // Vérification des permissions — fonctions simples, PAS des computed.
+  //
+  // Un computed retournant une fonction oblige les consommateurs à écrire
+  // auth.can.value('perm') au lieu de auth.can('perm') → TypeError.
+  // ─────────────────────────────────────────────────────────────────────
 
   /**
-   * Vérifie que TOUTES les permissions listées sont présentes.
+   * Retourne true si AU MOINS UNE des permissions est présente.
+   * Usage : authStore.can('flight.create')
+   *         authStore.can(['flight.updateOwn', 'flight.updateAny'])
    */
-  const canAll = computed(() => (permissions: string[]): boolean => {
-    if (!user.value?.permissions) return false
+  const can = (permission: string | string[]): boolean => {
+    if (!user.value) return false
+    const perms = Array.isArray(permission) ? permission : [permission]
+    return perms.some(p => user.value!.permissions.includes(p))
+  }
+
+  /**
+   * Retourne true si TOUTES les permissions listées sont présentes.
+   */
+  const canAll = (permissions: string[]): boolean => {
+    if (!user.value) return false
     return permissions.every(p => user.value!.permissions.includes(p))
-  })
+  }
 
   // ─────────────────────────────────────────────────────────────────────
   // Actions
@@ -80,23 +81,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Rafraîchit le profil + permissions depuis GET /user.
-   *
-   * Appelé automatiquement :
-   * - Au démarrage de l'app (plugin auth.client.ts)
-   * - Après assignation d'une fonction (UserController::assignFunction)
-   * - Après grant / revoke de permission (UserPermissionController)
-   *
-   * ⚠️  Ceci est le seul endroit où user.value est réécrit post-login.
-   *     Tout changement de permissions doit passer ici pour garantir
-   *     la réactivité du can() computed dans tous les composants.
+   * Rafraîchit le profil + permissions depuis GET /api/user.
+   * À appeler après assignFunction / grant / revoke.
    */
   const refreshMe = async (): Promise<void> => {
     const { apiFetch } = useApi()
 
     try {
-      const data = await apiFetch<AuthUser>('/user')
-      user.value = data
+      user.value = await apiFetch<AuthUser>('/user')
     } catch {
       clearAuth()
       await navigateTo('/login')
@@ -124,10 +116,6 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     user.value  = null
   }
-
-  // ─────────────────────────────────────────────────────────────────────
-  // Helpers internes
-  // ─────────────────────────────────────────────────────────────────────
 
   const extractErrorMessage = (error: any): string => {
     if (error?.data?.errors) {

@@ -3,7 +3,7 @@
 
     <!-- Header -->
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" @click="navigateTo('/agents')">
+      <Button variant="ghost" size="sm" @click="navigateTo('/users/')">
         <ArrowLeft class="h-4 w-4 mr-1" />
         Retour
       </Button>

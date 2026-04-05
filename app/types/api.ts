@@ -15,7 +15,7 @@ export interface AuthUser {
   name: string
   username: string
   function: string | null
-  role: 'admin' | 'manager' | 'agent' | null
+  role: 'admin' | 'manager' | 'agent' | 'permanent' | null
   permissions: string[]
   overrides?: PermissionOverride[]
 }

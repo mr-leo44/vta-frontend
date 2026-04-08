@@ -38,12 +38,12 @@
           <Eye class="mr-2 h-4 w-4" />
           Voir les détails
         </DropdownMenuItem>
-        <DropdownMenuItem @click="$emit('edit', operator)">
+        <DropdownMenuItem v-if="canEdit !== false" @click="$emit('edit', operator)">
           <Pencil class="mr-2 h-4 w-4" />
           Modifier
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem @click="$emit('delete', operator)" class="text-destructive">
+        <DropdownMenuSeparator v-if="canDelete !== false" />
+        <DropdownMenuItem v-if="canDelete !== false" @click="$emit('delete', operator)" class="text-destructive">
           <Trash2 class="mr-2 h-4 w-4" />
           Supprimer
         </DropdownMenuItem>
@@ -67,6 +67,8 @@ import {
 
 defineProps<{
   operator: Operator
+  canEdit?: boolean
+  canDelete?: boolean
 }>()
 
 defineEmits<{

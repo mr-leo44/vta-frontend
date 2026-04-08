@@ -52,12 +52,12 @@
                 <Eye class="mr-2 h-4 w-4" />
                 Voir les détails
               </DropdownMenuItem>
-              <DropdownMenuItem @click.stop="$emit('edit', flight)" class="cursor-pointer">
+              <DropdownMenuItem v-if="canEdit !== false" @click.stop="$emit('edit', flight)" class="cursor-pointer">
                 <Pencil class="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuSeparator v-if="canDelete !== false" />
+              <DropdownMenuItem v-if="canDelete !== false"
                 @click.stop="$emit('delete', flight)"
                 class="text-destructive focus:text-destructive cursor-pointer"
               >
@@ -176,6 +176,8 @@ import {
 
 defineProps<{
   flight: Flight
+  canEdit?: boolean
+  canDelete?: boolean
 }>()
 
 defineEmits<{

@@ -116,10 +116,11 @@ export function usePermission() {
     operators:     auth.can('operator.viewAny'),
     aircrafts:     auth.can('aircraft.viewAny'),
     aircraftTypes: auth.can('aircraftType.viewAny'),
-    agents:        auth.can('user.viewAny'),
+    agents:        auth.can('user.create'),
     reports:       auth.can('report.view'),
     imports:       auth.can('files.import'),
     permissions:   true, // Visible pour tout utilisateur authentifié
+    logs:          auth.isAdmin
   }))
 
   return {

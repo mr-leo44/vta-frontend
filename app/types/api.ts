@@ -71,6 +71,7 @@ export interface AuditLogEntry {
   event_label: string
   model: string
   model_id: number
+  model_name: string
   actor: {
     id: number
     name: string

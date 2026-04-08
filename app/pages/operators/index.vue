@@ -105,7 +105,9 @@
             <OperatorCard 
               v-for="operator in operators" 
               :key="operator.id" 
-              :operator="operator" 
+              :operator="operator"
+              :can-edit="can('operator.update')"
+              :can-delete="can('operator.delete')"
               @view="openViewDialog"
               @edit="openEditDialog" 
               @delete="confirmDelete" 
@@ -118,6 +120,8 @@
               v-for="operator in operators" 
               :key="operator.id" 
               :operator="operator"
+              :can-edit="can('operator.update')"
+              :can-delete="can('operator.delete')"
               @view="openViewDialog"
               @edit="openEditDialog" 
               @delete="confirmDelete" 
@@ -161,7 +165,7 @@
             <p class="text-muted-foreground mb-6 text-center max-w-md">
               {{ searchTerm ? 'Essayez avec d\'autres termes de recherche' : 'Commencez par créer votre premier exploitant' }}
             </p>
-            <Button v-if="!searchTerm" @click="openCreateDialog" size="lg" class="gap-2">
+            <Button v-if="!searchTerm && can('operator.create')" @click="openCreateDialog" size="lg" class="gap-2">
               <Plus class="h-4 w-4" />
               Créer le premier exploitant
             </Button>
@@ -258,6 +262,7 @@ definePageMeta({
 
 const operatorsStore = useOperatorsStore()
 const { success: showSuccess, error: showError } = useToast()
+const { can } = usePermission()
 
 // State
 const operators = computed(() => operatorsStore.operators)

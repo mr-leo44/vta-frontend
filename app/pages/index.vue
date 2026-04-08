@@ -3,153 +3,128 @@
 
   <div v-else class="space-y-6">
 
-    <!-- Hero banner -->
-    <div class="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-400 to-blue-600 p-8 text-white shadow-2xl">
-      <div class="absolute inset-0 bg-black/10" />
-      <div class="relative z-10">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <span class="text-2xl">👋</span>
-          </div>
+    <!-- Hero -->
+    <div class="rounded-xl bg-blue-600 px-6 py-5 text-white">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-lg bg-white/20 flex items-center justify-center text-xl">👋</div>
           <div>
-            <h1 class="text-3xl font-bold">Bienvenue, {{ authStore.user?.username ?? '' }} !</h1>
-            <p class="text-white/90 text-sm mt-1 flex items-center gap-2">
-              Voici un aperçu de votre activité
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-white/20 text-xs font-semibold">
-                {{ roleLabelFull }}
-              </span>
+            <h1 class="text-xl font-bold leading-tight">
+              Bonjour, {{ authStore.user?.name }} !
+            </h1>
+            <p class="text-blue-100 text-sm mt-0.5">
+              {{ currentDate }} · {{ roleLabelFull }}
             </p>
           </div>
         </div>
+        <!-- Indicateur de session -->
+        <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 text-sm">
+          <span class="h-1.5 w-1.5 rounded-full bg-green-300"></span>
+          Session active
+        </div>
       </div>
-      <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-      <div class="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
     </div>
 
-    <!-- KPI Cards — visibles uniquement si l'utilisateur a accès aux données -->
-    <div v-if="visibleStats.length" class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card
+    <!-- KPIs -->
+    <div v-if="visibleStats.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div
         v-for="stat in visibleStats"
         :key="stat.key"
-        class="group hover:shadow-xl transition-all duration-300 cursor-pointer border-2 relative overflow-hidden"
-        :class="`hover:border-${stat.color}-500/50`"
+        class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-200 group"
         @click="navigateTo(stat.link)"
       >
-        <div
-          class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          :class="`bg-linear-to-br from-${stat.color}-500/5 to-transparent`"
-        />
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{ stat.label }}</CardTitle>
-          <div
-            class="h-10 w-10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"
-            :class="`bg-${stat.color}-100 dark:bg-${stat.color}-950`"
-          >
-            <component :is="stat.icon" class="h-5 w-5" :class="`text-${stat.color}-600 dark:text-${stat.color}-400`" />
+        <div class="flex items-start justify-between mb-3">
+          <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ stat.label }}</span>
+          <div class="h-8 w-8 rounded-lg flex items-center justify-center" :class="stat.iconBg">
+            <component :is="stat.icon" class="h-4 w-4" :class="stat.iconColor" />
           </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold bg-clip-text text-transparent" :class="`bg-linear-to-br from-${stat.color}-600 to-${stat.color}-800`">
-            {{ stat.value }}
-          </div>
-          <p v-if="stat.badge" class="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full" :class="stat.badge.class">
-              <component :is="stat.badge.icon" class="h-3 w-3" />
-              {{ stat.badge.text }}
-            </span>
-            ce mois-ci
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+        <div class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">{{ stat.value }}</div>
+        <div class="mt-2 flex items-center gap-1.5 text-xs">
+          <span class="flex items-center gap-1 font-medium px-1.5 py-0.5 rounded" :class="stat.badge.class">
+            <component :is="stat.badge.icon" class="h-3 w-3" />
+            {{ stat.badge.text }}
+          </span>
+          <span class="text-gray-400">ce mois</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Accès rapide — filtré par permissions -->
-    <Card class="border-2 shadow-lg">
-      <CardHeader>
-        <div class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded-xl bg-linear-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-            <Zap class="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <CardTitle class="text-xl">Accès rapide</CardTitle>
-            <CardDescription>Raccourcis vers vos fonctionnalités disponibles</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <!-- Contenu principal : accès rapide + activités côte à côte sur lg -->
+    <div class="grid gap-6 lg:grid-cols-3">
 
-        <Button
-          v-for="shortcut in visibleShortcuts"
-          :key="shortcut.key"
-          variant="outline"
-          class="h-28 flex-col gap-3 group transition-all"
-          :class="`hover:border-${shortcut.color}-500 hover:bg-${shortcut.color}-50 dark:hover:bg-${shortcut.color}-950/20`"
-          @click="navigateTo(shortcut.link)"
-        >
-          <div
-            class="h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"
-            :class="`bg-${shortcut.color}-100 dark:bg-${shortcut.color}-950`"
+      <!-- Accès rapide (2/3) -->
+      <div class="lg:col-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2.5">
+          <div class="h-6 w-6 rounded-md bg-blue-600 flex items-center justify-center">
+            <Zap class="h-3.5 w-3.5 text-white" />
+          </div>
+          <h2 class="font-semibold text-gray-900 dark:text-white text-sm">Accès rapide</h2>
+        </div>
+        <div class="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+          <button
+            v-for="sc in visibleShortcuts"
+            :key="sc.key"
+            class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-150 group text-left"
+            @click="navigateTo(sc.link)"
           >
-            <component :is="shortcut.icon" class="h-6 w-6" :class="`text-${shortcut.color}-600 dark:text-${shortcut.color}-400`" />
-          </div>
-          <span class="font-semibold">{{ shortcut.label }}</span>
-        </Button>
+            <div class="h-10 w-10 rounded-lg flex items-center justify-center" :class="sc.iconBg">
+              <component :is="sc.icon" class="h-5 w-5" :class="sc.iconColor" />
+            </div>
+            <span class="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{{ sc.label }}</span>
+          </button>
 
-        <!-- Toujours visible : Mes permissions -->
-        <Button
-          variant="outline"
-          class="h-28 flex-col gap-3 group hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-950/20 transition-all"
-          @click="navigateTo('/permissions')"
-        >
-          <div class="h-12 w-12 rounded-xl bg-violet-100 dark:bg-violet-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Shield class="h-6 w-6 text-violet-600 dark:text-violet-400" />
-          </div>
-          <span class="font-semibold">Mes permissions</span>
-        </Button>
-
-      </CardContent>
-    </Card>
-
-    <!-- Activités récentes -->
-    <Card class="border-2 shadow-lg">
-      <CardHeader>
-        <div class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-            <Activity class="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <CardTitle class="text-xl">Activités récentes</CardTitle>
-            <CardDescription>Les dernières actions enregistrées dans le système</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div v-if="recentActivities.length" class="space-y-3">
-          <div
-            v-for="activity in recentActivities"
-            :key="activity.id"
-            class="flex items-center gap-4 p-4 border rounded-xl hover:bg-muted/50 transition-all cursor-pointer group"
+          <!-- Permissions — toujours visible -->
+          <button
+            class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-violet-200 dark:hover:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all duration-150 group text-left"
+            @click="navigateTo('/permissions')"
           >
-            <div class="h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform" :class="activity.colorClass">
-              <component :is="activity.icon" class="h-5 w-5" :class="activity.iconColorClass" />
+            <div class="h-10 w-10 rounded-lg bg-violet-100 dark:bg-violet-950 flex items-center justify-center">
+              <Shield class="h-5 w-5 text-violet-600 dark:text-violet-400" />
             </div>
-            <div class="flex-1">
-              <p class="font-medium">{{ activity.title }}</p>
-              <p class="text-sm text-muted-foreground">{{ activity.description }}</p>
-            </div>
-            <div class="text-xs text-muted-foreground whitespace-nowrap">{{ activity.timeAgo }}</div>
-          </div>
-        </div>
-        <div v-else class="text-center py-12">
-          <div class="h-20 w-20 rounded-2xl bg-muted mx-auto mb-4 flex items-center justify-center">
-            <Activity class="h-10 w-10 text-muted-foreground opacity-50" />
-          </div>
-          <p class="text-lg font-medium mb-2">Aucune activité récente</p>
-          <p class="text-sm text-muted-foreground">Les activités apparaîtront ici une fois que vous commencerez à utiliser le système</p>
-        </div>
-      </CardContent>
-    </Card>
+            <span class="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">Mes permissions</span>
+          </button>
 
+        </div>
+      </div>
+
+      <!-- Activités récentes (1/3) -->
+      <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2.5">
+          <div class="h-6 w-6 rounded-md bg-gray-800 dark:bg-gray-200 flex items-center justify-center">
+            <Activity class="h-3.5 w-3.5 text-white dark:text-gray-800" />
+          </div>
+          <h2 class="font-semibold text-gray-900 dark:text-white text-sm">Activité récente</h2>
+        </div>
+
+        <div v-if="recentActivities.length" class="divide-y divide-gray-50 dark:divide-gray-800">
+          <div
+            v-for="act in recentActivities"
+            :key="act.id"
+            class="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          >
+            <div class="h-7 w-7 rounded-md flex items-center justify-center mt-0.5 shrink-0" :class="act.iconBg">
+              <component :is="act.icon" class="h-3.5 w-3.5" :class="act.iconColor" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ act.title }}</p>
+              <p class="text-xs text-gray-400 truncate mt-0.5">{{ act.description }}</p>
+            </div>
+            <span class="text-[10px] text-gray-400 whitespace-nowrap mt-1">{{ act.timeAgo }}</span>
+          </div>
+        </div>
+
+        <div v-else class="flex flex-col items-center justify-center py-12 text-center px-5">
+          <div class="h-12 w-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
+            <Activity class="h-6 w-6 text-gray-400" />
+          </div>
+          <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Aucune activité</p>
+          <p class="text-xs text-gray-400 mt-1">Les actions apparaîtront ici</p>
+        </div>
+      </div>
+
+    </div>
   </div>
 </template>
 
@@ -157,10 +132,8 @@
 import {
   Building2, Plane, Users, FileText, Upload,
   PlaneTakeoff, TrendingUp, TrendingDown, AlertCircle,
-  Zap, Activity, Shield, ShieldCheck
+  Zap, Activity, Shield
 } from 'lucide-vue-next'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import LoadingScreen from '~/components/LoadingScreen.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from '@/composables/useToast'
@@ -172,12 +145,12 @@ const operatorsStore = useOperatorsStore()
 const aircraftsStore = useAircraftsStore()
 const flightsStore   = useFlightsStore()
 const usersStore     = useUsersStore()
-const { can, nav, isAdmin, isManager, isPermanent, isAgent } = usePermission()
+const { nav }        = usePermission()
 const { error: showError } = useToast()
 
 const loading = ref(true)
 
-// ─── Label du rôle ────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const roleLabelFull = computed(() => ({
   admin:     'Administrateur',
@@ -186,247 +159,211 @@ const roleLabelFull = computed(() => ({
   agent:     'Agent',
 }[authStore.user?.role ?? ''] ?? ''))
 
-// ─── Statistiques — uniquement les domaines accessibles ──────────────────────
+const currentDate = computed(() =>
+  new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+)
+
+const getTimeAgo = (d: string): string => {
+  const diff  = Date.now() - new Date(d).getTime()
+  const mins  = Math.floor(diff / 60_000)
+  const hours = Math.floor(diff / 3_600_000)
+  const days  = Math.floor(diff / 86_400_000)
+  if (mins  < 60)  return `${mins}min`
+  if (hours < 24)  return `${hours}h`
+  if (days  === 1) return 'hier'
+  if (days  < 30)  return `${days}j`
+  return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
+// ─── Calculs bruts ───────────────────────────────────────────────────────────
 
 const rawStats = computed(() => {
-  const now          = new Date()
-  const currentMonth = now.getMonth()
-  const currentYear  = now.getFullYear()
-  const lastMonth    = currentMonth - 1
+  const now   = new Date()
+  const month = now.getMonth()
+  const year  = now.getFullYear()
+  const prev  = month - 1
 
-  const monthlyFlights = flightsStore.flights.filter(f => {
+  const inMonth = (date: string | null) => {
+    if (!date) return false
+    const d = new Date(date)
+    return d.getMonth() === month && d.getFullYear() === year
+  }
+
+  const monthFlights = flightsStore.flights.filter(f => inMonth(f.departure_time)).length
+  const prevFlights  = flightsStore.flights.filter(f => {
     const d = new Date(f.departure_time)
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+    return d.getMonth() === prev && d.getFullYear() === year
   }).length
 
-  const lastMonthFlights = flightsStore.flights.filter(f => {
-    const d = new Date(f.departure_time)
-    return d.getMonth() === lastMonth && d.getFullYear() === currentYear
-  }).length
-
-  const newOperators = operatorsStore.allOperators.filter(o => {
-    const d = new Date(o.created_at ?? '')
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
-  }).length
-
-  const newAircrafts = aircraftsStore.allAircrafts.filter(a => {
-    const d = new Date(a.created_at ?? '')
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear
-  }).length
-
-  const trend = monthlyFlights - lastMonthFlights
-
-  return { monthlyFlights, lastMonthFlights, newOperators, newAircrafts, trend }
+  return {
+    newOperators: operatorsStore.allOperators.filter(o => inMonth(o.created_at)).length,
+    newAircrafts: aircraftsStore.allAircrafts.filter(a => inMonth(a.created_at)).length,
+    monthFlights,
+    flightTrend:  monthFlights - prevFlights,
+  }
 })
 
-/**
- * KPI cards filtrées selon les permissions.
- * Chaque card n'est incluse que si le user a le droit de voir la donnée.
- */
-const visibleStats = computed(() => {
-  const items = []
+// ─── KPI Cards — classes Tailwind statiques (pas de string interpolation) ────
 
-  if (nav.value.operators) {
-    items.push({
+const visibleStats = computed(() => {
+  const s   = rawStats.value
+  const all = [
+    nav.value.operators && {
       key:   'operators',
       label: 'Exploitants',
       value: operatorsStore.allOperators.length,
       icon:  Building2,
-      color: 'blue',
+      iconBg:    'bg-blue-100 dark:bg-blue-950',
+      iconColor: 'text-blue-600 dark:text-blue-400',
       link:  '/operators',
-      badge: {
-        icon:  TrendingUp,
-        text:  `+${rawStats.value.newOperators}`,
-        class: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400',
-      },
-    })
-  }
-
-  if (nav.value.aircrafts) {
-    items.push({
+      badge: { icon: TrendingUp, text: `+${s.newOperators}`, class: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
+    },
+    nav.value.aircrafts && {
       key:   'aircrafts',
       label: 'Aéronefs',
       value: aircraftsStore.allAircrafts.length,
       icon:  Plane,
-      color: 'indigo',
+      iconBg:    'bg-sky-100 dark:bg-sky-950',
+      iconColor: 'text-sky-600 dark:text-sky-400',
       link:  '/aircrafts',
-      badge: {
-        icon:  TrendingUp,
-        text:  `+${rawStats.value.newAircrafts}`,
-        class: 'bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400',
-      },
-    })
-  }
-
-  if (nav.value.flights) {
-    const trend = rawStats.value.trend
-    items.push({
+      badge: { icon: TrendingUp, text: `+${s.newAircrafts}`, class: 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-400' },
+    },
+    nav.value.flights && {
       key:   'flights',
       label: 'Vols',
       value: flightsStore.total,
       icon:  PlaneTakeoff,
-      color: 'purple',
+      iconBg:    'bg-indigo-100 dark:bg-indigo-950',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
       link:  '/flights',
       badge: {
-        icon:  trend >= 0 ? TrendingUp : TrendingDown,
-        text:  `${trend >= 0 ? '+' : ''}${rawStats.value.monthlyFlights}`,
-        class: trend >= 0
-          ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400'
-          : 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400',
+        icon:  s.flightTrend >= 0 ? TrendingUp : TrendingDown,
+        text:  `${s.flightTrend >= 0 ? '+' : ''}${s.monthFlights}`,
+        class: s.flightTrend >= 0
+          ? 'bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400'
+          : 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
       },
-    })
-  }
-
-  if (nav.value.agents) {
-    items.push({
+    },
+    nav.value.agents && {
       key:   'agents',
-      label: 'Agents actifs',
+      label: 'Agents',
       value: usersStore.allUsers.length,
       icon:  Users,
-      color: 'green',
+      iconBg:    'bg-teal-100 dark:bg-teal-950',
+      iconColor: 'text-teal-600 dark:text-teal-400',
       link:  '/agents',
-      badge: usersStore.allUsers.length === 0
-        ? { icon: AlertCircle, text: 'Données non disponibles', class: 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400' }
-        : null,
-    })
-  }
-
-  return items
-})
-
-// ─── Accès rapide — filtré par permissions ────────────────────────────────────
-
-/**
- * Chaque shortcut est conditionné par une clé de `nav`.
- * "Mes permissions" est rendu directement dans le template (toujours visible).
- */
-const visibleShortcuts = computed(() => {
-  const all = [
-    {
-      key:   'flights',
-      show:  nav.value.flights,
-      label: 'Gérer les vols',
-      icon:  PlaneTakeoff,
-      color: 'purple',
-      link:  '/flights',
-    },
-    {
-      key:   'operators',
-      show:  nav.value.operators,
-      label: 'Gérer les exploitants',
-      icon:  Building2,
-      color: 'blue',
-      link:  '/operators',
-    },
-    {
-      key:   'aircrafts',
-      show:  nav.value.aircrafts,
-      label: 'Gérer les aéronefs',
-      icon:  Plane,
-      color: 'indigo',
-      link:  '/aircrafts',
-    },
-    {
-      key:   'reports',
-      show:  nav.value.reports,
-      label: 'Voir les rapports',
-      icon:  FileText,
-      color: 'orange',
-      link:  '/reports',
-    },
-    {
-      key:   'agents',
-      show:  nav.value.agents,
-      label: 'Gérer les utilisateurs',
-      icon:  Users,
-      color: 'teal',
-      link:  '/agents',
-    },
-    {
-      key:   'imports',
-      show:  nav.value.imports,
-      label: 'Imports',
-      icon:  Upload,
-      color: 'teal',
-      link:  '/imports',
+      badge: usersStore.allUsers.length > 0
+        ? { icon: TrendingUp, text: `${usersStore.allUsers.length} actifs`, class: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400' }
+        : { icon: AlertCircle, text: 'Non disponible', class: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
     },
   ]
+  return all.filter(Boolean) as any[]
+})
 
-  return all.filter(s => s.show)
+// ─── Accès rapide — classes Tailwind statiques ────────────────────────────────
+
+const visibleShortcuts = computed(() => {
+  const all = [
+    nav.value.flights && {
+      key:       'flights',
+      label:     'Gérer les vols',
+      icon:      PlaneTakeoff,
+      iconBg:    'bg-indigo-100 dark:bg-indigo-950',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      link:      '/flights',
+    },
+    nav.value.operators && {
+      key:       'operators',
+      label:     'Exploitants',
+      icon:      Building2,
+      iconBg:    'bg-blue-100 dark:bg-blue-950',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      link:      '/operators',
+    },
+    nav.value.aircrafts && {
+      key:       'aircrafts',
+      label:     'Aéronefs',
+      icon:      Plane,
+      iconBg:    'bg-sky-100 dark:bg-sky-950',
+      iconColor: 'text-sky-600 dark:text-sky-400',
+      link:      '/aircrafts',
+    },
+    nav.value.reports && {
+      key:       'reports',
+      label:     'Rapports',
+      icon:      FileText,
+      iconBg:    'bg-orange-100 dark:bg-orange-950',
+      iconColor: 'text-orange-600 dark:text-orange-400',
+      link:      '/reports',
+    },
+    nav.value.agents && {
+      key:       'agents',
+      label:     'Gestion agents',
+      icon:      Users,
+      iconBg:    'bg-teal-100 dark:bg-teal-950',
+      iconColor: 'text-teal-600 dark:text-teal-400',
+      link:      '/agents',
+    },
+    nav.value.imports && {
+      key:       'imports',
+      label:     'Imports',
+      icon:      Upload,
+      iconBg:    'bg-gray-100 dark:bg-gray-800',
+      iconColor: 'text-gray-600 dark:text-gray-400',
+      link:      '/imports',
+    },
+  ]
+  return all.filter(Boolean) as any[]
 })
 
 // ─── Activités récentes ───────────────────────────────────────────────────────
 
 const recentActivities = computed(() => {
-  const activities: any[] = []
+  const out: any[] = []
 
-  // Vols — si le user peut les voir
   if (nav.value.flights) {
     ;[...flightsStore.flights]
       .sort((a, b) => new Date(b.departure_time).getTime() - new Date(a.departure_time).getTime())
       .slice(0, 3)
-      .forEach(f => {
-        activities.push({
-          id:           `flight-${f.id}`,
-          title:        'Vol enregistré',
-          description:  `${f.flight_number}  ${f.departure?.from?.iata ?? ''} → ${f.departure?.to?.iata ?? ''}`,
-          timeAgo:      getTimeAgo(f.departure_time),
-          icon:         PlaneTakeoff,
-          colorClass:   'bg-blue-100 dark:bg-blue-950',
-          iconColorClass: 'text-blue-600 dark:text-blue-400',
-        })
-      })
+      .forEach(f => out.push({
+        id:          `f-${f.id}`,
+        title:       f.flight_number,
+        description: `${f.departure?.from?.iata ?? '?'} → ${f.departure?.to?.iata ?? '?'}`,
+        timeAgo:     getTimeAgo(f.departure_time),
+        icon:        PlaneTakeoff,
+        iconBg:      'bg-indigo-100 dark:bg-indigo-950',
+        iconColor:   'text-indigo-600 dark:text-indigo-400',
+      }))
   }
 
-  // Aéronefs — si le user peut les voir
   if (nav.value.aircrafts) {
     ;[...aircraftsStore.allAircrafts]
       .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
       .slice(0, 2)
-      .forEach(a => {
-        activities.push({
-          id:           `aircraft-${a.id}`,
-          title:        'Aéronef ajouté',
-          description:  `${a.type?.name ?? 'Type inconnu'} (${a.immatriculation})`,
-          timeAgo:      a.created_at ? getTimeAgo(a.created_at) : '—',
-          icon:         Plane,
-          colorClass:   'bg-indigo-100 dark:bg-indigo-950',
-          iconColorClass: 'text-indigo-600 dark:text-indigo-400',
-        })
-      })
+      .forEach(a => out.push({
+        id:          `a-${a.id}`,
+        title:       a.immatriculation,
+        description: a.type?.name ?? 'Type inconnu',
+        timeAgo:     a.created_at ? getTimeAgo(a.created_at) : '—',
+        icon:        Plane,
+        iconBg:      'bg-sky-100 dark:bg-sky-950',
+        iconColor:   'text-sky-600 dark:text-sky-400',
+      }))
   }
 
-  return activities.slice(0, 5)
+  return out.slice(0, 6)
 })
 
-// ─── Helper date ──────────────────────────────────────────────────────────────
-
-const getTimeAgo = (dateString: string): string => {
-  const diff  = Date.now() - new Date(dateString).getTime()
-  const mins  = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days  = Math.floor(diff / 86400000)
-
-  if (mins  < 60)  return `Il y a ${mins} minute${mins  > 1 ? 's' : ''}`
-  if (hours < 24)  return `Il y a ${hours} heure${hours > 1 ? 's' : ''}`
-  if (days  === 1) return 'Hier'
-  if (days  < 30)  return `Il y a ${days} jour${days   > 1 ? 's' : ''}`
-  return new Date(dateString).toLocaleDateString('fr-FR')
-}
-
-// ─── Chargement conditionnel selon les permissions ───────────────────────────
+// ─── Chargement conditionnel ──────────────────────────────────────────────────
 
 onMounted(async () => {
   loading.value = true
   try {
     const calls: Promise<any>[] = []
-
-    // On ne charge que les données auxquelles le user a accès
     if (nav.value.operators) calls.push(operatorsStore.fetchAllOperators())
     if (nav.value.aircrafts)  calls.push(aircraftsStore.fetchAllAircrafts())
     if (nav.value.flights)    calls.push(flightsStore.fetchFlights(1))
     if (nav.value.agents)     calls.push(usersStore.fetchAllUsers())
-
     await Promise.all(calls)
   } catch {
     showError('Erreur lors du chargement du tableau de bord')

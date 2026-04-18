@@ -145,6 +145,27 @@ export interface AircraftTypeFormData {
   default_pmad?: number | 0
 }
 
+export interface AircraftTypeKPIs {
+  active_aircrafts: number
+  inactive_aircrafts: number
+  total_aircrafts: number
+  total_operators: number
+  total_flights_current_year: number
+  total_flights: number
+  utilization_rate: number
+  average_pmad: number | null
+  flights_per_aircraft: number
+}
+
+export interface OperatorWithAircraftCount {
+  id: number
+  name: string
+  sigle: string
+  country?: string | null
+  aircrafts_count: number
+  active_aircrafts_count: number
+}
+
 // ==================== AIRCRAFTS ====================
 export interface Aircraft {
   id: number

@@ -6,7 +6,7 @@
       <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-14">
 
-          <!-- Logo + Nav -->
+          <!-- Logo + Nav desktop -->
           <div class="flex items-center gap-8">
             <NuxtLink to="/" class="flex items-center gap-2.5 shrink-0">
               <div class="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm">
@@ -15,23 +15,29 @@
               <span class="text-base font-bold text-gray-900 dark:text-white hidden sm:block">VTA System</span>
             </NuxtLink>
 
-            <!-- Nav desktop -->
             <nav class="hidden lg:flex items-center gap-1">
 
-              <NuxtLink to="/" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150" :class="$route.path === '/' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
+              <!-- Tableau de bord — toujours visible -->
+              <NuxtLink to="/"
+                class="nav-link"
+                :class="$route.path === '/' ? 'nav-link-active' : ''">
                 <Home class="h-3.5 w-3.5" />
                 Tableau de bord
               </NuxtLink>
 
-              <NuxtLink v-if="nav.operators" to="/operators" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
-                :class="$route.path.startsWith('/operators') ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
+              <!-- Exploitants — admin / manager / agent -->
+              <NuxtLink v-if="nav.operators" to="/operators"
+                class="nav-link"
+                :class="$route.path.startsWith('/operators') ? 'nav-link-active' : ''">
                 <Building2 class="h-3.5 w-3.5" />
                 Exploitants
               </NuxtLink>
 
+              <!-- Aéronefs dropdown — admin / manager / agent -->
               <DropdownMenu v-if="nav.aircrafts || nav.aircraftTypes">
                 <DropdownMenuTrigger as-child>
-                  <button class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150" :class="$route.path.startsWith('/aircrafts') ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
+                  <button class="nav-link"
+                    :class="$route.path.startsWith('/aircrafts') ? 'nav-link-active' : ''">
                     <Plane class="h-3.5 w-3.5" />
                     Aéronefs
                     <ChevronDown class="h-3 w-3 ml-0.5 opacity-60" />
@@ -40,28 +46,29 @@
                 <DropdownMenuContent align="start" class="w-48">
                   <DropdownMenuItem v-if="nav.aircraftTypes" as-child>
                     <NuxtLink to="/aircrafts/types" class="flex items-center gap-2 cursor-pointer">
-                      <Layers class="h-4 w-4 text-gray-400" />
-                      Types d'aéronefs
+                      <Layers class="h-4 w-4 text-gray-400" />Types d'aéronefs
                     </NuxtLink>
                   </DropdownMenuItem>
                   <DropdownMenuItem v-if="nav.aircrafts" as-child>
                     <NuxtLink to="/aircrafts" class="flex items-center gap-2 cursor-pointer">
-                      <Plane class="h-4 w-4 text-gray-400" />
-                      Aéronefs
+                      <Plane class="h-4 w-4 text-gray-400" />Aéronefs
                     </NuxtLink>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <NuxtLink v-if="nav.flights" to="/flights" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
-                :class="$route.path.startsWith('/flights') ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
+              <!-- Vols — tous les rôles -->
+              <NuxtLink v-if="nav.flights" to="/flights"
+                class="nav-link"
+                :class="$route.path.startsWith('/flights') ? 'nav-link-active' : ''">
                 <PlaneTakeoff class="h-3.5 w-3.5" />
                 Vols
               </NuxtLink>
 
-              <DropdownMenu v-if="nav.agents || nav.imports || nav.reports || nav.permissions">
+              <!-- "Plus" dropdown — contenu conditionnel par rôle -->
+              <DropdownMenu v-if="showMoreMenu">
                 <DropdownMenuTrigger as-child>
-                  <button class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150">
+                  <button class="nav-link">
                     <MoreHorizontal class="h-3.5 w-3.5" />
                     Plus
                     <ChevronDown class="h-3 w-3 ml-0.5 opacity-60" />
@@ -69,71 +76,76 @@
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" class="w-48">
 
-                  <DropdownMenuItem v-if="nav.agents" as-child>
-                    <NuxtLink to="/agents/" class="flex items-center gap-2 cursor-pointer">
-                      <Users class="h-4 w-4 text-gray-400" />
-                      Agents
-                    </NuxtLink>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem v-if="nav.imports" as-child>
-                    <NuxtLink to="/imports" class="flex items-center gap-2 cursor-pointer">
-                      <Upload class="h-4 w-4 text-gray-400" />
-                      Imports
-                    </NuxtLink>
-                  </DropdownMenuItem>
-
+                  <!-- Rapports — admin + manager uniquement -->
                   <DropdownMenuSub v-if="nav.reports">
                     <DropdownMenuSubTrigger class="flex items-center gap-2 cursor-pointer">
-                      <FileText class="h-4 w-4 text-gray-400" />
-                      Rapports
+                      <FileText class="h-4 w-4 text-gray-400" />Rapports
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent class="w-44">
                       <DropdownMenuItem as-child>
                         <NuxtLink to="/reports" class="flex items-center gap-2 cursor-pointer">
-                          <BarChart3 class="h-4 w-4 text-gray-400" />
-                          Tous les rapports
+                          <BarChart3 class="h-4 w-4 text-gray-400" />Tous les rapports
                         </NuxtLink>
                       </DropdownMenuItem>
                       <DropdownMenuItem as-child>
                         <NuxtLink to="/reports/traffic" class="flex items-center gap-2 cursor-pointer">
-                          <PlaneTakeoff class="h-4 w-4 text-gray-400" />
-                          Trafic
+                          <PlaneTakeoff class="h-4 w-4 text-gray-400" />Trafic
                         </NuxtLink>
                       </DropdownMenuItem>
                       <DropdownMenuItem as-child>
                         <NuxtLink to="/reports/pax-bus" class="flex items-center gap-2 cursor-pointer">
-                          <Users class="h-4 w-4 text-gray-400" />
-                          Pax-Bus
+                          <Users class="h-4 w-4 text-gray-400" />Pax-Bus
                         </NuxtLink>
                       </DropdownMenuItem>
                       <DropdownMenuItem as-child>
                         <NuxtLink to="/reports/idef" class="flex items-center gap-2 cursor-pointer">
-                          <Package class="h-4 w-4 text-gray-400" />
-                          IDEF
+                          <Package class="h-4 w-4 text-gray-400" />IDEF
                         </NuxtLink>
                       </DropdownMenuItem>
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
 
-                  <DropdownMenuSeparator v-if="nav.agents || nav.imports || nav.reports" />
-
-                  <DropdownMenuItem as-child>
-                    <NuxtLink to="/permissions" class="flex items-center gap-2 cursor-pointer">
-                      <Shield class="h-4 w-4 text-gray-400" />
-                      Permissions
+                  <!-- Agents — admin uniquement -->
+                  <DropdownMenuItem v-if="nav.agents" as-child>
+                    <NuxtLink to="/agents/" class="flex items-center gap-2 cursor-pointer">
+                      <Users class="h-4 w-4 text-gray-400" />Agents
                     </NuxtLink>
                   </DropdownMenuItem>
 
+                  <!-- Imports — admin uniquement -->
+                  <DropdownMenuItem v-if="nav.imports" as-child>
+                    <NuxtLink to="/imports" class="flex items-center gap-2 cursor-pointer">
+                      <Upload class="h-4 w-4 text-gray-400" />Imports
+                    </NuxtLink>
+                  </DropdownMenuItem>
+
+                  <!-- Séparateur avant section système -->
+                  <DropdownMenuSeparator v-if="nav.reports || nav.agents || nav.imports" />
+
+                  <!-- Permissions — tous les rôles authentifiés -->
+                  <DropdownMenuItem as-child>
+                    <NuxtLink to="/permissions" class="flex items-center gap-2 cursor-pointer">
+                      <Shield class="h-4 w-4 text-gray-400" />Permissions
+                    </NuxtLink>
+                  </DropdownMenuItem>
+
+                  <!-- Logs — admin uniquement -->
                   <DropdownMenuItem v-if="nav.logs" as-child>
                     <NuxtLink to="/audit" class="flex items-center gap-2 cursor-pointer">
-                      <ScrollText class="h-4 w-4 text-gray-400" />
-                      Logs
+                      <ScrollText class="h-4 w-4 text-gray-400" />Logs d'audit
                     </NuxtLink>
                   </DropdownMenuItem>
 
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <!-- Permissions en nav directe quand "Plus" absent (permanent) -->
+              <NuxtLink v-if="!showMoreMenu" to="/permissions"
+                class="nav-link"
+                :class="$route.path.startsWith('/permissions') ? 'nav-link-active' : ''">
+                <Shield class="h-3.5 w-3.5" />
+                Permissions
+              </NuxtLink>
 
             </nav>
           </div>
@@ -142,7 +154,8 @@
           <div class="flex items-center gap-2">
 
             <!-- User pill (desktop) -->
-            <div v-if="authStore.user" class="hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+            <div v-if="authStore.user"
+              class="hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
               <div class="h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center">
                 <span class="text-[10px] font-bold text-white uppercase">{{ authStore.user.name.charAt(0) }}</span>
               </div>
@@ -155,7 +168,7 @@
               </span>
             </div>
 
-            <!-- Mobile menu toggle -->
+            <!-- Mobile toggle -->
             <Button variant="ghost" size="sm" class="lg:hidden h-8 w-8 p-0" @click="mobileMenuOpen = !mobileMenuOpen">
               <Menu v-if="!mobileMenuOpen" class="h-4 w-4" />
               <X v-else class="h-4 w-4" />
@@ -184,14 +197,12 @@
                 <DropdownMenuSeparator />
                 <DropdownMenuItem as-child>
                   <NuxtLink to="/settings" class="flex items-center gap-2 cursor-pointer">
-                    <User class="h-4 w-4 text-gray-400" />
-                    Mon profil
+                    <User class="h-4 w-4 text-gray-400" />Mon profil
                   </NuxtLink>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem @click="handleLogout" class="text-red-600 dark:text-red-400 cursor-pointer focus:text-red-600">
-                  <LogOut class="h-4 w-4 mr-2" />
-                  Déconnexion
+                  <LogOut class="h-4 w-4 mr-2" />Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -199,61 +210,74 @@
           </div>
         </div>
 
-        <!-- Mobile nav -->
+        <!-- ── Mobile nav ── -->
         <Transition name="slide-fade">
-          <nav v-if="mobileMenuOpen" class="lg:hidden pb-3 pt-2 border-t border-gray-100 dark:border-gray-800 space-y-0.5 mt-1">
+          <nav v-if="mobileMenuOpen"
+            class="lg:hidden pb-3 pt-2 border-t border-gray-100 dark:border-gray-800 space-y-0.5 mt-1">
 
-            <NuxtLink to="/" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150" :class="$route.path === '/' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
-              <Home class="h-4 w-4" /> Tableau de bord
+            <NuxtLink to="/" @click="mobileMenuOpen = false" class="mobile-link"
+              :class="$route.path === '/' ? 'mobile-link-active' : ''">
+              <Home class="h-4 w-4" />Tableau de bord
             </NuxtLink>
 
-            <NuxtLink v-if="nav.operators" to="/operators" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
-              :class="$route.path.startsWith('/operators') ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
-              <Building2 class="h-4 w-4" /> Exploitants
+            <!-- Exploitants — admin / manager / agent -->
+            <NuxtLink v-if="nav.operators" to="/operators" @click="mobileMenuOpen = false"
+              class="mobile-link" :class="$route.path.startsWith('/operators') ? 'mobile-link-active' : ''">
+              <Building2 class="h-4 w-4" />Exploitants
             </NuxtLink>
 
+            <!-- Aéronefs — admin / manager / agent -->
             <template v-if="nav.aircrafts || nav.aircraftTypes">
-              <div class="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Aéronefs</div>
-              <NuxtLink v-if="nav.aircraftTypes" to="/aircrafts/types" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 ml-3"
-                :class="$route.path === '/aircrafts/types' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
-                <Layers class="h-4 w-4" /> Types d'aéronefs
+              <div class="mobile-section-label">Aéronefs</div>
+              <NuxtLink v-if="nav.aircraftTypes" to="/aircrafts/types" @click="mobileMenuOpen = false"
+                class="mobile-link ml-3" :class="$route.path === '/aircrafts/types' ? 'mobile-link-active' : ''">
+                <Layers class="h-4 w-4" />Types d'aéronefs
               </NuxtLink>
-              <NuxtLink v-if="nav.aircrafts" to="/aircrafts" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 ml-3"
-                :class="$route.path === '/aircrafts' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
-                <Plane class="h-4 w-4" /> Aéronefs
+              <NuxtLink v-if="nav.aircrafts" to="/aircrafts" @click="mobileMenuOpen = false"
+                class="mobile-link ml-3" :class="$route.path === '/aircrafts' ? 'mobile-link-active' : ''">
+                <Plane class="h-4 w-4" />Aéronefs
               </NuxtLink>
             </template>
 
-            <NuxtLink v-if="nav.flights" to="/flights" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
-              :class="$route.path.startsWith('/flights') ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60' : ''">
-              <PlaneTakeoff class="h-4 w-4" /> Vols
+            <!-- Vols — tous -->
+            <NuxtLink v-if="nav.flights" to="/flights" @click="mobileMenuOpen = false"
+              class="mobile-link" :class="$route.path.startsWith('/flights') ? 'mobile-link-active' : ''">
+              <PlaneTakeoff class="h-4 w-4" />Vols
             </NuxtLink>
 
-            <template v-if="nav.agents || nav.imports">
-              <div class="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Administration</div>
-              <NuxtLink v-if="nav.agents" to="/agents/" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 ml-3">
-                <Users class="h-4 w-4" /> Agents
-              </NuxtLink>
-              <NuxtLink v-if="nav.imports" to="/imports" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 ml-3">
-                <Upload class="h-4 w-4" /> Imports
-              </NuxtLink>
-            </template>
-
+            <!-- Rapports — admin + manager -->
             <template v-if="nav.reports">
-              <div class="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">Rapports</div>
-              <NuxtLink to="/reports/traffic" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 ml-3">
-                <PlaneTakeoff class="h-4 w-4" /> Trafic
+              <div class="mobile-section-label">Rapports</div>
+              <NuxtLink to="/reports/traffic" @click="mobileMenuOpen = false" class="mobile-link ml-3">
+                <PlaneTakeoff class="h-4 w-4" />Trafic
               </NuxtLink>
-              <NuxtLink to="/reports/pax-bus" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 ml-3">
-                <Users class="h-4 w-4" /> Pax-Bus
+              <NuxtLink to="/reports/pax-bus" @click="mobileMenuOpen = false" class="mobile-link ml-3">
+                <Users class="h-4 w-4" />Pax-Bus
               </NuxtLink>
-              <NuxtLink to="/reports/idef" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 ml-3">
-                <Package class="h-4 w-4" /> IDEF
+              <NuxtLink to="/reports/idef" @click="mobileMenuOpen = false" class="mobile-link ml-3">
+                <Package class="h-4 w-4" />IDEF
               </NuxtLink>
             </template>
 
-            <NuxtLink to="/permissions" @click="mobileMenuOpen = false" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150">
-              <Shield class="h-4 w-4" /> Permissions
+            <!-- Administration — admin uniquement -->
+            <template v-if="nav.agents || nav.imports">
+              <div class="mobile-section-label">Administration</div>
+              <NuxtLink v-if="nav.agents" to="/agents/" @click="mobileMenuOpen = false" class="mobile-link ml-3">
+                <Users class="h-4 w-4" />Agents
+              </NuxtLink>
+              <NuxtLink v-if="nav.imports" to="/imports" @click="mobileMenuOpen = false" class="mobile-link ml-3">
+                <Upload class="h-4 w-4" />Imports
+              </NuxtLink>
+            </template>
+
+            <!-- Système — toujours -->
+            <div class="mobile-section-label">Système</div>
+            <NuxtLink to="/permissions" @click="mobileMenuOpen = false"
+              class="mobile-link ml-3" :class="$route.path.startsWith('/permissions') ? 'mobile-link-active' : ''">
+              <Shield class="h-4 w-4" />Permissions
+            </NuxtLink>
+            <NuxtLink v-if="nav.logs" to="/audit" @click="mobileMenuOpen = false" class="mobile-link ml-3">
+              <ScrollText class="h-4 w-4" />Logs d'audit
             </NuxtLink>
 
           </nav>
@@ -307,7 +331,20 @@ import { Button } from '@/components/ui/button'
 const authStore      = useAuthStore()
 const mobileMenuOpen = ref(false)
 const { success, error } = useToast()
-const { nav }        = usePermission()
+const { nav } = usePermission()
+
+// ── "Plus" menu visible si au moins un item supplémentaire existe ──────────────
+//    (rapports, agents, imports, logs, ou permissions en fallback)
+const showMoreMenu = computed(() =>
+  nav.value.reports ||
+  nav.value.agents  ||
+  nav.value.imports ||
+  nav.value.logs    ||
+  // Toujours vrai : permissions est dans "Plus" dès qu'il y a autre chose
+  nav.value.operators || nav.value.aircrafts
+)
+
+// ── Libellés rôle ──────────────────────────────────────────────────────────────
 
 const roleLabel = computed(() => ({
   admin:     'Admin',
@@ -334,6 +371,73 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
+/* ─── Nav link atoms ───────────────────────────────────────────────── */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  color: #4b5563;
+  transition: color 0.15s, background 0.15s;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.nav-link:hover {
+  color: #111827;
+  background: #f3f4f6;
+}
+.nav-link-active {
+  color: #2563eb !important;
+  background: #eff6ff !important;
+}
+
+/* dark */
+@media (prefers-color-scheme: dark) {
+  .nav-link { color: #9ca3af; }
+  .nav-link:hover { color: #111827; background: rgba(37,99,235,0.15); }
+  .nav-link-active { color: #60a5fa !important; background: rgba(37,99,235,0.15) !important; }
+}
+
+/* ─── Mobile link atoms ────────────────────────────────────────────── */
+.mobile-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  color: #374151;
+  transition: color 0.15s, background 0.15s;
+  text-decoration: none;
+}
+.mobile-link:hover {
+  color: #111827;
+  background: #f3f4f6;
+}
+.mobile-link-active {
+  color: #2563eb !important;
+  background: #eff6ff !important;
+}
+.mobile-section-label {
+  padding: 12px 12px 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+@media (prefers-color-scheme: dark) {
+  .mobile-link { color: #d1d5db; }
+  .mobile-link:hover { color: #fff; background: #1f2937; }
+  .mobile-link-active { color: #60a5fa !important; background: rgba(37,99,235,0.15) !important; }
+}
+
+/* ─── Transitions ──────────────────────────────────────────────────── */
 .slide-fade-enter-active,
 .slide-fade-leave-active { transition: all 0.2s ease; }
 .slide-fade-enter-from,

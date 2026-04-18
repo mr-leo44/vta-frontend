@@ -17,7 +17,6 @@
             </p>
           </div>
         </div>
-        <!-- Indicateur de session -->
         <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 text-sm">
           <span class="h-1.5 w-1.5 rounded-full bg-green-300"></span>
           Session active
@@ -25,7 +24,7 @@
       </div>
     </div>
 
-    <!-- KPIs -->
+    <!-- KPIs — filtrés par rôle -->
     <div v-if="visibleStats.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div
         v-for="stat in visibleStats"
@@ -50,7 +49,7 @@
       </div>
     </div>
 
-    <!-- Contenu principal : accès rapide + activités côte à côte sur lg -->
+    <!-- Accès rapide + Activités -->
     <div class="grid gap-6 lg:grid-cols-3">
 
       <!-- Accès rapide (2/3) -->
@@ -150,7 +149,7 @@ const { error: showError } = useToast()
 
 const loading = ref(true)
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const roleLabelFull = computed(() => ({
   admin:     'Administrateur',
@@ -175,7 +174,7 @@ const getTimeAgo = (d: string): string => {
   return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
-// ─── Calculs bruts ───────────────────────────────────────────────────────────
+// ─── Stats brutes ──────────────────────────────────────────────────────────────
 
 const rawStats = computed(() => {
   const now   = new Date()
@@ -199,43 +198,54 @@ const rawStats = computed(() => {
     newOperators: operatorsStore.allOperators.filter(o => inMonth(o.created_at)).length,
     newAircrafts: aircraftsStore.allAircrafts.filter(a => inMonth(a.created_at)).length,
     monthFlights,
-    flightTrend:  monthFlights - prevFlights,
+    flightTrend: monthFlights - prevFlights,
   }
 })
 
-// ─── KPI Cards — classes Tailwind statiques (pas de string interpolation) ────
+// ─── KPI Cards
+// Règles :
+//   admin    → tout (operators, aircrafts, flights, agents)
+//   manager  → operators, aircrafts, flights  (pas agents)
+//   agent    → operators, aircrafts, flights  (pas agents)
+//   permanent→ flights seulement
+// ──────────────────────────────────────────────────────────────────────────────
 
 const visibleStats = computed(() => {
   const s   = rawStats.value
   const all = [
+    // Exploitants — admin / manager / agent (pas permanent)
     nav.value.operators && {
-      key:   'operators',
-      label: 'Exploitants',
-      value: operatorsStore.allOperators.length,
-      icon:  Building2,
+      key:       'operators',
+      label:     'Exploitants',
+      value:     operatorsStore.allOperators.length,
+      icon:      Building2,
       iconBg:    'bg-blue-100 dark:bg-blue-950',
       iconColor: 'text-blue-600 dark:text-blue-400',
-      link:  '/operators',
+      link:      '/operators',
       badge: { icon: TrendingUp, text: `+${s.newOperators}`, class: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
     },
+
+    // Aéronefs — admin / manager / agent (pas permanent)
     nav.value.aircrafts && {
-      key:   'aircrafts',
-      label: 'Aéronefs',
-      value: aircraftsStore.allAircrafts.length,
-      icon:  Plane,
+      key:       'aircrafts',
+      label:     'Aéronefs',
+      value:     aircraftsStore.allAircrafts.length,
+      icon:      Plane,
       iconBg:    'bg-sky-100 dark:bg-sky-950',
       iconColor: 'text-sky-600 dark:text-sky-400',
-      link:  '/aircrafts',
+      link:      '/aircrafts',
       badge: { icon: TrendingUp, text: `+${s.newAircrafts}`, class: 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-400' },
     },
+
+    // Vols — tous les rôles
     nav.value.flights && {
-      key:   'flights',
-      label: 'Vols',
-      value: flightsStore.total,
-      icon:  PlaneTakeoff,
+      key:       'flights',
+      label:     'Vols',
+      value:     flightsStore.total,
+      icon:      PlaneTakeoff,
       iconBg:    'bg-indigo-100 dark:bg-indigo-950',
       iconColor: 'text-indigo-600 dark:text-indigo-400',
-      link:  '/flights',
+      link:      '/flights',
       badge: {
         icon:  s.flightTrend >= 0 ? TrendingUp : TrendingDown,
         text:  `${s.flightTrend >= 0 ? '+' : ''}${s.monthFlights}`,
@@ -244,14 +254,16 @@ const visibleStats = computed(() => {
           : 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
       },
     },
+
+    // Agents — admin uniquement
     nav.value.agents && {
-      key:   'agents',
-      label: 'Agents',
-      value: usersStore.allUsers.length,
-      icon:  Users,
+      key:       'agents',
+      label:     'Agents',
+      value:     usersStore.allUsers.length,
+      icon:      Users,
       iconBg:    'bg-teal-100 dark:bg-teal-950',
       iconColor: 'text-teal-600 dark:text-teal-400',
-      link:  '/agents',
+      link:      '/agents',
       badge: usersStore.allUsers.length > 0
         ? { icon: TrendingUp, text: `${usersStore.allUsers.length} actifs`, class: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400' }
         : { icon: AlertCircle, text: 'Non disponible', class: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
@@ -260,10 +272,17 @@ const visibleStats = computed(() => {
   return all.filter(Boolean) as any[]
 })
 
-// ─── Accès rapide — classes Tailwind statiques ────────────────────────────────
+// ─── Accès rapide
+// Règles :
+//   admin    → flights, operators, aircrafts, reports, agents, imports
+//   manager  → flights, operators, aircrafts, reports  (pas agents/imports)
+//   agent    → flights, operators, aircrafts           (pas rapports)
+//   permanent→ flights seulement (+ permissions toujours en dur en bas)
+// ──────────────────────────────────────────────────────────────────────────────
 
 const visibleShortcuts = computed(() => {
   const all = [
+    // Vols — tous
     nav.value.flights && {
       key:       'flights',
       label:     'Gérer les vols',
@@ -272,6 +291,8 @@ const visibleShortcuts = computed(() => {
       iconColor: 'text-indigo-600 dark:text-indigo-400',
       link:      '/flights',
     },
+
+    // Exploitants — admin / manager / agent
     nav.value.operators && {
       key:       'operators',
       label:     'Exploitants',
@@ -280,6 +301,8 @@ const visibleShortcuts = computed(() => {
       iconColor: 'text-blue-600 dark:text-blue-400',
       link:      '/operators',
     },
+
+    // Aéronefs — admin / manager / agent
     nav.value.aircrafts && {
       key:       'aircrafts',
       label:     'Aéronefs',
@@ -288,6 +311,8 @@ const visibleShortcuts = computed(() => {
       iconColor: 'text-sky-600 dark:text-sky-400',
       link:      '/aircrafts',
     },
+
+    // Rapports — admin + manager uniquement
     nav.value.reports && {
       key:       'reports',
       label:     'Rapports',
@@ -296,6 +321,8 @@ const visibleShortcuts = computed(() => {
       iconColor: 'text-orange-600 dark:text-orange-400',
       link:      '/reports',
     },
+
+    // Agents — admin uniquement
     nav.value.agents && {
       key:       'agents',
       label:     'Gestion agents',
@@ -304,6 +331,8 @@ const visibleShortcuts = computed(() => {
       iconColor: 'text-teal-600 dark:text-teal-400',
       link:      '/agents',
     },
+
+    // Imports — admin uniquement
     nav.value.imports && {
       key:       'imports',
       label:     'Imports',
@@ -316,7 +345,7 @@ const visibleShortcuts = computed(() => {
   return all.filter(Boolean) as any[]
 })
 
-// ─── Activités récentes ───────────────────────────────────────────────────────
+// ─── Activités récentes ────────────────────────────────────────────────────────
 
 const recentActivities = computed(() => {
   const out: any[] = []
@@ -354,12 +383,13 @@ const recentActivities = computed(() => {
   return out.slice(0, 6)
 })
 
-// ─── Chargement conditionnel ──────────────────────────────────────────────────
+// ─── Chargement conditionnel selon le rôle ────────────────────────────────────
 
 onMounted(async () => {
   loading.value = true
   try {
     const calls: Promise<any>[] = []
+    // Chaque fetch ne se déclenche que si l'utilisateur a la permission correspondante
     if (nav.value.operators) calls.push(operatorsStore.fetchAllOperators())
     if (nav.value.aircrafts)  calls.push(aircraftsStore.fetchAllAircrafts())
     if (nav.value.flights)    calls.push(flightsStore.fetchFlights(1))

@@ -1,30 +1,31 @@
 <template>
-  <Card class="hover:shadow-md transition-shadow">
-    <CardHeader class="pb-3">
-      <div class="flex items-start justify-between">
-        <div class="flex-1 space-y-2">
-          <Skeleton class="h-5 w-3/4" />
-          <Skeleton class="h-4 w-16" />
+  <div class="bg-card border border-border rounded-xl overflow-hidden">
+    <!-- Barre latérale simulée -->
+    <div class="flex">
+      <div class="w-[3px] bg-muted shrink-0"></div>
+      <div class="flex-1 pl-5 pr-4 pt-4 pb-4">
+        <!-- En-tête : icône + nom -->
+        <div class="flex items-start gap-2.5 mb-3">
+          <Skeleton class="h-9 w-9 rounded-lg shrink-0" />
+          <div class="flex-1 space-y-1.5 pt-0.5">
+            <Skeleton class="h-3.5 w-3/4" />
+            <Skeleton class="h-3 w-1/4" />
+          </div>
         </div>
-        <Skeleton class="h-8 w-8 rounded-md" />
+        <!-- Séparateur -->
+        <div class="h-px bg-border mb-3" />
+        <!-- PMAD pill -->
+        <Skeleton class="h-5 w-24 rounded mb-3" />
+        <!-- Footer -->
+        <div class="flex items-center gap-1.5 pt-2.5 border-t border-border">
+          <Skeleton class="h-3 w-3 rounded" />
+          <Skeleton class="h-3 w-20" />
+        </div>
       </div>
-    </CardHeader>
-    <CardContent>
-      <div class="space-y-2">
-        <div class="flex items-center justify-between">
-          <Skeleton class="h-4 w-20" />
-          <Skeleton class="h-5 w-8" />
-        </div>
-        <div class="flex items-center justify-between">
-          <Skeleton class="h-4 w-16" />
-          <Skeleton class="h-4 w-24" />
-        </div>
-      </div>
-    </CardContent>
-  </Card>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 </script>

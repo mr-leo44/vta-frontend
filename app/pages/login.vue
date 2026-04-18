@@ -108,8 +108,15 @@
             </div>
           </div>
 
+          <!-- Message de session expirée -->
+          <div v-if="sessionExpired"
+            class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm">
+            <AlertCircle class="h-4 w-4 shrink-0" />
+            Votre session a expiré. Veuillez vous reconnecter.
+          </div>
+
           <!-- Erreur générale -->
-          <div v-if="error && !isRateLimited"
+          <div v-if="error && !isRateLimited && !sessionExpired"
             class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
             <AlertCircle class="h-4 w-4 shrink-0" />
             {{ error }}
@@ -176,6 +183,7 @@ const loading      = ref(false)
 const error        = ref('')
 const checking     = ref(true)
 const showPassword = ref(false)
+const sessionExpired = ref(false)
 
 // ───── Rate limit persistant ──────────────────────────────────────────────────
 const RATE_LIMIT_KEY      = 'vta_rate_limit_until'  // timestamp de fin de blocage
@@ -311,6 +319,11 @@ const features = [
 
 onMounted(async () => {
   checkPersistedRateLimit()
+
+  // Detect if redirected due to token expiration
+  if (route.query.reason === 'expired') {
+    sessionExpired.value = true
+  }
 
   if (authStore.$hydrate) await authStore.$hydrate()
   if (authStore.isAuthenticated) {

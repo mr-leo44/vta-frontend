@@ -15,8 +15,8 @@
       </Button>
     </div>
 
-    <!-- KPI Cards -->
-    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- KPI Cards — masquées sur mobile, visibles tablette et desktop -->
+    <div class="hidden sm:grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <template v-if="loading && aircrafts.length === 0">
         <div v-for="i in 4" :key="i" class="bg-card border border-border rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">

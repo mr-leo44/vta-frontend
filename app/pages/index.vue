@@ -131,7 +131,7 @@
 import {
   Building2, Plane, Users, FileText, Upload,
   PlaneTakeoff, TrendingUp, TrendingDown, AlertCircle,
-  Zap, Activity, Shield
+  Zap, Activity, Shield, BarChart3
 } from 'lucide-vue-next'
 import LoadingScreen from '~/components/LoadingScreen.vue'
 import { ref, computed, onMounted } from 'vue'
@@ -347,6 +347,16 @@ const visibleShortcuts = computed(() => {
       iconBg:    'bg-gray-100 dark:bg-gray-800',
       iconColor: 'text-gray-600 dark:text-gray-400',
       link:      '/imports',
+    },
+
+    // Audit logs — admin uniquement
+    nav.value.agents && {
+      key:       'audit',
+      label:     'Audit logs',
+      icon:      BarChart3,
+      iconBg:    'bg-red-100 dark:bg-red-950',
+      iconColor: 'text-red-600 dark:text-red-400',
+      link:      '/audit',
     },
   ]
   return all.filter(Boolean) as any[]

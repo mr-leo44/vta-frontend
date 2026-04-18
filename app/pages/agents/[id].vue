@@ -198,6 +198,13 @@ import {
 import type { UserPermissionsDetail } from '~/types/api'
 import { useToast } from '@/composables/useToast'
 
+useHead({
+  title: 'Permissions agent | VTA',
+  meta: [
+    { name: 'description', content: 'Gestion détaillée des permissions et rôles pour un agent système.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 const route = useRoute()

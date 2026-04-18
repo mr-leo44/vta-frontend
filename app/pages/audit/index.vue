@@ -246,6 +246,13 @@ import {
 import type { AuditLogEntry, AuditStats } from '~/types/api'
 import { useToast } from '@/composables/useToast'
 
+useHead({
+  title: 'Audit | VTA',
+  meta: [
+    { name: 'description', content: 'Journal d\'audit complet de toutes les actions et modifications dans le système.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 const { apiFetch } = useApi()

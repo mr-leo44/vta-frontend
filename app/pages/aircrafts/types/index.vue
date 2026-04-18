@@ -517,6 +517,13 @@ definePageMeta({
   middleware: 'auth'
 })
 
+useHead({
+  title: 'Types d\'aéronefs | VTA',
+  meta: [
+    { name: 'description', content: 'Gestion des types d\'aéronefs. Consultez et modifiez les caractéristiques des différents types d\'aéronefs disponibles.' }
+  ]
+})
+
 const { kgToTons } = useAircraftUtils()
 const aircraftsStore = useAircraftsStore()
 const aircraftTypesStore = useAircraftTypesStore()

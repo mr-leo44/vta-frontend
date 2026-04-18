@@ -238,6 +238,13 @@ import {
 import type { AuthUser } from '~/types/api'
 import { useToast } from '@/composables/useToast'
 
+useHead({
+  title: 'Paramètres | VTA',
+  meta: [
+    { name: 'description', content: 'Gestion des paramètres utilisateur et des préférences du système.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 const { apiFetch } = useApi()

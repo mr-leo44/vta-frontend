@@ -314,6 +314,13 @@ import MultiStepFlightForm from '@/components/modules/flight/MultiStepFlightForm
 import FlightViewDialog from '@/components/modules/flight/FlightViewDialog.vue'
 import TodayFlightsDialog from '~/components/modules/flight/TodayFlightsDialog.vue'
 
+useHead({
+  title: 'Vols | VTA',
+  meta: [
+    { name: 'description', content: 'Gestion complète des vols. Consultez, créez et modifiez les informations de tous les vols enregistrés.' }
+  ]
+})
+
 definePageMeta({
   middleware: 'auth'
 })

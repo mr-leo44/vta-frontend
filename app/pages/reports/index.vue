@@ -249,6 +249,13 @@ import TrafficStatsDialog from '~/components/modules/report/TrafficStatsDialog.v
 import PaxSynthDialog     from '~/components/modules/report/PAXSynthDialog.vue'
 import FreightSynthDialog from '~/components/modules/report/FreightSynthDialog.vue'
 
+useHead({
+  title: 'Rapports | VTA',
+  meta: [
+    { name: 'description', content: 'Accès à tous les rapports de trafic aérien, fret et passagers avec visualisations et statistiques.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 const trafficDialogOpen = ref(false)

@@ -67,6 +67,17 @@ import GenericMonthlyReportDialog from '@/components/modules/report/GenericMonth
 import GenericAnnualReportDialog from '@/components/modules/report/GenericAnnualReportDialog.vue'
 import BiMonthlyReportDialog from '@/components/modules/report/paxbus/BiMonthlyReportDialog.vue'
 
+useHead({
+  title: 'Rapports PAX-BUS | VTA',
+  meta: [
+    { name: 'description', content: 'Consultez les rapports PAX-BUS avec analyses de passagers et statistiques détaillées.' }
+  ]
+})
+
+definePageMeta({
+  middleware: 'auth'
+})
+
 const { success, error } = useToast()
 const loading = ref(false)
 const { apiFetch } = useApi()

@@ -485,6 +485,13 @@ import { cn } from '@/lib/utils'
 import GenericMonthlyReportDialog from '~/components/modules/report/GenericMonthlyReportDialog.vue'
 import GenericAnnualReportDialog from '~/components/modules/report/GenericAnnualReportDialog.vue'
 
+useHead({
+  title: 'Rapports IDEF Fret | VTA',
+  meta: [
+    { name: 'description', content: 'Consultez les rapports IDEF Fret avec gestion des taux de change et analyse détaillée.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 const { success, error } = useToast()

@@ -139,6 +139,13 @@ import { useToast } from '@/composables/useToast'
 
 definePageMeta({ middleware: 'auth' })
 
+useHead({
+  title: 'Tableau de bord | VTA',
+  meta: [
+    { name: 'description', content: 'Tableau de bord de gestion du trafic aérien. Consultez les statistiques, les vols, les exploitants et les aéronefs.' }
+  ]
+})
+
 const authStore      = useAuthStore()
 const operatorsStore = useOperatorsStore()
 const aircraftsStore = useAircraftsStore()

@@ -193,6 +193,13 @@ definePageMeta({
   middleware: 'auth'
 })
 
+useHead({
+  title: 'Aéronefs | VTA',
+  meta: [
+    { name: 'description', content: 'Gestion complète des aéronefs. Consultez, créez et modifiez les informations de tous les aéronefs de votre flotte.' }
+  ]
+})
+
 const aircraftsStore = useAircraftsStore()
 const { success: showSuccess, error: showError } = useToast()
 const { apiFetch } = useApi()

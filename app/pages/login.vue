@@ -171,6 +171,13 @@ import { AlertCircle, User, Lock, LogIn, Shield, Eye, EyeOff, PlaneTakeoff, Plan
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import LoadingScreen from '@/components/LoadingScreen.vue'
 
+useHead({
+  title: 'Connexion | VTA',
+  meta: [
+    { name: 'description', content: 'Connectez-vous au système VTA de gestion du trafic aérien.' }
+  ]
+})
+
 definePageMeta({ layout: false, middleware: [] })
 
 const authStore = useAuthStore()

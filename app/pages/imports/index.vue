@@ -381,6 +381,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
+useHead({
+  title: 'Imports | VTA',
+  meta: [
+    { name: 'description', content: 'Importation de données en masse pour exploitants, aéronefs et vols.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 // ── Stores ───────────────────────────────────────────────────────

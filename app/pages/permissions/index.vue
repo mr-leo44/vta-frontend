@@ -352,6 +352,13 @@ import {
 import type { AuthUser } from '~/types/api'
 import { useToast } from '@/composables/useToast'
 
+useHead({
+  title: 'Permissions | VTA',
+  meta: [
+    { name: 'description', content: 'Gestion des rôles et permissions système avec grants et revokes.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 const { can } = usePermission()

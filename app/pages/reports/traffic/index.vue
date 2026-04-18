@@ -87,6 +87,13 @@ import GenericAnnualReportDialog from '~/components/modules/report/GenericAnnual
 import DailyReportDialog from '~/components/modules/report/traffic/DailyReportDialog.vue'
 import HighlightsDialog from '~/components/modules/report/traffic/HighlightsDialog.vue'
 
+useHead({
+  title: 'Rapports de trafic | VTA',
+  meta: [
+    { name: 'description', content: 'Consultez les rapports de trafic aérien détaillés avec graphiques et statistiques.' }
+  ]
+})
+
 definePageMeta({
   middleware: 'auth'
 })

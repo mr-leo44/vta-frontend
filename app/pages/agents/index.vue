@@ -239,6 +239,13 @@ import {
 import type { UserListItem } from '~/types/api'
 import { useToast } from '@/composables/useToast'
 
+useHead({
+  title: 'Agents | VTA',
+  meta: [
+    { name: 'description', content: 'Gestion des agents système avec assignation de fonctions et contrôle des permissions.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 const { can } = usePermission()

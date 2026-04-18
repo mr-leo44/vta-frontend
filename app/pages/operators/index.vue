@@ -235,6 +235,13 @@ import OperatorViewDialog from '~/components/modules/operator/OperatorViewDialog
 import OperatorFormDialog from '@/components/modules/operator/OperatorFormDialog.vue'
 import OperatorFilters, { type OperatorFilters as FilterType } from '~/components/modules/operator/OperatorFilters.vue'
 
+useHead({
+  title: 'Exploitants | VTA',
+  meta: [
+    { name: 'description', content: 'Gestion complète des exploitants aériens. Consultez, créez et modifiez les informations des exploitants de votre flotte.' }
+  ]
+})
+
 definePageMeta({ middleware: 'auth' })
 
 const operatorsStore = useOperatorsStore()

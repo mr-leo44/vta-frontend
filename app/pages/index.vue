@@ -1,414 +1,402 @@
 <template>
-  <!-- Écran de chargement complet -->
   <LoadingScreen v-if="loading" message="Chargement du tableau de bord..." />
 
   <div v-else class="space-y-6">
-    <!-- Header avec linear moderne -->
-    <div
-      class="relative overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 via-purple-600 to-slate-600 p-8 text-white shadow-2xl">
-      <div class="absolute inset-0 bg-black/10"></div>
-      <div class="relative z-10">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <span class="text-2xl">👋</span>
-          </div>
+
+    <!-- Hero -->
+    <div class="rounded-xl bg-blue-600 px-6 py-5 text-white">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-lg bg-white/20 flex items-center justify-center text-xl">👋</div>
           <div>
-            <h1 class="text-3xl font-bold">Bienvenue, {{ authStore.user?.username || '' }} !</h1>
-            <p class="text-white/90 text-sm mt-1">
-              Voici un aperçu de votre activité
+            <h1 class="text-xl font-bold leading-tight">
+              Bonjour, {{ authStore.user?.name }} !
+            </h1>
+            <p class="text-blue-100 text-sm mt-0.5">
+              {{ currentDate }} · {{ roleLabelFull }}
             </p>
           </div>
         </div>
+        <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 text-sm">
+          <span class="h-1.5 w-1.5 rounded-full bg-green-300"></span>
+          Session active
+        </div>
       </div>
-      <!-- Decorative circles -->
-      <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-      <div class="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
     </div>
 
-    <!-- Statistiques principales avec design moderne -->
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card
-        class="group hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-blue-500/50 relative overflow-hidden">
-        <div
-          class="absolute inset-0 bg-linear-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+    <!-- KPIs — filtrés par rôle -->
+    <div v-if="visibleStats.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div
+        v-for="stat in visibleStats"
+        :key="stat.key"
+        class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all duration-200 group"
+        @click="navigateTo(stat.link)"
+      >
+        <div class="flex items-start justify-between mb-3">
+          <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ stat.label }}</span>
+          <div class="h-8 w-8 rounded-lg flex items-center justify-center" :class="stat.iconBg">
+            <component :is="stat.icon" class="h-4 w-4" :class="stat.iconColor" />
+          </div>
         </div>
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">Exploitants</CardTitle>
-          <div
-            class="h-10 w-10 rounded-xl bg-blue-100 dark:bg-blue-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Building2 class="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold bg-linear-to-br from-blue-600 to-blue-800 bg-clip-text text-transparent">
-            {{ stats.operators.total }}
-          </div>
-          <p class="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400">
-              <TrendingUp class="h-3 w-3" />
-              +{{ stats.operators.newThisMonth }}
-            </span>
-            ce mois-ci
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card
-        class="group hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-indigo-500/50 relative overflow-hidden">
-        <div
-          class="absolute inset-0 bg-linear-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+        <div class="text-3xl font-bold text-gray-900 dark:text-white tabular-nums">{{ stat.value }}</div>
+        <div class="mt-2 flex items-center gap-1.5 text-xs">
+          <span class="flex items-center gap-1 font-medium px-1.5 py-0.5 rounded" :class="stat.badge.class">
+            <component :is="stat.badge.icon" class="h-3 w-3" />
+            {{ stat.badge.text }}
+          </span>
+          <span class="text-gray-400">ce mois</span>
         </div>
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">Aéronefs</CardTitle>
-          <div
-            class="h-10 w-10 rounded-xl bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Plane class="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold bg-linear-to-br from-indigo-600 to-indigo-800 bg-clip-text text-transparent">
-            {{ stats.aircrafts.total }}
-          </div>
-          <p class="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400">
-              <TrendingUp class="h-3 w-3" />
-              +{{ stats.aircrafts.newThisMonth }}
-            </span>
-            ce mois-ci
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card
-        class="group hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-purple-500/50 relative overflow-hidden">
-        <div
-          class="absolute inset-0 bg-linear-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        </div>
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">Vols</CardTitle>
-          <div
-            class="h-10 w-10 rounded-xl bg-purple-100 dark:bg-purple-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <PlaneTakeoff class="h-5 w-5 text-purple-600 dark:text-purple-400" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold bg-linear-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent">
-            {{ stats.flights.total }}
-          </div>
-          <p class="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <span :class="[
-              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full',
-              stats.flights.trend >= 0
-                ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400'
-                : 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400'
-            ]">
-              <component :is="stats.flights.trend >= 0 ? TrendingUp : TrendingDown" class="h-3 w-3" />
-              {{ stats.flights.trend >= 0 ? '+' : '' }}{{ stats.flights.monthlyFlights }}
-            </span>
-            ce mois-ci
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card
-        class="group hover:shadow-xl transition-all duration-300 cursor-pointer border-2 hover:border-green-500/50 relative overflow-hidden">
-        <div
-          class="absolute inset-0 bg-linear-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        </div>
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">Agents actifs</CardTitle>
-          <div
-            class="h-10 w-10 rounded-xl bg-green-100 dark:bg-green-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Users class="h-5 w-5 text-green-600 dark:text-green-400" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div class="text-3xl font-bold bg-linear-to-br from-green-600 to-green-800 bg-clip-text text-transparent">
-            {{ stats.users.active }}
-          </div>
-          <p class="text-xs text-muted-foreground mt-2">
-            <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
-              <AlertCircle class="h-3 w-3" />
-              Données non disponibles
-            </span>
-          </p>
-        </CardContent>
-      </Card>
+      </div>
     </div>
 
-    <!-- Accès rapide avec design moderne -->
-    <Card class="border-2 shadow-lg">
-      <CardHeader>
-        <div class="flex items-center gap-3">
-          <div
-            class="h-10 w-10 rounded-xl bg-linear-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-            <Zap class="h-5 w-5 text-white" />
+    <!-- Accès rapide + Activités -->
+    <div class="grid gap-6 lg:grid-cols-3">
+
+      <!-- Accès rapide (2/3) -->
+      <div class="lg:col-span-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2.5">
+          <div class="h-6 w-6 rounded-md bg-blue-600 flex items-center justify-center">
+            <Zap class="h-3.5 w-3.5 text-white" />
           </div>
-          <div>
-            <CardTitle class="text-xl">Accès rapide</CardTitle>
-            <CardDescription>Raccourcis vers les fonctionnalités principales</CardDescription>
-          </div>
+          <h2 class="font-semibold text-gray-900 dark:text-white text-sm">Accès rapide</h2>
         </div>
-      </CardHeader>
-      <CardContent class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Button variant="outline"
-          class="h-28 flex-col gap-3 group hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-all"
-          @click="navigateTo('/operators')">
-          <div
-            class="h-12 w-12 rounded-xl bg-blue-100 dark:bg-blue-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Building2 class="h-6 w-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <span class="font-semibold">Gérer les exploitants</span>
-        </Button>
+        <div class="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
 
-        <Button variant="outline"
-          class="h-28 flex-col gap-3 group hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all"
-          @click="navigateTo('/flights')">
-          <div
-            class="h-12 w-12 rounded-xl bg-purple-100 dark:bg-purple-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <PlaneTakeoff class="h-6 w-6 text-purple-600 dark:text-purple-400" />
-          </div>
-          <span class="font-semibold">Gérer les vols</span>
-        </Button>
-
-        <Button variant="outline"
-          class="h-28 flex-col gap-3 group hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all"
-          @click="navigateTo('/aircrafts')">
-          <div
-            class="h-12 w-12 rounded-xl bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Plane class="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <span class="font-semibold">Gérer les aéronefs</span>
-        </Button>
-
-        <Button variant="outline"
-          class="h-28 flex-col gap-3 group hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950/20 transition-all"
-          @click="navigateTo('/imports')">
-          <div
-            class="h-12 w-12 rounded-xl bg-teal-100 dark:bg-teal-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Upload class="h-6 w-6 text-teal-600 dark:text-teal-400" />
-          </div>
-          <span class="font-semibold">Imports</span>
-        </Button>
-
-        <Button variant="outline" class="h-28 flex-col gap-3 opacity-60 cursor-not-allowed" disabled>
-          <div class="h-12 w-12 rounded-xl bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-            <Users class="h-6 w-6 text-gray-400" />
-          </div>
-          <div class="text-center">
-            <span class="font-semibold block">Gérer les agents</span>
-            <span class="text-xs text-muted-foreground">(Bientôt disponible)</span>
-          </div>
-        </Button>
-
-        <Button variant="outline"
-          class="h-28 flex-col gap-3 group hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all"
-          @click="navigateTo('/reports')">
-          <div
-            class="h-12 w-12 rounded-xl bg-orange-100 dark:bg-orange-950 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <FileText class="h-6 w-6 text-orange-600 dark:text-orange-400" />
-          </div>
-          <span class="font-semibold">Voir les rapports</span>
-        </Button>
-      </CardContent>
-    </Card>
-
-    <!-- Activités récentes avec design moderne -->
-    <Card class="border-2 shadow-lg">
-      <CardHeader>
-        <div class="flex items-center gap-3">
-          <div
-            class="h-10 w-10 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-            <Activity class="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <CardTitle class="text-xl">Activités récentes</CardTitle>
-            <CardDescription>Les dernières actions effectuées dans le système</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div v-if="recentActivities.length > 0" class="space-y-3">
-          <div v-for="activity in recentActivities" :key="activity.id"
-            class="flex items-center gap-4 p-4 border rounded-xl hover:bg-muted/50 transition-all cursor-pointer group">
-            <div
-              :class="['h-12 w-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform', activity.colorClass]">
-              <component :is="activity.icon" class="h-5 w-5" :class="activity.iconColorClass" />
+          <button
+            v-for="sc in visibleShortcuts"
+            :key="sc.key"
+            class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-150 group text-left"
+            @click="navigateTo(sc.link)"
+          >
+            <div class="h-10 w-10 rounded-lg flex items-center justify-center" :class="sc.iconBg">
+              <component :is="sc.icon" class="h-5 w-5" :class="sc.iconColor" />
             </div>
-            <div class="flex-1">
-              <p class="font-medium">{{ activity.title }}</p>
-              <p class="text-sm text-muted-foreground">{{ activity.description }}</p>
+            <span class="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{{ sc.label }}</span>
+          </button>
+
+          <!-- Permissions — toujours visible -->
+          <button
+            class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-violet-200 dark:hover:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-all duration-150 group text-left"
+            @click="navigateTo('/permissions')"
+          >
+            <div class="h-10 w-10 rounded-lg bg-violet-100 dark:bg-violet-950 flex items-center justify-center">
+              <Shield class="h-5 w-5 text-violet-600 dark:text-violet-400" />
             </div>
-            <div class="text-xs text-muted-foreground whitespace-nowrap">
-              {{ activity.timeAgo }}
+            <span class="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">Mes permissions</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Activités récentes (1/3) -->
+      <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
+        <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2.5">
+          <div class="h-6 w-6 rounded-md bg-gray-800 dark:bg-gray-200 flex items-center justify-center">
+            <Activity class="h-3.5 w-3.5 text-white dark:text-gray-800" />
+          </div>
+          <h2 class="font-semibold text-gray-900 dark:text-white text-sm">Activité récente</h2>
+        </div>
+
+        <div v-if="recentActivities.length" class="divide-y divide-gray-50 dark:divide-gray-800">
+          <div
+            v-for="act in recentActivities"
+            :key="act.id"
+            class="flex items-start gap-3 px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          >
+            <div class="h-7 w-7 rounded-md flex items-center justify-center mt-0.5 shrink-0" :class="act.iconBg">
+              <component :is="act.icon" class="h-3.5 w-3.5" :class="act.iconColor" />
             </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{{ act.title }}</p>
+              <p class="text-xs text-gray-400 truncate mt-0.5">{{ act.description }}</p>
+            </div>
+            <span class="text-[10px] text-gray-400 whitespace-nowrap mt-1">{{ act.timeAgo }}</span>
           </div>
         </div>
-        <div v-else class="text-center py-12">
-          <div class="h-20 w-20 rounded-2xl bg-muted mx-auto mb-4 flex items-center justify-center">
-            <Activity class="h-10 w-10 text-muted-foreground opacity-50" />
+
+        <div v-else class="flex flex-col items-center justify-center py-12 text-center px-5">
+          <div class="h-12 w-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
+            <Activity class="h-6 w-6 text-gray-400" />
           </div>
-          <p class="text-lg font-medium mb-2">Aucune activité récente</p>
-          <p class="text-sm text-muted-foreground">Les activités apparaîtront ici une fois que vous commencerez à
-            utiliser le système</p>
+          <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Aucune activité</p>
+          <p class="text-xs text-gray-400 mt-1">Les actions apparaîtront ici</p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Building2, Plane, Users, FileText, Upload, PlaneTakeoff, TrendingUp, TrendingDown, AlertCircle, Zap, Activity } from 'lucide-vue-next'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import {
+  Building2, Plane, Users, FileText, Upload,
+  PlaneTakeoff, TrendingUp, TrendingDown, AlertCircle,
+  Zap, Activity, Shield
+} from 'lucide-vue-next'
 import LoadingScreen from '~/components/LoadingScreen.vue'
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useToast } from '@/composables/useToast'
 
-definePageMeta({
-  middleware: 'auth'
-})
+definePageMeta({ middleware: 'auth' })
 
-const authStore = useAuthStore()
+const authStore      = useAuthStore()
 const operatorsStore = useOperatorsStore()
 const aircraftsStore = useAircraftsStore()
-const flightsStore = useFlightsStore()
-
-const { success: showSuccess, error: showError } = useToast()
+const flightsStore   = useFlightsStore()
+const usersStore     = useUsersStore()
+const { nav }        = usePermission()
+const { error: showError } = useToast()
 
 const loading = ref(true)
 
-// Statistiques calculées
-const stats = computed(() => {
-  const now = new Date()
-  const currentMonth = now.getMonth()
-  const lastMonth = currentMonth - 1
-  const currentYear = now.getFullYear()
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-  // Calcul des vols du mois
-  const monthlyFlights = flightsStore.flights.filter(f => {
-    const flightDate = new Date(f.departure_time)
-    return flightDate.getMonth() === currentMonth && flightDate.getFullYear() === currentYear
-  }).length
+const roleLabelFull = computed(() => ({
+  admin:     'Administrateur',
+  manager:   'Manager',
+  permanent: 'Permanent',
+  agent:     'Agent',
+}[authStore.user?.role ?? ''] ?? ''))
 
-  const lastMonthFlights = flightsStore.flights.filter(f => {
-    const flightDate = new Date(f.departure_time)
-    return flightDate.getMonth() === lastMonth && flightDate.getFullYear() === currentYear
-  }).length
+const currentDate = computed(() =>
+  new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+)
 
-  // Calcul des operateurs du mois
-  const newOperatorsThisMonth = operatorsStore.allOperators.filter(o => {
-    const operatorDate = new Date(o.created_at)
-    return operatorDate.getMonth() === currentMonth && operatorDate.getFullYear() === currentYear
-  }).length
+const getTimeAgo = (d: string): string => {
+  const diff  = Date.now() - new Date(d).getTime()
+  const mins  = Math.floor(diff / 60_000)
+  const hours = Math.floor(diff / 3_600_000)
+  const days  = Math.floor(diff / 86_400_000)
+  if (mins  < 60)  return `${mins}min`
+  if (hours < 24)  return `${hours}h`
+  if (days  === 1) return 'hier'
+  if (days  < 30)  return `${days}j`
+  return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
 
-  // Calcul des aéronefs du mois
-  const newAircraftsThisMonth = aircraftsStore.allAircrafts.filter(a => {
-    const aircraftDate = new Date(a.created_at)
-    return aircraftDate.getMonth() === currentMonth && aircraftDate.getFullYear() === currentYear
+// ─── Stats brutes ──────────────────────────────────────────────────────────────
+
+const rawStats = computed(() => {
+  const now   = new Date()
+  const month = now.getMonth()
+  const year  = now.getFullYear()
+  const prev  = month - 1
+
+  const inMonth = (date: string | null) => {
+    if (!date) return false
+    const d = new Date(date)
+    return d.getMonth() === month && d.getFullYear() === year
+  }
+
+  const monthFlights = flightsStore.flights.filter(f => inMonth(f.departure_time)).length
+  const prevFlights  = flightsStore.flights.filter(f => {
+    const d = new Date(f.departure_time)
+    return d.getMonth() === prev && d.getFullYear() === year
   }).length
 
   return {
-    operators: {
-      total: operatorsStore.allOperators.length || 0,
-      newThisMonth: newOperatorsThisMonth,
-    },
-    aircrafts: {
-      total: aircraftsStore.allAircrafts.length || 0,
-      newThisMonth: newAircraftsThisMonth,
-    },
-    flights: {
-      total: flightsStore.total || 0,
-      monthlyFlights,
-      trend: monthlyFlights - lastMonthFlights
-    },
-    users: {
-      active: 0
-    }
+    newOperators: operatorsStore.allOperators.filter(o => inMonth(o.created_at)).length,
+    newAircrafts: aircraftsStore.allAircrafts.filter(a => inMonth(a.created_at)).length,
+    monthFlights,
+    flightTrend: monthFlights - prevFlights,
   }
 })
 
-// Activités récentes basées sur les vraies données
+// ─── KPI Cards
+// Règles :
+//   admin    → tout (operators, aircrafts, flights, agents)
+//   manager  → operators, aircrafts, flights  (pas agents)
+//   agent    → operators, aircrafts, flights  (pas agents)
+//   permanent→ flights seulement
+// ──────────────────────────────────────────────────────────────────────────────
+
+const visibleStats = computed(() => {
+  const s   = rawStats.value
+  const all = [
+    // Exploitants — admin / manager / agent (pas permanent)
+    nav.value.operators && {
+      key:       'operators',
+      label:     'Exploitants',
+      value:     operatorsStore.allOperators.length,
+      icon:      Building2,
+      iconBg:    'bg-blue-100 dark:bg-blue-950',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      link:      '/operators',
+      badge: { icon: TrendingUp, text: `+${s.newOperators}`, class: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400' },
+    },
+
+    // Aéronefs — admin / manager / agent (pas permanent)
+    nav.value.aircrafts && {
+      key:       'aircrafts',
+      label:     'Aéronefs',
+      value:     aircraftsStore.allAircrafts.length,
+      icon:      Plane,
+      iconBg:    'bg-sky-100 dark:bg-sky-950',
+      iconColor: 'text-sky-600 dark:text-sky-400',
+      link:      '/aircrafts',
+      badge: { icon: TrendingUp, text: `+${s.newAircrafts}`, class: 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-400' },
+    },
+
+    // Vols — tous les rôles
+    nav.value.flights && {
+      key:       'flights',
+      label:     'Vols',
+      value:     flightsStore.total,
+      icon:      PlaneTakeoff,
+      iconBg:    'bg-indigo-100 dark:bg-indigo-950',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      link:      '/flights',
+      badge: {
+        icon:  s.flightTrend >= 0 ? TrendingUp : TrendingDown,
+        text:  `${s.flightTrend >= 0 ? '+' : ''}${s.monthFlights}`,
+        class: s.flightTrend >= 0
+          ? 'bg-green-50 text-green-600 dark:bg-green-950 dark:text-green-400'
+          : 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
+      },
+    },
+
+    // Agents — admin uniquement
+    nav.value.agents && {
+      key:       'agents',
+      label:     'Agents',
+      value:     usersStore.allUsers.length,
+      icon:      Users,
+      iconBg:    'bg-teal-100 dark:bg-teal-950',
+      iconColor: 'text-teal-600 dark:text-teal-400',
+      link:      '/agents',
+      badge: usersStore.allUsers.length > 0
+        ? { icon: TrendingUp, text: `${usersStore.allUsers.length} actifs`, class: 'bg-teal-50 text-teal-600 dark:bg-teal-950 dark:text-teal-400' }
+        : { icon: AlertCircle, text: 'Non disponible', class: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400' },
+    },
+  ]
+  return all.filter(Boolean) as any[]
+})
+
+// ─── Accès rapide
+// Règles :
+//   admin    → flights, operators, aircrafts, reports, agents, imports
+//   manager  → flights, operators, aircrafts, reports  (pas agents/imports)
+//   agent    → flights, operators, aircrafts           (pas rapports)
+//   permanent→ flights seulement (+ permissions toujours en dur en bas)
+// ──────────────────────────────────────────────────────────────────────────────
+
+const visibleShortcuts = computed(() => {
+  const all = [
+    // Vols — tous
+    nav.value.flights && {
+      key:       'flights',
+      label:     'Gérer les vols',
+      icon:      PlaneTakeoff,
+      iconBg:    'bg-indigo-100 dark:bg-indigo-950',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      link:      '/flights',
+    },
+
+    // Exploitants — admin / manager / agent
+    nav.value.operators && {
+      key:       'operators',
+      label:     'Exploitants',
+      icon:      Building2,
+      iconBg:    'bg-blue-100 dark:bg-blue-950',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      link:      '/operators',
+    },
+
+    // Aéronefs — admin / manager / agent
+    nav.value.aircrafts && {
+      key:       'aircrafts',
+      label:     'Aéronefs',
+      icon:      Plane,
+      iconBg:    'bg-sky-100 dark:bg-sky-950',
+      iconColor: 'text-sky-600 dark:text-sky-400',
+      link:      '/aircrafts',
+    },
+
+    // Rapports — admin + manager uniquement
+    nav.value.reports && {
+      key:       'reports',
+      label:     'Rapports',
+      icon:      FileText,
+      iconBg:    'bg-orange-100 dark:bg-orange-950',
+      iconColor: 'text-orange-600 dark:text-orange-400',
+      link:      '/reports',
+    },
+
+    // Agents — admin uniquement
+    nav.value.agents && {
+      key:       'agents',
+      label:     'Gestion agents',
+      icon:      Users,
+      iconBg:    'bg-teal-100 dark:bg-teal-950',
+      iconColor: 'text-teal-600 dark:text-teal-400',
+      link:      '/agents',
+    },
+
+    // Imports — admin uniquement
+    nav.value.imports && {
+      key:       'imports',
+      label:     'Imports',
+      icon:      Upload,
+      iconBg:    'bg-gray-100 dark:bg-gray-800',
+      iconColor: 'text-gray-600 dark:text-gray-400',
+      link:      '/imports',
+    },
+  ]
+  return all.filter(Boolean) as any[]
+})
+
+// ─── Activités récentes ────────────────────────────────────────────────────────
+
 const recentActivities = computed(() => {
-  const activities: any[] = []
+  const out: any[] = []
 
-  // Derniers vols (limité à 3)
-  const recentFlights = [...flightsStore.flights]
-    .sort((a, b) => new Date(b.departure_time).getTime() - new Date(a.departure_time).getTime())
-    .slice(0, 3)
+  if (nav.value.flights) {
+    ;[...flightsStore.flights]
+      .sort((a, b) => new Date(b.departure_time).getTime() - new Date(a.departure_time).getTime())
+      .slice(0, 3)
+      .forEach(f => out.push({
+        id:          `f-${f.id}`,
+        title:       f.flight_number,
+        description: `${f.departure?.from?.iata ?? '?'} → ${f.departure?.to?.iata ?? '?'}`,
+        timeAgo:     getTimeAgo(f.departure_time),
+        icon:        PlaneTakeoff,
+        iconBg:      'bg-indigo-100 dark:bg-indigo-950',
+        iconColor:   'text-indigo-600 dark:text-indigo-400',
+      }))
+  }
 
-  recentFlights.forEach(flight => {
-    activities.push({
-      title: 'Nouveau vol enregistré',
-      description: `${flight.flight_number} ${flight.departure?.from?.iata || ''} → ${flight.departure?.to?.iata || ''}`,
-      timeAgo: getTimeAgo(flight.departure_time),
-      icon: PlaneTakeoff,
-      colorClass: 'bg-blue-100 dark:bg-blue-950',
-      iconColorClass: 'text-blue-600 dark:text-blue-400'
-    })
-  })
+  if (nav.value.aircrafts) {
+    ;[...aircraftsStore.allAircrafts]
+      .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
+      .slice(0, 2)
+      .forEach(a => out.push({
+        id:          `a-${a.id}`,
+        title:       a.immatriculation,
+        description: a.type?.name ?? 'Type inconnu',
+        timeAgo:     a.created_at ? getTimeAgo(a.created_at) : '—',
+        icon:        Plane,
+        iconBg:      'bg-sky-100 dark:bg-sky-950',
+        iconColor:   'text-sky-600 dark:text-sky-400',
+      }))
+  }
 
-  // Derniers aéronefs (limité à 2)
-  const recentAircrafts = [...aircraftsStore.allAircrafts]
-    .sort((a, b) => {
-      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
-      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
-      return dateB - dateA
-    })
-    .slice(0, 2)
-
-  recentAircrafts.forEach(aircraft => {
-    activities.push({
-      id: `aircraft-${aircraft.id}`,
-      title: 'Nouvel aéronef ajouté',
-      description: `${aircraft.type?.name || 'Type inconnu'} (${aircraft.immatriculation})`,
-      timeAgo: aircraft.created_at ? getTimeAgo(aircraft.created_at) : 'Date inconnue',
-      icon: Plane,
-      colorClass: 'bg-indigo-100 dark:bg-indigo-950',
-      iconColorClass: 'text-indigo-600 dark:text-indigo-400'
-    })
-  })
-
-  return activities.slice(0, 5)
+  return out.slice(0, 6)
 })
 
-// Fonction helper pour calculer le temps écoulé
-const getTimeAgo = (dateString: string): string => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
+// ─── Chargement conditionnel selon le rôle ────────────────────────────────────
 
-  if (diffMins < 60) {
-    return `Il y a ${diffMins} minute${diffMins > 1 ? 's' : ''}`
-  } else if (diffHours < 24) {
-    return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`
-  } else if (diffDays === 1) {
-    return 'Hier'
-  } else if (diffDays < 30) {
-    return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`
-  } else {
-    return date.toLocaleDateString('fr-FR')
-  }
-}
-
-// Chargement des données au montage
 onMounted(async () => {
   loading.value = true
-
   try {
-    await Promise.all([
-      operatorsStore.fetchAllOperators(),
-      aircraftsStore.fetchAllAircrafts(),
-      flightsStore.fetchFlights(1)
-    ])
-  } catch (error) {
-    showError('Erreur lors du chargement des données du dashboard:', error)
+    const calls: Promise<any>[] = []
+    // Chaque fetch ne se déclenche que si l'utilisateur a la permission correspondante
+    if (nav.value.operators) calls.push(operatorsStore.fetchAllOperators())
+    if (nav.value.aircrafts)  calls.push(aircraftsStore.fetchAllAircrafts())
+    if (nav.value.flights)    calls.push(flightsStore.fetchFlights(1))
+    if (nav.value.agents)     calls.push(usersStore.fetchAllUsers())
+    await Promise.all(calls)
+  } catch {
+    showError('Erreur lors du chargement du tableau de bord')
   } finally {
     loading.value = false
   }

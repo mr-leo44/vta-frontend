@@ -20,7 +20,7 @@
           <component :is="viewMode === 'grid' ? List : LayoutGrid" class="h-4 w-4" />
           {{ viewMode === 'grid' ? 'Liste' : 'Grille' }}
         </Button>
-        <Button @click="openCreateDialog" size="lg"
+        <Button v-if="can('flight.create')" @click="openCreateDialog" size="lg"
           class="gap-2 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
           <Plus class="h-4 w-4" />
           Nouveau vol
@@ -203,7 +203,7 @@
           <Button v-if="hasActiveFilters" @click="clearAllFilters" variant="outline" size="sm">
             Réinitialiser les filtres
           </Button>
-          <Button v-else @click="openCreateDialog" class="gap-2">
+          <Button v-if="can('flight.create')" @click="openCreateDialog" class="gap-2">
             <Plus class="h-4 w-4" />
             Créer un vol
           </Button>
@@ -213,13 +213,13 @@
 
     <!-- Flights Grid -->
     <div v-else-if="viewMode === 'grid'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <FlightCard v-for="flight in filteredFlights" :key="flight.id" :flight="flight" @view="openViewDialog"
+      <FlightCard v-for="flight in filteredFlights" :key="flight.id" :flight="flight" :can-edit="can('flight.updateAny') || can('flight.updateOwn')" :can-delete="can('flight.deleteAny') || can('flight.deleteOwn')" @view="openViewDialog"
         @edit="openEditDialog" @delete="confirmDelete" />
     </div>
 
     <!-- Flights List (Table) -->
     <div v-else class="space-y-2">
-      <FlightTableRow v-for="flight in filteredFlights" :key="flight.id" :flight="flight" @view="openViewDialog"
+      <FlightTableRow v-for="flight in filteredFlights" :key="flight.id" :flight="flight" :can-edit="can('flight.updateAny') || can('flight.updateOwn')" :can-delete="can('flight.deleteAny') || can('flight.deleteOwn')" @view="openViewDialog"
         @edit="openEditDialog" @delete="confirmDelete" />
     </div>
 
@@ -234,9 +234,18 @@
     <!-- Dialogs -->
     <MultiStepFlightForm v-model:open="formDialogOpen" :flight="selectedFlight" @submit="handleFormSubmit" />
 
-    <FlightViewDialog v-model:open="viewDialogOpen" :flight="selectedFlight" @edit="openEditDialog" />
+    <FlightViewDialog
+      v-model:open="viewDialogOpen"
+      :flight="selectedFlight"
+      :aircrafts="aircrafts"
+      @edit="openEditDialog"
+      @updated="handleFlightUpdated"
+    />
 
-    <TodayFlightsDialog v-model:open="todayFlightsDialogOpen" />
+    <TodayFlightsDialog
+      v-model:open="todayFlightsDialogOpen"
+      @view="openViewDialog"
+    />
 
     <AlertDialog v-model:open="deleteDialogOpen">
       <AlertDialogContent>
@@ -313,6 +322,7 @@ const flightsStore = useFlightsStore()
 const aircraftsStore = useAircraftsStore()
 const operatorsStore = useOperatorsStore()
 const { success: showSuccess, error: showError } = useToast()
+const { can } = usePermission()
 
 // State
 const viewMode = ref<'grid' | 'list'>('grid')
@@ -537,20 +547,26 @@ const openTodayFlightsDialog = async () => {
 }
 
 const openCreateDialog = () => {
+  viewDialogOpen.value = false
+  todayFlightsDialogOpen.value = false
   selectedFlight.value = null
   formDialogOpen.value = true
 }
 
 const openEditDialog = async (flight: Flight) => {
+  viewDialogOpen.value = false
+  todayFlightsDialogOpen.value = false
   const result = await flightsStore.fetchFlight(flight.id)
 
   if (result.success && result.data) {
-    selectedFlight.value = result.data   // <-- le bon state !
+    selectedFlight.value = result.data
     formDialogOpen.value = true
   }
 }
 
 const openViewDialog = async (flight: Flight) => {
+  formDialogOpen.value = false
+  todayFlightsDialogOpen.value = false
   const result = await flightsStore.fetchFlight(flight.id)
   if (result.success && result.data) {
     selectedFlight.value = result.data
@@ -576,6 +592,11 @@ const deleteFlight = async () => {
 }
 
 const handleFormSubmit = async () => {
+  await fetchFlights()
+}
+
+const handleFlightUpdated = async (flight: Flight) => {
+  selectedFlight.value = flight
   await fetchFlights()
 }
 

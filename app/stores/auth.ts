@@ -14,6 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const currentUser     = computed(() => user.value)
   const isAdmin         = computed(() => user.value?.role === 'admin')
   const isManager       = computed(() => user.value?.role === 'manager')
+  const isPermanent     = computed(() => user.value?.role === 'permanent')
   const isAgent         = computed(() => user.value?.role === 'agent')
 
   // ─────────────────────────────────────────────────────────────────────
@@ -94,6 +95,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Rafraîchit silencieusement (sans redirection si erreur).
+   * Utile après une action admin sur un autre user — l'admin
+   * n'a pas besoin d'être déconnecté si le refresh échoue.
+   */
+  const refreshMeSilent = async (): Promise<boolean> => {
+    const { apiFetch } = useApi()
+
+    try {
+      const data = await apiFetch<AuthUser>('/user')
+      user.value = data
+      return true
+    } catch {
+      return false
+    }
+  }
+
   const clearAuth = (): void => {
     token.value = null
     user.value  = null
@@ -114,12 +132,14 @@ export const useAuthStore = defineStore('auth', () => {
     currentUser,
     isAdmin,
     isManager,
+    isPermanent,
     isAgent,
     can,
     canAll,
     login,
     logout,
     refreshMe,
+    refreshMeSilent,
     clearAuth,
   }
 },

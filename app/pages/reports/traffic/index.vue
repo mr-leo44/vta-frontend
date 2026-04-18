@@ -32,7 +32,7 @@
         badge="Journalier"
         gradient-class="bg-gradient-to-br from-orange-500 to-orange-600"
         hover-border-class="hover:border-orange-500/50"
-        @click="openDailySheetDialog"
+        @click="dailySheetDialogOpen = true"
       />
 
       <ReportCardItem

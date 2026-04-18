@@ -18,7 +18,7 @@
             </div>
           </div>
         </div>
-        <Button @click="openCreateDialog" size="lg" class="bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 shadow-xl gap-2">
+        <Button v-if="can('aircraft.create')" @click="openCreateDialog" size="lg" class="bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 shadow-xl gap-2">
           <Plus class="h-5 w-5" />
           Nouvel aéronef
         </Button>
@@ -73,15 +73,14 @@
 
         <!-- Aircrafts List -->
         <div v-else-if="aircrafts.length > 0" class="space-y-4">
-          <!-- Cards View -->
           <div v-if="viewMode === 'cards'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <AircraftCard v-for="aircraft in aircrafts" :key="aircraft.id" :aircraft="aircraft" @view="openViewDialog"
+            <AircraftCard v-for="aircraft in aircrafts" :key="aircraft.id" :aircraft="aircraft" :can-edit="can('aircraft.update')" :can-delete="can('aircraft.delete')" @view="openViewDialog"
               @edit="openEditDialog" @delete="confirmDelete" />
           </div>
 
           <!-- Table View -->
           <div v-else class="space-y-3">
-            <AircraftTableRow v-for="aircraft in aircrafts" :key="aircraft.id" :aircraft="aircraft"
+            <AircraftTableRow v-for="aircraft in aircrafts" :key="aircraft.id" :aircraft="aircraft" :can-edit="can('aircraft.update')" :can-delete="can('aircraft.delete')"
               @view="openViewDialog" @edit="openEditDialog" @delete="confirmDelete" />
           </div>
 
@@ -117,7 +116,7 @@
               {{ searchTerm ? 'Essayez avec d\'autres termes de recherche' : 'Commencez par créer votre premier aéronef'
               }}
             </p>
-            <Button v-if="!searchTerm" @click="openCreateDialog">
+            <Button v-if="!searchTerm && can('aircraft.create')" @click="openCreateDialog">
               <Plus class="mr-2 h-4 w-4" />
               Créer le premier aéronef
             </Button>
@@ -197,6 +196,7 @@ definePageMeta({
 const aircraftsStore = useAircraftsStore()
 const { success: showSuccess, error: showError } = useToast()
 const { apiFetch } = useApi()
+const { can } = usePermission()
 
 // State
 const aircrafts = computed(() => aircraftsStore.aircrafts)

@@ -15,7 +15,7 @@ export interface AuthUser {
   name: string
   username: string
   function: string | null
-  role: 'admin' | 'manager' | 'agent' | null
+  role: 'admin' | 'manager' | 'agent' | 'permanent' | null
   permissions: string[]
   overrides?: PermissionOverride[]
 }
@@ -71,6 +71,7 @@ export interface AuditLogEntry {
   event_label: string
   model: string
   model_id: number
+  model_name: string
   actor: {
     id: number
     name: string
@@ -117,6 +118,15 @@ export interface OperatorFormData {
   icao_code?: string | null
   country?: string | null
   flight_type: 'regular' | 'non_regular'
+}
+
+export interface OperatorKPIs {
+  total_flights_current_year: number
+  total_flights_previous_year: number
+  growth_percentage: number
+  active_aircrafts_count: number
+  inactive_aircrafts_count: number
+  total_aircrafts: number
 }
 
 // ==================== AIRCRAFT TYPES ====================

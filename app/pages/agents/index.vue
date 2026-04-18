@@ -13,74 +13,85 @@
       </Button>
     </div>
 
-    <!-- Table -->
-    <Card class="border-2">
-      <CardContent class="p-0">
-        <div v-if="loading" class="flex items-center justify-center py-20">
-          <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
+    <!-- Layout : table à gauche, requests à droite (admin only) -->
+    <div :class="can('permission.request.review') ? 'grid grid-cols-1 xl:grid-cols-3 gap-6 items-start' : ''">
 
-        <div v-else-if="!users.length" class="text-center py-16 text-muted-foreground">
-          <Users class="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>Aucun agent trouvé</p>
-        </div>
+      <!-- Table agents -->
+      <div :class="can('permission.request.review') ? 'xl:col-span-2' : ''">
+        <Card class="border-2">
+          <CardContent class="p-0">
+            <div v-if="loading" class="flex items-center justify-center py-20">
+              <div class="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
 
-        <table v-else class="w-full text-sm">
-          <thead class="border-b bg-muted/40">
-            <tr>
-              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Agent</th>
-              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Fonction</th>
-              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Rôle</th>
-              <th class="text-right px-6 py-3 font-medium text-muted-foreground">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y">
-            <tr v-for="u in users" :key="u.id" class="hover:bg-muted/30 transition-colors">
-              <td class="px-6 py-4">
-                <div class="font-medium">{{ u.name }}</div>
-                <div class="text-xs text-muted-foreground">{{ u.username }}</div>
-              </td>
-              <td class="px-6 py-4">
-                <span v-if="u.function" class="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary text-xs font-medium">
-                  {{ u.function.label ?? u.function.value }}
-                </span>
-                <span v-else class="text-muted-foreground text-xs italic">Aucune fonction</span>
-              </td>
-              <td class="px-6 py-4">
-                <span :class="roleClass(u.role)" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium">
-                  {{ roleLabel(u.role) }}
-                </span>
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center justify-end gap-2">
-                  <Button v-if="can('user.assignFunction')" variant="outline" size="sm" @click="openAssignModal(u)">
-                    <UserCog class="h-3.5 w-3.5 mr-1.5" />
-                    Fonction
-                  </Button>
-                  <Button variant="ghost" size="sm" @click="navigateTo(`/agents/${u.id}`)">
-                    <Shield class="h-3.5 w-3.5 mr-1.5" />
-                    Permissions
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </CardContent>
+            <div v-else-if="!users.length" class="text-center py-16 text-muted-foreground">
+              <Users class="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>Aucun agent trouvé</p>
+            </div>
 
-      <!-- Pagination -->
-      <div v-if="meta && meta.last_page > 1" class="flex items-center justify-between px-6 py-4 border-t">
-        <span class="text-sm text-muted-foreground">{{ meta.total }} agent{{ meta.total > 1 ? 's' : '' }}</span>
-        <div class="flex gap-2">
-          <Button variant="outline" size="sm" :disabled="meta.current_page === 1" @click="fetchUsers(meta.current_page - 1)">
-            Précédent
-          </Button>
-          <Button variant="outline" size="sm" :disabled="meta.current_page === meta.last_page" @click="fetchUsers(meta.current_page + 1)">
-            Suivant
-          </Button>
-        </div>
+            <table v-else class="w-full text-sm">
+              <thead class="border-b bg-muted/40">
+                <tr>
+                  <th class="text-left px-6 py-3 font-medium text-muted-foreground">Agent</th>
+                  <th class="text-left px-6 py-3 font-medium text-muted-foreground">Fonction</th>
+                  <th class="text-left px-6 py-3 font-medium text-muted-foreground">Rôle</th>
+                  <th class="text-right px-6 py-3 font-medium text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                <tr v-for="u in users" :key="u.id" class="hover:bg-muted/30 transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="font-medium">{{ u.name }}</div>
+                    <div class="text-xs text-muted-foreground">{{ u.username }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span v-if="u.function" class="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary text-xs font-medium">
+                      {{ u.function.label ?? u.function.value }}
+                    </span>
+                    <span v-else class="text-muted-foreground text-xs italic">Aucune fonction</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span :class="roleClass(u.role)"
+                      class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium">
+                      {{ roleLabel(u.role) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-end gap-2">
+                      <Button v-if="can('user.assignFunction')" variant="outline" size="sm" @click="openAssignModal(u)">
+                        <UserCog class="h-3.5 w-3.5 mr-1.5" />
+                        Fonction
+                      </Button>
+                      <Button variant="ghost" size="sm" @click="navigateTo(`/agents/${u.id}`)">
+                        <Shield class="h-3.5 w-3.5 mr-1.5" />
+                        Permissions
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </CardContent>
+
+          <!-- Pagination -->
+          <div v-if="meta && meta.last_page > 1" class="flex items-center justify-between px-6 py-4 border-t">
+            <span class="text-sm text-muted-foreground">{{ meta.total }} agent{{ meta.total > 1 ? 's' : '' }}</span>
+            <div class="flex gap-2">
+              <Button variant="outline" size="sm"
+                :disabled="meta.current_page === 1"
+                @click="fetchUsers(meta.current_page - 1)">
+                Précédent
+              </Button>
+              <Button variant="outline" size="sm"
+                :disabled="meta.current_page === meta.last_page"
+                @click="fetchUsers(meta.current_page + 1)">
+                Suivant
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
-    </Card>
+
 
     <!-- Modal : créer un agent -->
     <Dialog v-model:open="createModal.open">
@@ -185,9 +196,17 @@
 
           <div v-if="assignModal.function" class="rounded-lg border bg-muted/40 p-3 text-sm">
             <span class="text-muted-foreground">Rôle résultant : </span>
-            <span :class="roleClass(functionRole(assignModal.function))" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ml-1">
+            <span
+              :class="roleClass(functionRole(assignModal.function))"
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ml-1">
               {{ roleLabel(functionRole(assignModal.function)) }}
             </span>
+          </div>
+
+          <!-- Avertissement si on change la fonction de l'utilisateur connecté -->
+          <div v-if="isSelfAssign" class="rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20 p-3 text-sm text-yellow-800 dark:text-yellow-300 flex items-start gap-2">
+            <AlertTriangle class="h-4 w-4 mt-0.5 shrink-0" />
+            <span>Vous modifiez votre propre fonction. Vos permissions seront mises à jour immédiatement après la sauvegarde.</span>
           </div>
         </div>
 
@@ -205,13 +224,14 @@
     </Dialog>
 
   </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { Plus, Users, UserCog, Shield, Copy, Check, RefreshCw, AlertTriangle } from 'lucide-vue-next'
 import { ref, computed, onMounted } from 'vue'
 import {
-  Card, CardContent,
+  Card, CardContent, CardHeader, CardTitle, CardDescription,
   Button, Input, Label,
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -224,6 +244,7 @@ definePageMeta({ middleware: 'auth' })
 const { can } = usePermission()
 const { apiFetch } = useApi()
 const { success: showSuccess, error: showError } = useToast()
+const authStore = useAuthStore()
 
 // ─────────────────────────────────────────────────────────────────────
 // State
@@ -314,6 +335,11 @@ const assignModal = ref({
   saving:    false,
 })
 
+/** Vrai si l'admin est en train de modifier sa propre fonction */
+const isSelfAssign = computed(() =>
+  assignModal.value.user?.id === authStore.user?.id
+)
+
 const openAssignModal = (u: UserListItem) => {
   assignModal.value = {
     open:      true,
@@ -351,7 +377,7 @@ const functionRole = (value: string) =>
   functionOptions.find(f => f.value === value)?.role ?? null
 
 // ─────────────────────────────────────────────────────────────────────
-// API
+// API — agents
 // ─────────────────────────────────────────────────────────────────────
 
 const fetchUsers = async (page = 1) => {
@@ -408,7 +434,24 @@ const submitAssign = async () => {
     })
     showSuccess('Fonction assignée avec succès')
     assignModal.value.open = false
+
+    // Recharge la liste pour afficher le nouveau rôle/fonction
     await fetchUsers()
+
+    /**
+     * Si l'admin a modifié sa PROPRE fonction, on rafraîchit le store auth
+     * pour que ses permissions soient immédiatement à jour dans tout le front
+     * (nav, can(), canAll(), etc.) sans avoir à recharger la page.
+     *
+     * Si c'est un autre utilisateur, on fait un refresh silencieux au cas où
+     * des overrides affecteraient l'admin — en pratique c'est un no-op mais
+     * ça garantit la cohérence.
+     */
+    if (isSelfAssign.value) {
+      await authStore.refreshMe()
+    } else {
+      await authStore.refreshMeSilent()
+    }
   } catch (e: any) {
     showError(e?.data?.message ?? "Erreur lors de l'assignation")
   } finally {
@@ -424,17 +467,21 @@ const roleLabel = (role?: string | null) => ({
   admin:   'Administrateur',
   manager: 'Manager',
   agent:   'Agent',
+  permanent: 'Permanent'
 }[role ?? ''] ?? '—')
 
 const roleClass = (role?: string | null) => ({
-  admin:   'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-  manager: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  agent:   'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  admin:     'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  manager:   'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  agent:     'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  permanent: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
 }[role ?? ''] ?? 'bg-gray-100 text-gray-600')
 
 // ─────────────────────────────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────────────────────────────
 
-onMounted(() => fetchUsers())
+onMounted(() => {
+  fetchUsers()
+})
 </script>

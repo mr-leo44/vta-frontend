@@ -3,7 +3,7 @@
 
     <!-- Header -->
     <div class="flex items-center gap-4">
-      <Button variant="ghost" size="sm" @click="navigateTo('/users/')">
+      <Button variant="ghost" size="sm" @click="navigateTo('/agents/')">
         <ArrowLeft class="h-4 w-4 mr-1" />
         Retour
       </Button>
@@ -211,13 +211,13 @@ const { success: showSuccess, error: showError } = useToast()
 // ─────────────────────────────────────────────────────────────────────
 
 const ALL_PERMISSIONS = [
-  'flight.viewAny','flight.view','flight.create','flight.updateOwn','flight.updateAny',
+  'flight.view','flight.view','flight.create','flight.updateOwn','flight.updateAny',
   'flight.deleteOwn','flight.deleteAny','flight.validate','flight.export',
-  'aircraft.viewAny','aircraft.view','aircraft.create','aircraft.update','aircraft.delete',
-  'aircraftType.viewAny','aircraftType.view','aircraftType.create','aircraftType.update','aircraftType.delete',
-  'operator.viewAny','operator.view','operator.create','operator.update','operator.delete',
+  'aircraft.view','aircraft.view','aircraft.create','aircraft.update','aircraft.delete',
+  'aircraftType.view','aircraftType.view','aircraftType.create','aircraftType.update','aircraftType.delete',
+  'operator.view','operator.view','operator.create','operator.update','operator.delete',
   'report.view','report.export',
-  'user.viewAny','user.create','user.update','user.delete','user.assignFunction',
+  'user.view','user.create','user.update','user.delete','user.assignFunction',
   'permissionRequest.create','permissionRequest.manage',
   'files.import',
 ]

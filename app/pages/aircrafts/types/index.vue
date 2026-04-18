@@ -16,7 +16,7 @@
             </div>
           </div>
         </div>
-        <Button 
+        <Button v-if="can('aircraftType.create')"
           @click="openCreateDialog" 
           size="lg"
           class="bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 shadow-xl gap-2"
@@ -243,7 +243,7 @@
           <p class="text-muted-foreground mb-6">
             {{ searchQuery ? 'Aucun résultat pour cette recherche' : 'Commencez par créer un type d\'aéronef' }}
           </p>
-          <Button v-if="!searchQuery" @click="openCreateDialog" size="lg" class="gap-2">
+          <Button v-if="!searchQuery && can('aircraftType.create')" @click="openCreateDialog" size="lg" class="gap-2">
             <Plus class="h-4 w-4" />
             Créer un type
           </Button>
@@ -289,12 +289,12 @@
                       <Eye class="mr-2 h-4 w-4" />
                       Voir les détails
                     </DropdownMenuItem>
-                    <DropdownMenuItem @click.stop="openEditDialog(type)">
+                    <DropdownMenuItem v-if="can('aircraftType.update')" @click.stop="openEditDialog(type)">
                       <Pencil class="mr-2 h-4 w-4" />
                       Modifier
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuSeparator v-if="can('aircraftType.delete')" />
+                    <DropdownMenuItem v-if="can('aircraftType.delete')"
                       @click.stop="confirmDelete(type)"
                       class="text-destructive focus:text-destructive"
                     >
@@ -374,12 +374,12 @@
                       <Eye class="mr-2 h-4 w-4" />
                       Voir les détails
                     </DropdownMenuItem>
-                    <DropdownMenuItem @click.stop="openEditDialog(type)">
+                    <DropdownMenuItem v-if="can('aircraftType.update')" @click.stop="openEditDialog(type)">
                       <Pencil class="mr-2 h-4 w-4" />
                       Modifier
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuSeparator v-if="can('aircraftType.delete')" />
+                    <DropdownMenuItem v-if="can('aircraftType.delete')"
                       @click.stop="confirmDelete(type)"
                       class="text-destructive focus:text-destructive"
                     >
@@ -522,6 +522,7 @@ const aircraftsStore = useAircraftsStore()
 const aircraftTypesStore = useAircraftTypesStore()
 const operatorsStore = useOperatorsStore()
 const { success: showSuccess, error: showError } = useToast()
+const { can } = usePermission()
 
 const searchQuery = ref('')
 const sortBy = ref('all')

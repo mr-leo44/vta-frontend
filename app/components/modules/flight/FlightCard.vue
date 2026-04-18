@@ -47,17 +47,28 @@
                 <MoreVertical class="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-48">
+            <DropdownMenuContent align="end" class="w-52">
               <DropdownMenuItem @click.stop="$emit('view', flight)" class="cursor-pointer">
                 <Eye class="mr-2 h-4 w-4" />
                 Voir les détails
               </DropdownMenuItem>
-              <DropdownMenuItem @click.stop="$emit('edit', flight)" class="cursor-pointer">
+
+              <!-- Saisie rapide — visible selon la fonction de l'utilisateur -->
+              <DropdownMenuItem
+                v-if="quickEditMode"
+                @click.stop="$emit('quickEdit', flight)"
+                class="cursor-pointer text-sky-600 dark:text-sky-400 focus:text-sky-700 focus:bg-sky-50 dark:focus:bg-sky-950/30"
+              >
+                <component :is="quickEditIcon" class="mr-2 h-4 w-4" />
+                {{ quickEditLabel }}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem v-if="canEdit !== false" @click.stop="$emit('edit', flight)" class="cursor-pointer">
                 <Pencil class="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuSeparator v-if="canDelete !== false" />
+              <DropdownMenuItem v-if="canDelete !== false"
                 @click.stop="$emit('delete', flight)"
                 class="text-destructive focus:text-destructive cursor-pointer"
               >
@@ -143,6 +154,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   PlaneTakeoff,
   MoreVertical,
@@ -155,7 +167,11 @@ import {
   Plane,
   Users,
   Building2,
-  Layers
+  Layers,
+  Bus,
+  TrendingUp,
+  BarChart3,
+  ClipboardEdit,
 } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -176,13 +192,44 @@ import {
 
 defineProps<{
   flight: Flight
+  canEdit?: boolean
+  canDelete?: boolean
 }>()
 
 defineEmits<{
   view: [flight: Flight]
   edit: [flight: Flight]
   delete: [flight: Flight]
+  quickEdit: [flight: Flight]
 }>()
+
+// ── Quick-edit mode selon la fonction de l'utilisateur ──────────────────────
+
+const { userFunction } = usePermission()
+
+const quickEditMode = computed<'paxbus' | 'idef' | 'trafic' | null>(() => {
+  const fn = (userFunction.value ?? '').toLowerCase()
+  if (fn.includes('paxbus') || fn === 'vta-paxbus') return 'paxbus'
+  if (fn.includes('idef') || fn === 'vta-idef') return 'idef'
+  if (fn.includes('trafic') || fn === 'vta-trafic') return 'trafic'
+  return null
+})
+
+const quickEditLabel = computed(() => {
+  if (quickEditMode.value === 'paxbus') return 'Saisie Pax Bus'
+  if (quickEditMode.value === 'idef') return 'Saisie IDEF'
+  if (quickEditMode.value === 'trafic') return 'Saisie Trafic'
+  return ''
+})
+
+const quickEditIcon = computed(() => {
+  if (quickEditMode.value === 'paxbus') return Bus
+  if (quickEditMode.value === 'idef') return TrendingUp
+  if (quickEditMode.value === 'trafic') return BarChart3
+  return ClipboardEdit
+})
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 const getStatusBorderColor = (status: string) => {
   const colors: Record<string, string> = {

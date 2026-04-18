@@ -1,3 +1,6 @@
+// Track token expiration to avoid multiple redirects
+let isRedirectingDueToExpiration = false
+
 export const useApi = () => {
   const config = useRuntimeConfig()
   
@@ -23,11 +26,30 @@ export const useApi = () => {
     },
     
     onResponseError({ response }) {
+      // Handle 401 Unauthorized — token has expired or is invalid
       if (response.status === 401) {
-        const authStore = getAuthStore()
-        if (authStore) {
-          authStore.clearAuth()
-          navigateTo('/login')
+        // Prevent multiple redirects if several requests fail simultaneously
+        if (!isRedirectingDueToExpiration) {
+          isRedirectingDueToExpiration = true
+          
+          const authStore = getAuthStore()
+          if (authStore) {
+            // Clear authentication
+            authStore.clearAuth()
+            
+            // Show notification to user
+            const { warning } = useToast()
+            warning('Session expirée', 'Votre session a expiré. Veuillez vous reconnecter.')
+            
+            // Redirect to login after a short delay to allow UI to update
+            setTimeout(() => {
+              navigateTo('/login?reason=expired')
+              // Reset flag after navigation
+              setTimeout(() => {
+                isRedirectingDueToExpiration = false
+              }, 1000)
+            }, 300)
+          }
         }
       }
     }

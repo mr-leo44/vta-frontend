@@ -1,153 +1,262 @@
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <div
-      class="relative overflow-hidden rounded-2xl p-2">
-      <div class="relative z-10 flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <div class="flex items-center gap-3 mb-2">
-            <div class="flex h-16 w-16 rounded-lg bg-linear-to-br from-green-600 via-emerald-600 to-teal-600flex items-center justify-center shadow-lg">
-              <PlaneIcon class="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 class="text-4xl font-bold tracking-tight">Aéronefs</h1>
+  <div class="space-y-5">
 
-              <p class="text-muted-foreground mt-1">
-                {{ total ?? 0 }} aéronef{{ total > 1 ? 's' : '' }} enregistré{{ total > 1 ? 's' : '' }}
-              </p>
-            </div>
-          </div>
-        </div>
-        <Button v-if="can('aircraft.create')" @click="openCreateDialog" size="lg" class="bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 shadow-xl gap-2">
-          <Plus class="h-5 w-5" />
-          Nouvel aéronef
-        </Button>
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Aéronefs</h1>
+        <p class="text-sm text-muted-foreground mt-0.5">
+          {{ total ?? 0 }} aéronef{{ (total ?? 0) > 1 ? 's' : '' }} enregistré{{ (total ?? 0) > 1 ? 's' : '' }}
+        </p>
       </div>
-      <!-- Decorative circles -->
-      <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-      <div class="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
+      <Button v-if="can('aircraft.create')" @click="openCreateDialog" size="sm" class="gap-1.5">
+        <Plus class="h-4 w-4" />
+        Nouvel aéronef
+      </Button>
     </div>
 
-    <!-- Search and View Toggle -->
-    <Card>
-      <CardContent class="pt-6">
-        <div class="flex items-center gap-4">
-          <div class="flex-1 relative">
-            <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input v-model="searchTerm" placeholder="Rechercher par immatriculation, opérateur ou type..." class="pl-10"
-              @input="debouncedSearch" />
+    <!-- KPI Cards -->
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <template v-if="loading && aircrafts.length === 0">
+        <div v-for="i in 4" :key="i" class="bg-card border border-border rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <Skeleton class="h-3.5 w-20" />
+            <Skeleton class="h-8 w-8 rounded-lg" />
           </div>
-          <Button variant="outline" @click="clearSearch" :disabled="!searchTerm">
-            <X class="h-4 w-4" />
-          </Button>
+          <Skeleton class="h-7 w-12" />
+          <Skeleton class="h-3 w-28" />
+        </div>
+      </template>
 
-          <!-- View Toggle -->
-          <div class="flex items-center border rounded-lg">
-            <Button variant="ghost" size="sm" :class="{ 'bg-muted': viewMode === 'cards' }" @click="viewMode = 'cards'">
-              <LayoutGrid class="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" :class="{ 'bg-muted': viewMode === 'table' }" @click="viewMode = 'table'">
-              <List class="h-4 w-4" />
-            </Button>
+      <template v-else>
+        <!-- Total aéronefs -->
+        <div class="bg-card border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total</span>
+            <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+              <Plane class="h-4 w-4 text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-foreground">{{ kpis.totalAircrafts }}</p>
+          <p class="text-xs text-muted-foreground mt-1">Aéronefs enregistrés</p>
+        </div>
+
+        <!-- En activité -->
+        <div class="bg-card border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Actifs</span>
+            <div class="h-8 w-8 rounded-lg bg-green-50 dark:bg-green-950 flex items-center justify-center">
+              <Activity class="h-4 w-4 text-green-600 dark:text-green-400" :stroke-width="1.5" />
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-foreground">{{ kpis.activeAircrafts }}</p>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs text-muted-foreground">
+              {{ kpis.totalAircrafts > 0 ? Math.round(kpis.activeAircrafts / kpis.totalAircrafts * 100) : 0 }}% de la flotte
+            </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
 
-    <!-- Filters Sidebar (Desktop) -->
-    <div class="grid gap-6 md:grid-cols-[280px_1fr]">
+        <!-- Types différents -->
+        <div class="bg-card border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Types</span>
+            <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+              <Layers class="h-4 w-4 text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-foreground">{{ kpis.uniqueTypes }}</p>
+          <p class="text-xs text-muted-foreground mt-1">Types distincts</p>
+        </div>
+
+        <!-- Exploitants -->
+        <div class="bg-card border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Exploitants</span>
+            <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+              <Building2 class="h-4 w-4 text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-foreground">{{ kpis.uniqueOperators }}</p>
+          <p class="text-xs text-muted-foreground mt-1">Compagnies</p>
+        </div>
+      </template>
+    </div>
+
+    <!-- Barre recherche + toggle vue -->
+    <div class="flex items-center gap-2">
+      <div class="flex-1 relative">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <Input
+          v-model="searchTerm"
+          placeholder="Rechercher par immatriculation, opérateur ou type..."
+          class="pl-9 h-9 text-sm"
+          @input="debouncedRefreshAircrafts"
+        />
+      </div>
+      <Button v-if="searchTerm" variant="ghost" size="icon" class="h-9 w-9 shrink-0" @click="clearSearch">
+        <X class="h-4 w-4" />
+      </Button>
+      <!-- Toggle vue -->
+      <div class="flex items-center bg-muted rounded-md p-0.5 shrink-0">
+        <button
+          @click="viewMode = 'cards'"
+          class="h-7 w-7 flex items-center justify-center rounded transition-all"
+          :class="viewMode === 'cards' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+        >
+          <LayoutGrid class="h-3.5 w-3.5" />
+        </button>
+        <button
+          @click="viewMode = 'table'"
+          class="h-7 w-7 flex items-center justify-center rounded transition-all"
+          :class="viewMode === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+        >
+          <List class="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Layout filtres + contenu -->
+    <div class="grid gap-5 md:grid-cols-[240px_1fr]">
+
+      <!-- Sidebar filtres -->
       <div class="hidden md:block">
-        <AircraftFilters :filters="filters" :available-operators="availableOperators" :available-types="availableTypes"
-          @update:filters="filters = $event" @apply="applyFilters" />
+        <AircraftFilters
+          :filters="filters"
+          :available-operators="availableOperators"
+          :available-types="availableTypes"
+          @update:filters="updateFilters"
+        />
       </div>
 
-      <!-- Main Content -->
-      <div class="space-y-4">
-        <!-- Loading Initial -->
-        <div v-if="loading && aircrafts.length === 0">
+      <!-- Contenu -->
+      <div class="space-y-3 min-w-0">
+
+        <!-- Skeleton initial -->
+        <template v-if="loading && paginatedAircrafts.length === 0">
           <AircraftTableSkeleton v-if="viewMode === 'table'" :count="6" />
-          <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <AircraftSkeleton v-for="i in 6" :key="i" />
           </div>
-        </div>
+        </template>
 
-        <!-- Aircrafts List -->
-        <div v-else-if="aircrafts.length > 0" class="space-y-4">
-          <div v-if="viewMode === 'cards'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <AircraftCard v-for="aircraft in aircrafts" :key="aircraft.id" :aircraft="aircraft" :can-edit="can('aircraft.update')" :can-delete="can('aircraft.delete')" @view="openViewDialog"
-              @edit="openEditDialog" @delete="confirmDelete" />
+        <!-- Liste -->
+        <template v-else-if="aircrafts.length > 0">
+          <!-- Cartes -->
+          <div v-if="viewMode === 'cards'" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <AircraftCard
+              v-for="aircraft in aircrafts"
+              :key="aircraft.id"
+              :aircraft="aircraft"
+              :can-edit="can('aircraft.update')"
+              :can-delete="can('aircraft.delete')"
+              @view="openViewDialog"
+              @edit="openEditDialog"
+              @delete="confirmDelete"
+            />
           </div>
 
-          <!-- Table View -->
-          <div v-else class="space-y-3">
-            <AircraftTableRow v-for="aircraft in aircrafts" :key="aircraft.id" :aircraft="aircraft" :can-edit="can('aircraft.update')" :can-delete="can('aircraft.delete')"
-              @view="openViewDialog" @edit="openEditDialog" @delete="confirmDelete" />
+          <!-- Tableau -->
+          <div v-else class="space-y-1.5">
+            <AircraftTableRow
+              v-for="aircraft in aircrafts"
+              :key="aircraft.id"
+              :aircraft="aircraft"
+              :can-edit="can('aircraft.update')"
+              :can-delete="can('aircraft.delete')"
+              @view="openViewDialog"
+              @edit="openEditDialog"
+              @delete="confirmDelete"
+            />
           </div>
 
-          <!-- Load More Trigger -->
-          <div v-if="hasMorePages && !loading" ref="loadMoreTrigger" class="flex justify-center py-8">
-            <Button variant="outline" @click="loadMore" :disabled="loading">
-              Charger plus d'aéronefs
+          <!-- Infinite scroll trigger -->
+          <div
+            v-if="!isUsingFullDataset && hasMorePages && !loading"
+            ref="loadMoreTrigger"
+            class="flex justify-center pt-4 pb-2"
+          >
+            <Button variant="outline" size="sm" @click="loadMore" :disabled="loading" class="gap-1.5 text-xs">
+              <ChevronDown class="h-3.5 w-3.5" />
+              Charger plus
             </Button>
           </div>
 
-          <!-- Loading More -->
-          <div v-if="loading && aircrafts.length > 0" class="py-4">
+          <!-- Skeleton page suivante -->
+          <template v-if="loading && paginatedAircrafts.length > 0">
             <AircraftTableSkeleton v-if="viewMode === 'table'" :count="3" />
-            <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <AircraftSkeleton v-for="i in 3" :key="i" />
             </div>
-          </div>
+          </template>
 
-          <!-- End of list -->
-          <div v-if="!hasMorePages && aircrafts.length > 0" class="text-center py-4 text-muted-foreground text-sm">
-            Tous les aéronefs ont été chargés
+          <!-- Fin de liste -->
+          <div v-if="!isUsingFullDataset && !hasMorePages && aircrafts.length > 0" class="flex justify-center pt-4 pb-2">
+            <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Check class="h-3.5 w-3.5 text-green-500" />
+              Tous les aéronefs sont affichés
+            </span>
           </div>
+        </template>
+
+        <!-- État vide -->
+        <div v-else class="flex flex-col items-center justify-center py-20 text-center">
+          <div class="h-14 w-14 rounded-xl bg-muted flex items-center justify-center mb-4">
+            <Plane class="h-7 w-7 text-muted-foreground" :stroke-width="1.5" />
+          </div>
+          <p class="font-medium text-sm mb-1">
+            {{ searchTerm || hasActiveFilters ? 'Aucun résultat trouvé' : 'Aucun aéronef enregistré' }}
+          </p>
+          <p class="text-xs text-muted-foreground mb-5 max-w-xs">
+            {{ searchTerm || hasActiveFilters ? 'Essayez avec d\'autres termes ou ajustez les filtres.' : 'Commencez par créer votre premier aéronef.' }}
+          </p>
+          <Button v-if="!searchTerm && !hasActiveFilters && can('aircraft.create')" @click="openCreateDialog" size="sm" class="gap-1.5">
+            <Plus class="h-4 w-4" />
+            Créer le premier aéronef
+          </Button>
+          <Button v-else variant="outline" size="sm" @click="resetSearchAndFilters" class="gap-1.5">
+            <X class="h-4 w-4" />
+            {{ searchTerm && hasActiveFilters ? 'Effacer la recherche et les filtres' : searchTerm ? 'Effacer la recherche' : 'Réinitialiser les filtres' }}
+          </Button>
         </div>
-
-        <!-- Empty State -->
-        <Card v-else>
-          <CardContent class="flex flex-col items-center justify-center py-12">
-            <Plane class="h-12 w-12 text-muted-foreground mb-4" />
-            <p class="text-lg font-medium mb-2">
-              {{ searchTerm ? 'Aucun résultat trouvé' : 'Aucun aéronef enregistré' }}
-            </p>
-            <p class="text-muted-foreground mb-4">
-              {{ searchTerm ? 'Essayez avec d\'autres termes de recherche' : 'Commencez par créer votre premier aéronef'
-              }}
-            </p>
-            <Button v-if="!searchTerm && can('aircraft.create')" @click="openCreateDialog">
-              <Plus class="mr-2 h-4 w-4" />
-              Créer le premier aéronef
-            </Button>
-            <Button v-else variant="outline" @click="clearSearch">
-              Effacer la recherche
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </div>
 
-    <!-- View Dialog -->
-    <AircraftViewDialog v-model:open="viewDialogOpen" :aircraft="selectedAircraft" @edit="openEditDialog" />
+    <!-- Dialogs -->
+    <AircraftViewDialog
+      v-model:open="viewDialogOpen"
+      :aircraft="selectedAircraft"
+      @edit="openEditDialog"
+      @delete="handleDeleteFromView"
+    />
 
-    <!-- Form Dialog (Create/Edit) -->
-    <AircraftFormDialog v-model:open="formDialogOpen" :aircraft="aircraftToEdit" @success="handleFormSuccess" />
+    <AircraftFormDialog
+      v-model:open="formDialogOpen"
+      :aircraft="aircraftToEdit"
+      @success="handleFormSuccess"
+    />
 
-    <!-- Delete Confirmation Dialog -->
+    <!-- Delete confirmation (depuis la liste) -->
     <AlertDialog v-model:open="deleteDialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+          <AlertDialogTitle class="flex items-center gap-2">
+            <AlertTriangle class="h-5 w-5 text-destructive" />
+            Confirmer la suppression
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Êtes-vous sûr de vouloir supprimer l'aéronef <strong class="font-mono">"{{ aircraftToDelete?.immatriculation
-            }}"</strong> ?
-            Cette action est irréversible et supprimera également toutes les données associées.
+            Êtes-vous sûr de vouloir supprimer l'aéronef
+            <strong class="text-foreground font-mono">{{ aircraftToDelete?.immatriculation }}</strong> ?
+            Cette action est irréversible et supprimera toutes les données associées.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction @click="deleteAircraft" class="bg-destructive text-white hover:bg-destructive/90">
+          <AlertDialogAction
+            @click="deleteAircraft"
+            class="bg-destructive text-white hover:bg-destructive/90 gap-2"
+          >
+            <Trash2 class="h-4 w-4" />
             Supprimer
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -159,27 +268,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import {
-  Plus,
-  Search,
-  X,
-  LayoutGrid,
-  List,
-  Plane,
-  PlaneIcon
+  Plus, Search, X, LayoutGrid, List, Plane, Layers, Building2,
+  Activity, ChevronDown, Check, Trash2, AlertTriangle
 } from 'lucide-vue-next'
-import type { Aircraft, AircraftType, Operator } from '~/types/api'
-import { Card, CardContent } from '@/components/ui/card'
+import type {
+  Aircraft,
+  AircraftFilterQuery,
+  AircraftFilters as AircraftFiltersState,
+  AircraftType,
+  Operator
+} from '~/types/api'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog'
 import AircraftCard from '~/components/modules/aircraft/AircraftCard.vue'
 import AircraftTableRow from '~/components/modules/aircraft/AircraftTableRow.vue'
@@ -187,17 +291,13 @@ import AircraftSkeleton from '~/components/modules/aircraft/AircraftSkeleton.vue
 import AircraftTableSkeleton from '~/components/modules/aircraft/AircraftTableSkeleton.vue'
 import AircraftViewDialog from '~/components/modules/aircraft/AircraftViewDialog.vue'
 import AircraftFormDialog from '@/components/modules/aircraft/AircraftFormDialog.vue'
-import AircraftFilters, { type AircraftFilters as FilterType } from '~/components/modules/aircraft/AircraftFilters.vue'
+import AircraftFilters from '~/components/modules/aircraft/AircraftFilters.vue'
 
-definePageMeta({
-  middleware: 'auth'
-})
+definePageMeta({ middleware: 'auth' })
 
 useHead({
   title: 'Aéronefs | VTA',
-  meta: [
-    { name: 'description', content: 'Gestion complète des aéronefs. Consultez, créez et modifiez les informations de tous les aéronefs de votre flotte.' }
-  ]
+  meta: [{ name: 'description', content: 'Gestion complète des aéronefs de la flotte VTA.' }]
 })
 
 const aircraftsStore = useAircraftsStore()
@@ -205,37 +305,32 @@ const { success: showSuccess, error: showError } = useToast()
 const { apiFetch } = useApi()
 const { can } = usePermission()
 
-// State
-const aircrafts = computed(() => aircraftsStore.aircrafts)
+// ─── State store ──────────────────────────────────────────────────────────────
+const paginatedAircrafts = computed(() => aircraftsStore.aircrafts)
 const loading = computed(() => aircraftsStore.loading)
 const hasMorePages = computed(() => aircraftsStore.hasMorePages)
-const total = computed(() => aircraftsStore.total)
 
 const searchTerm = ref('')
-const viewMode = ref<'cards' | 'table'>('cards')
-const isSearching = ref(false)
+const viewMode   = ref<'cards' | 'table'>('cards')
 
-// Dialog states
-const viewDialogOpen = ref(false)
-const formDialogOpen = ref(false)
+// Dialogs
+const viewDialogOpen   = ref(false)
+const formDialogOpen   = ref(false)
 const deleteDialogOpen = ref(false)
+const selectedAircraft  = ref<Aircraft | null>(null)
+const aircraftToEdit    = ref<Aircraft | null>(null)
+const aircraftToDelete  = ref<Aircraft | null>(null)
 
-// Selected items
-const selectedAircraft = ref<Aircraft | null>(null)
-const aircraftToEdit = ref<Aircraft | null>(null)
-const aircraftToDelete = ref<Aircraft | null>(null)
-
-// Filter data
+// Données pour les filtres
 const availableOperators = ref<Operator[]>([])
-const availableTypes = ref<AircraftType[]>([])
+const availableTypes     = ref<AircraftType[]>([])
 
-// Intersection Observer
+// Infinite scroll
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
-let searchTimeout: NodeJS.Timeout
+let searchTimeout: ReturnType<typeof setTimeout>
 
-// State pour les filtres
-const filters = ref<FilterType>({
+const createDefaultFilters = (): AircraftFiltersState => ({
   operator_id: '',
   aircraft_type_id: '',
   in_activity: '',
@@ -245,106 +340,39 @@ const filters = ref<FilterType>({
   has_flights: false
 })
 
-// Charger les données de référence pour les filtres
-const loadFilterData = async () => {
-  try {
-    const [typesRes, operatorsRes] = await Promise.all([
-      apiFetch<{ data: AircraftType[] }>('/aircraft-types'),
-      apiFetch<{ data: Operator[] }>('/operators')
-    ])
-    availableTypes.value = typesRes.data || []
-    availableOperators.value = operatorsRes.data || []
-  } catch (error) {
-    console.error('Error loading filter data:', error)
-  }
+// Filtres — valeurs vides '' = pas de filtre (pas de valeur "all" en v-model interne)
+const filters = ref<AircraftFiltersState>(createDefaultFilters())
+
+const updateFilters = (nextFilters: AircraftFiltersState) => {
+  filters.value = nextFilters
 }
 
-// Fetch initial aircrafts
-const fetchAircrafts = async () => {
-  aircraftsStore.resetPagination()
-  const result = await aircraftsStore.fetchAircrafts(1)
+const normalizeNumericFilter = (value: number | null | undefined) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null
 
-  if (!result.success) {
-    showError(result.message || 'Erreur lors du chargement des aéronefs')
-  }
-}
+const normalizedSearchTerm = computed(() => searchTerm.value.trim())
 
-// Load more for infinite scroll
-const loadMore = async () => {
-  if (!hasMorePages.value || loading.value) return
-  await aircraftsStore.loadNextPage()
-}
+const hasServerFilters = computed(() =>
+  !!normalizedSearchTerm.value ||
+  !!filters.value.operator_id ||
+  !!filters.value.aircraft_type_id ||
+  !!filters.value.in_activity ||
+  normalizeNumericFilter(filters.value.pmad_min) !== null ||
+  normalizeNumericFilter(filters.value.pmad_max) !== null ||
+  filters.value.has_flights
+)
 
-// Search with debounce
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(async () => {
-    if (searchTerm.value.trim()) {
-      isSearching.value = true
-      aircraftsStore.resetPagination()
+const hasActiveFilters = computed(() =>
+  hasServerFilters.value || !!filters.value.sort_by
+)
 
-      const result = await aircraftsStore.searchAircrafts(searchTerm.value)
+const isUsingFullDataset = computed(() =>
+  hasServerFilters.value || !!filters.value.sort_by
+)
 
-      if (result.success && result.data) {
-        aircraftsStore.aircrafts = result.data
-        aircraftsStore.total = result.data.length
-      } else {
-        aircraftsStore.aircrafts = []
-        aircraftsStore.total = 0
-        if (result.message) {
-          showError(result.message)
-        }
-      }
+const aircrafts = computed(() => {
+  const filtered = [...paginatedAircrafts.value]
 
-      isSearching.value = false
-    } else {
-      isSearching.value = false
-      await fetchAircrafts()
-    }
-  }, 300)
-}
-
-const clearSearch = () => {
-  searchTerm.value = ''
-  fetchAircrafts()
-}
-
-// Fonction pour appliquer les filtres
-const applyFilters = () => {
-  let filtered = [...aircraftsStore.aircrafts]
-
-  // Filtre par opérateur
-  if (filters.value.operator_id && filters.value.operator_id !== 'all') {
-    const operatorId = parseInt(filters.value.operator_id)
-    filtered = filtered.filter(a => a.operator_id === operatorId)
-  }
-
-  // Filtre par type d'aéronef
-  if (filters.value.aircraft_type_id && filters.value.aircraft_type_id !== 'all') {
-    const typeId = parseInt(filters.value.aircraft_type_id)
-    filtered = filtered.filter(a => a.aircraft_type_id === typeId)
-  }
-
-  // Filtre par statut
-  if (filters.value.in_activity && filters.value.in_activity !== 'all') {
-    const isActive = filters.value.in_activity === 'true'
-    filtered = filtered.filter(a => a.in_activity === isActive)
-  }
-
-  // Filtre par PMAD
-  if (filters.value.pmad_min !== null) {
-    filtered = filtered.filter(a => a.pmad && a.pmad >= filters.value.pmad_min!)
-  }
-  if (filters.value.pmad_max !== null) {
-    filtered = filtered.filter(a => a.pmad && a.pmad <= filters.value.pmad_max!)
-  }
-
-  // Filtre par vols
-  if (filters.value.has_flights) {
-    filtered = filtered.filter(a => a.flights && a.flights.length > 0)
-  }
-
-  // Tri
   switch (filters.value.sort_by) {
     case 'immatriculation_asc':
       filtered.sort((a, b) => a.immatriculation.localeCompare(b.immatriculation))
@@ -353,14 +381,10 @@ const applyFilters = () => {
       filtered.sort((a, b) => b.immatriculation.localeCompare(a.immatriculation))
       break
     case 'created_desc':
-      filtered.sort((a, b) =>
-        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-      )
+      filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
       break
     case 'created_asc':
-      filtered.sort((a, b) =>
-        new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-      )
+      filtered.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
       break
     case 'pmad_desc':
       filtered.sort((a, b) => (b.pmad || 0) - (a.pmad || 0))
@@ -370,105 +394,193 @@ const applyFilters = () => {
       break
   }
 
-  aircraftsStore.aircrafts = filtered
+  return filtered
+})
+
+const total = computed(() =>
+  isUsingFullDataset.value ? aircrafts.value.length : aircraftsStore.total
+)
+
+// ─── KPIs calculés depuis le store ───────────────────────────────────────────
+const kpis = computed(() => {
+  // Toujours utiliser le dataset complet (allAircrafts) pour les KPI,
+  // indépendamment des filtres affichés dans la vue.
+  const list = aircraftsStore.allAircrafts
+
+  const activeAircrafts  = list.filter(a => a.in_activity).length
+  const uniqueTypes      = new Set(list.map(a => a.type?.id).filter(Boolean)).size
+  const uniqueOperators  = new Set(list.map(a => a.operator?.id).filter(Boolean)).size
+
+  return {
+    totalAircrafts: list.length,
+    activeAircrafts,
+    uniqueTypes,
+    uniqueOperators
+  }
+})
+
+// ─── Données filtres ──────────────────────────────────────────────────────────
+const loadFilterData = async () => {
+  try {
+    const [typesRes, operatorsRes] = await Promise.all([
+      apiFetch<{ data: AircraftType[] }>('/aircraft-types/all'),
+      apiFetch<{ data: Operator[] }>('/operators/all')
+    ])
+    availableTypes.value     = typesRes.data || []
+    availableOperators.value = operatorsRes.data || []
+  } catch {
+    console.error('Erreur chargement données filtres')
+  }
 }
 
-// Dialog handlers
+// ─── Fetch ────────────────────────────────────────────────────────────────────
+const buildAircraftFilterQuery = (): AircraftFilterQuery => ({
+  search: normalizedSearchTerm.value || null,
+  operator_id: filters.value.operator_id ? parseInt(filters.value.operator_id, 10) : null,
+  aircraft_type_id: filters.value.aircraft_type_id ? parseInt(filters.value.aircraft_type_id, 10) : null,
+  pmad_from: normalizeNumericFilter(filters.value.pmad_min),
+  pmad_to: normalizeNumericFilter(filters.value.pmad_max),
+  in_activity: filters.value.in_activity === '' ? null : filters.value.in_activity === 'true',
+  with_flights: filters.value.has_flights ? true : null
+})
+
+const fetchAircrafts = async () => {
+  aircraftsStore.resetPagination()
+  const result = await aircraftsStore.fetchAircrafts(1)
+  if (!result.success) showError(result.message || 'Erreur lors du chargement des aéronefs')
+}
+
+const fetchFilteredAircrafts = async () => {
+  const result = await aircraftsStore.fetchAllFilteredAircrafts(buildAircraftFilterQuery())
+  if (!result.success) showError(result.message || 'Erreur lors du chargement des aéronefs')
+}
+
+const refreshAircrafts = async () => {
+  if (isUsingFullDataset.value) {
+    await fetchFilteredAircrafts()
+    return
+  }
+
+  await fetchAircrafts()
+}
+
+const loadMore = async () => {
+  if (isUsingFullDataset.value || !hasMorePages.value || loading.value) return
+  await aircraftsStore.loadNextPage()
+}
+
+// ─── Recherche / filtres réactifs ─────────────────────────────────────────────
+const debouncedRefreshAircrafts = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(async () => {
+    await refreshAircrafts()
+  }, 300)
+}
+
+const clearSearch = async () => {
+  clearTimeout(searchTimeout)
+  searchTerm.value = ''
+  await refreshAircrafts()
+}
+
+const resetSearchAndFilters = async () => {
+  clearTimeout(searchTimeout)
+  filters.value = createDefaultFilters()
+  searchTerm.value = ''
+  await refreshAircrafts()
+}
+
+// ─── Dialogs ──────────────────────────────────────────────────────────────────
 const openViewDialog = async (aircraft: Aircraft) => {
   const result = await aircraftsStore.fetchAircraft(aircraft.id)
   if (result.success && result.data) {
     selectedAircraft.value = result.data
-    viewDialogOpen.value = true
+    viewDialogOpen.value   = true
   }
 }
 
-const openCreateDialog = () => {
-  aircraftToEdit.value = null
-  formDialogOpen.value = true
-}
-
+const openCreateDialog = () => { aircraftToEdit.value = null; formDialogOpen.value = true }
 const openEditDialog = (aircraft: Aircraft) => {
-  aircraftToEdit.value = aircraft
-  viewDialogOpen.value = false
-  formDialogOpen.value = true
+  aircraftToEdit.value  = aircraft
+  viewDialogOpen.value  = false
+  formDialogOpen.value  = true
 }
 
 const confirmDelete = (aircraft: Aircraft) => {
-  aircraftToDelete.value = aircraft
-  deleteDialogOpen.value = true
+  aircraftToDelete.value  = aircraft
+  deleteDialogOpen.value  = true
 }
 
 const deleteAircraft = async () => {
   if (!aircraftToDelete.value) return
-
   const result = await aircraftsStore.deleteAircraft(aircraftToDelete.value.id)
-
   if (result.success) {
     showSuccess('Aéronef supprimé avec succès')
-    deleteDialogOpen.value = false
-    aircraftToDelete.value = null
+    deleteDialogOpen.value  = false
+    aircraftToDelete.value  = null
   } else {
     showError(result.message || 'Erreur lors de la suppression')
   }
 }
 
-const handleFormSuccess = async () => {
-  if (searchTerm.value) {
-    clearSearch()
-  } else {
-    await fetchAircrafts()
-  }
+// Suppression depuis le ViewDialog (emit 'delete')
+const handleDeleteFromView = async (_aircraft: Aircraft) => {
+  await refreshAircrafts()
 }
 
-// Setup Intersection Observer for infinite scroll
+const handleFormSuccess = async () => {
+  await refreshAircrafts()
+}
+
+// ─── Infinite scroll ──────────────────────────────────────────────────────────
 const setupIntersectionObserver = () => {
   if (!loadMoreTrigger.value) return
-
   observer = new IntersectionObserver(
     (entries) => {
-      if (entries[0].isIntersecting && hasMorePages.value && !loading.value) {
-        loadMore()
-      }
+      if (entries[0].isIntersecting && hasMorePages.value && !loading.value) loadMore()
     },
     { threshold: 0.5, rootMargin: '100px' }
   )
-
   observer.observe(loadMoreTrigger.value)
 }
 
-// Lifecycle
+// ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
-  await Promise.all([
-    fetchAircrafts(),
-    loadFilterData()
-  ])
-
-  setTimeout(() => {
-    setupIntersectionObserver()
-  }, 100)
+  if (import.meta.client) {
+    const saved = localStorage.getItem('aircrafts-view-mode')
+    if (saved === 'table' || saved === 'cards') viewMode.value = saved
+  }
+  await Promise.all([refreshAircrafts(), loadFilterData()])
+  setTimeout(setupIntersectionObserver, 100)
 })
 
 onUnmounted(() => {
-  if (observer) {
-    observer.disconnect()
-  }
+  observer?.disconnect()
   clearTimeout(searchTimeout)
 })
 
-// Save view mode preference
 watch(viewMode, (mode) => {
-  if (import.meta.client) {
-    localStorage.setItem('aircrafts-view-mode', mode)
-  }
+  if (import.meta.client) localStorage.setItem('aircrafts-view-mode', mode)
 })
 
-// Restore view mode preference
-onMounted(() => {
-  if (import.meta.client) {
-    const savedMode = localStorage.getItem('aircrafts-view-mode')
-    if (savedMode === 'table' || savedMode === 'cards') {
-      viewMode.value = savedMode
+watch(
+  () => [
+    filters.value.operator_id,
+    filters.value.aircraft_type_id,
+    filters.value.in_activity,
+    filters.value.pmad_min,
+    filters.value.pmad_max,
+    filters.value.has_flights
+  ],
+  debouncedRefreshAircrafts
+)
+
+watch(
+  () => filters.value.sort_by,
+  async (nextSort, previousSort) => {
+    if (!hasServerFilters.value && Boolean(nextSort) !== Boolean(previousSort)) {
+      await refreshAircrafts()
     }
   }
-})
+)
 </script>

@@ -201,6 +201,50 @@ export interface AircraftFormData {
   operator_id: number
 }
 
+export interface AircraftKPIs {
+  total_flights_current_year: number
+  total_flights_current_month: number
+  average_flights_per_month: number
+  is_active: boolean
+  pmad: number | null
+  total_flight_hours: number
+  average_flight_duration: number
+  utilization_rate: number
+  last_flight_date: string | null
+}
+
+export type AircraftFilterActivity = '' | 'true' | 'false'
+
+export type AircraftFilterSort =
+  | ''
+  | 'immatriculation_asc'
+  | 'immatriculation_desc'
+  | 'created_desc'
+  | 'created_asc'
+  | 'pmad_desc'
+  | 'pmad_asc'
+
+export interface AircraftFilters {
+  operator_id: string
+  aircraft_type_id: string
+  in_activity: AircraftFilterActivity
+  pmad_min: number | null
+  pmad_max: number | null
+  sort_by: AircraftFilterSort
+  has_flights: boolean
+}
+
+export interface AircraftFilterQuery {
+  search?: string | null
+  operator_id?: number | null
+  aircraft_type_id?: number | null
+  pmad_from?: number | null
+  pmad_to?: number | null
+  in_activity?: boolean | null
+  with_flights?: boolean | null
+  per_page?: number | null
+}
+
 // ==================== FLIGHTS ====================
 export type FlightStatus = 'qrf' | 'prevu' | 'embarque' | 'annule' | 'detourne'
 export type FlightRegime = 'domestic' | 'international'

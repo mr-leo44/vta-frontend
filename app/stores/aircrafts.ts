@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Aircraft, ApiResponse, PaginatedResponse, AircraftFormData, AircraftKPIs } from '~/types/api'
+import type {
+  Aircraft,
+  AircraftFilterQuery,
+  ApiResponse,
+  PaginatedResponse,
+  AircraftFormData,
+  AircraftKPIs
+} from '~/types/api'
 
 const handleApiError = (error: any): string => {
   console.error('API Error:', error)
@@ -40,6 +47,22 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
 
   const aircraftsList = computed(() => aircrafts.value)
   const allAircraftsList = computed(() => allAircrafts.value)
+
+  const buildAircraftFilterUrl = (filters: AircraftFilterQuery = {}, page: number = 1) => {
+    const params = new URLSearchParams()
+
+    if (filters.search) params.set('search', filters.search)
+    if (filters.operator_id != null) params.set('operator_id', String(filters.operator_id))
+    if (filters.aircraft_type_id != null) params.set('aircraft_type_id', String(filters.aircraft_type_id))
+    if (filters.pmad_from != null) params.set('pmad_from', String(filters.pmad_from))
+    if (filters.pmad_to != null) params.set('pmad_to', String(filters.pmad_to))
+    if (filters.in_activity != null) params.set('in_activity', String(filters.in_activity))
+    if (filters.with_flights != null) params.set('with_flights', String(filters.with_flights))
+    if (filters.per_page != null) params.set('per_page', String(filters.per_page))
+    params.set('page', String(page))
+
+    return `/aircrafts/filter?${params.toString()}`
+  }
 
   /**
    * Récupère TOUS les aéronefs (sans pagination)
@@ -142,6 +165,70 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  /**
+   * Filtre les aéronefs via l'endpoint dédié
+   * Utilise GET /aircrafts/filter
+   */
+  const filterAircrafts = async (
+    filters: AircraftFilterQuery = {},
+    page: number = 1,
+    append: boolean = false
+  ) => {
+    loading.value = true
+    error.value = null
+    const { apiFetch } = useApi()
+
+    try {
+      const response = await apiFetch<PaginatedResponse<Aircraft>>(buildAircraftFilterUrl(filters, page))
+
+      if (append) {
+        aircrafts.value = [...aircrafts.value, ...response.data]
+      } else {
+        aircrafts.value = response.data
+      }
+
+      currentPage.value = response.meta.current_page
+      lastPage.value = response.meta.last_page
+      perPage.value = response.meta.per_page
+      total.value = response.meta.total
+
+      return { success: true, data: response.data }
+    } catch (err: any) {
+      error.value = handleApiError(err)
+      return { success: false, message: error.value, data: [] }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Charge toutes les pages correspondant aux filtres
+   * Le tri est ensuite géré côté frontend.
+   */
+  const fetchAllFilteredAircrafts = async (filters: AircraftFilterQuery = {}) => {
+    resetPagination()
+
+    const firstPage = await filterAircrafts(
+      { ...filters, per_page: filters.per_page ?? 100 },
+      1,
+      false
+    )
+
+    if (!firstPage.success) return firstPage
+
+    while (currentPage.value < lastPage.value) {
+      const nextPage = await filterAircrafts(
+        { ...filters, per_page: filters.per_page ?? 100 },
+        currentPage.value + 1,
+        true
+      )
+
+      if (!nextPage.success) return nextPage
+    }
+
+    return { success: true, data: aircrafts.value }
   }
 
   /**
@@ -341,6 +428,8 @@ export const useAircraftsStore = defineStore('aircrafts', () => {
     loadNextPage,
     fetchAircraft,
     searchAircrafts,
+    filterAircrafts,
+    fetchAllFilteredAircrafts,
     fetchAircraftKPIs,
     createAircraft,
     updateAircraft,

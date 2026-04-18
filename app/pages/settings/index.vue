@@ -42,15 +42,22 @@
           <form class="space-y-4" @submit.prevent="updateProfile">
             <!-- Name -->
             <div class="space-y-2">
-              <Label for="name">Nom complet</Label>
+              <Label for="name" class="flex items-center gap-2">
+                Nom complet
+                <Badge v-if="canUpdateProfile" variant="outline" class="text-xs text-green-600 border-green-300">
+                  <Pencil class="h-2.5 w-2.5 mr-1" />Modifiable
+                </Badge>
+              </Label>
               <Input
                 id="name"
                 v-model="profileForm.name"
                 placeholder="Jean Dupont"
-                disabled
-                class="bg-muted"
+                :disabled="!canUpdateProfile"
+                :class="!canUpdateProfile ? 'bg-muted' : ''"
               />
-              <p class="text-xs text-muted-foreground">Contactez un administrateur pour modifier votre nom</p>
+              <p v-if="!canUpdateProfile" class="text-xs text-muted-foreground">
+                Contactez un administrateur pour modifier votre nom
+              </p>
             </div>
 
             <!-- Username -->
@@ -79,10 +86,9 @@
               <p class="text-xs text-muted-foreground">Assignée par un administrateur</p>
             </div>
 
-
-
-            <!-- Save Button -->
+            <!-- Save Button — only shown if can update profile -->
             <Button
+              v-if="canUpdateProfile"
               type="submit"
               :disabled="saving"
               class="w-full"
@@ -93,19 +99,62 @@
               </span>
               <span v-else>Enregistrer les modifications</span>
             </Button>
+
+            <!-- Locked hint when no permission -->
+            <div v-else class="flex items-center gap-2 text-xs text-muted-foreground p-3 rounded-lg bg-muted/50 border">
+              <Lock class="h-3.5 w-3.5 shrink-0" />
+              Vous n'avez pas la permission de modifier le profil. Contactez un administrateur.
+            </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <!-- Account Info -->
+      <Card class="border-2 bg-muted/30">
+        <CardHeader>
+          <CardTitle class="text-base">Informations du compte</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="space-y-3 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">Rôle</span>
+              <span :class="roleClass(user?.role)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                {{ roleLabel(user?.role) }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">Fonction</span>
+              <span class="font-medium">{{ user?.function ?? 'Non assignée' }}</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       <!-- Security -->
       <Card class="border-2">
         <CardHeader>
-          <CardTitle>Sécurité</CardTitle>
-          <CardDescription>Gérez votre accès et votre mot de passe</CardDescription>
+          <div class="flex items-start justify-between">
+            <div>
+              <CardTitle>Sécurité</CardTitle>
+              <CardDescription>Gérez votre accès et votre mot de passe</CardDescription>
+            </div>
+            <Badge v-if="canChangePassword" variant="outline" class="text-xs text-green-600 border-green-300 h-fit">
+              <Pencil class="h-2.5 w-2.5 mr-1" />Modifiable
+            </Badge>
+            <Badge v-else variant="outline" class="text-xs text-muted-foreground h-fit">
+              <Lock class="h-2.5 w-2.5 mr-1" />Restreint
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent class="space-y-4">
+          <!-- Locked message -->
+          <div v-if="!canChangePassword" class="flex items-center gap-2 text-xs text-muted-foreground p-3 rounded-lg bg-muted/50 border">
+            <Lock class="h-3.5 w-3.5 shrink-0" />
+            Vous n'avez pas la permission de modifier le mot de passe. Contactez un administrateur.
+          </div>
+
           <!-- Password Change -->
-          <div class="space-y-4">
+          <div v-else class="space-y-4">
             <div class="space-y-2">
               <Label for="current-password">Mot de passe actuel</Label>
               <Input
@@ -154,32 +203,6 @@
         </CardContent>
       </Card>
 
-      <!-- Account Info -->
-      <Card class="border-2 bg-muted/30">
-        <CardHeader>
-          <CardTitle class="text-base">Informations du compte</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="space-y-3 text-sm">
-            <div class="flex items-center justify-between">
-              <span class="text-muted-foreground">Rôle</span>
-              <span :class="roleClass(user?.role)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                {{ roleLabel(user?.role) }}
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-muted-foreground">Fonction</span>
-              <span class="font-medium">{{ user?.function ?? 'Non assignée' }}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-muted-foreground">Identifiant</span>
-              <span class="font-mono text-xs">{{ user?.id }}</span>
-            </div>
-
-          </div>
-        </CardContent>
-      </Card>
-
       <!-- Danger Zone -->
       <Card class="border-2 border-red-200 dark:border-red-800">
         <CardHeader>
@@ -206,10 +229,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { Pencil, Lock } from 'lucide-vue-next'
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
-  Button, Input, Label,
+  Button, Input, Label, Badge,
 } from '#components'
 import type { AuthUser } from '~/types/api'
 import { useToast } from '@/composables/useToast'
@@ -220,12 +244,12 @@ const { apiFetch } = useApi()
 const { success: showSuccess, error: showError } = useToast()
 const authStore = useAuthStore()
 const router = useRouter()
+const { can } = usePermission()
 
 const loading = ref(true)
 const saving = ref(false)
 const changingPassword = ref(false)
 const loggingOut = ref(false)
-
 
 const user = ref<AuthUser | null>(null)
 
@@ -239,6 +263,14 @@ const passwordForm = ref({
   new: '',
   confirm: '',
 })
+
+// ─── Permissions ──────────────────────────────────────────────────────────────
+
+/** L'utilisateur peut modifier son profil (nom) */
+const canUpdateProfile = computed(() => can('profile.update') || can('me.updateProfile'))
+
+/** L'utilisateur peut changer son mot de passe */
+const canChangePassword = computed(() => can('password.change') || can('me.changePassword'))
 
 // ─────────────────────────────────────────────────────────────────────
 // Helpers
@@ -278,6 +310,7 @@ const fetchProfile = async () => {
 }
 
 const updateProfile = async () => {
+  if (!canUpdateProfile.value) return
   saving.value = true
   try {
     await apiFetch('/me/profile', {
@@ -288,6 +321,7 @@ const updateProfile = async () => {
     })
 
     showSuccess('Profil mis à jour', 'Vos informations ont été enregistrées')
+    await authStore.refreshMe?.()
     await fetchProfile()
   } catch (err: any) {
     showError(err?.data?.message ?? 'Erreur lors de la mise à jour du profil')
@@ -297,6 +331,8 @@ const updateProfile = async () => {
 }
 
 const changePassword = async () => {
+  if (!canChangePassword.value) return
+
   if (passwordForm.value.new !== passwordForm.value.confirm) {
     showError('Les mots de passe ne correspondent pas')
     return

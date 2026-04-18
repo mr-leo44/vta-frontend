@@ -1,93 +1,129 @@
 <template>
-  <Card
-    class="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 hover:border-primary/50 relative overflow-hidden">
-    <!-- linear overlay on hover -->
+  <div
+    class="group relative bg-card border border-border rounded-xl overflow-hidden cursor-pointer transition-all duration-150
+           hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,95,165,0.08)]"
+    @click="$emit('view', operator)"
+  >
+    <!-- Barre latérale gauche : bleu plein = régulier, bleu clair = non régulier -->
     <div
-      class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-    </div>
+      class="absolute left-0 top-0 bottom-0 w-[3px]"
+      :class="operator.flight_type?.value === 'regular'
+        ? 'bg-blue-600'
+        : 'bg-blue-200 dark:bg-blue-800'"
+    />
 
-    <!-- Main clickable area for view -->
-    <div @click="$emit('view', operator)" class="relative">
-      <CardHeader class="pb-3">
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <!-- Company logo/icon with animation -->
-            <div
-              class="h-16 w-16 rounded-2xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
-              <Building2 class="h-8 w-8 text-white" />
-            </div>
+    <!-- Corps -->
+    <div class="pl-5 pr-4 pt-4 pb-4">
 
-            <CardTitle class="text-xl mb-2 group-hover:text-primary transition-colors">
-              {{ operator.name }}
-            </CardTitle>
-
-            <CardDescription class="mt-2">
-              <div class="flex items-center gap-2 flex-wrap">
-                <Badge variant="secondary" class="font-semibold">{{ operator.sigle }}</Badge>
-                <Badge v-if="operator.iata_code" variant="outline" class="font-mono">
-                  <Ticket class="h-3 w-3 mr-1" />
-                  {{ operator.iata_code }}
-                </Badge>
-                <!-- Flight type badge -->
-                <Badge :variant="operator.flight_type.value === 'regular' ? 'default' : 'secondary'" class="gap-1">
-                  <Plane class="h-3 w-3" />
-                  {{ operator.flight_type.label }}
-                </Badge>
-              </div>
-            </CardDescription>
+      <!-- Ligne 1 : icône + nom + sigle + menu -->
+      <div class="flex items-start justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <!-- Icône -->
+          <div class="h-9 w-9 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
+            <Building2 class="h-[18px] w-[18px] text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
           </div>
-
-          <!-- Actions menu (non-clickable for view) -->
-          <DropdownMenu>
-            <DropdownMenuTrigger as-child @click.stop>
-              <Button variant="ghost" size="icon"
-                class="h-9 w-9 opacity-0 group-hover:opacity-100 transition-all hover:bg-primary/10">
-                <MoreVertical class="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-48">
-              <DropdownMenuItem @click.stop="$emit('view', operator)" class="cursor-pointer">
-                <Eye class="mr-2 h-4 w-4" />
-                Voir les détails
-              </DropdownMenuItem>
-              <DropdownMenuItem v-if="canEdit !== false" @click.stop="$emit('edit', operator)" class="cursor-pointer">
-                <Pencil class="mr-2 h-4 w-4" />
-                Modifier
-              </DropdownMenuItem>
-              <DropdownMenuSeparator v-if="canDelete !== false" />
-              <DropdownMenuItem v-if="canDelete !== false" @click.stop="$emit('delete', operator)"
-                class="text-destructive focus:text-destructive cursor-pointer">
-                <Trash2 class="mr-2 h-4 w-4" />
-                Supprimer
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-
-      <CardContent class="space-y-3">
-        <!-- Location info -->
-        <div v-if="operator.country" class="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-          <MapPin class="h-4 w-4 text-muted-foreground shrink-0" />
-          <span class="font-medium">{{ operator.country }}</span>
+          <!-- Nom + sigle -->
+          <div class="min-w-0">
+            <p class="text-[13.5px] font-semibold leading-tight truncate text-foreground
+                       group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              {{ operator.name }}
+            </p>
+            <p class="text-[11px] font-mono text-muted-foreground mt-0.5">{{ operator.sigle }}</p>
+          </div>
         </div>
 
-        <!-- ICAO code -->
-        <div v-if="operator.icao_code"
-          class="flex items-center gap-2 text-xs text-muted-foreground p-2 bg-muted/30 rounded">
-          <Radio class="h-3 w-3" />
-          <span>Code OACI : <span class="font-mono font-semibold">{{ operator.icao_code }}</span></span>
+        <!-- Menu (visible au hover) -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child @click.stop>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity border border-border rounded-md"
+            >
+              <MoreVertical class="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-44">
+            <DropdownMenuItem @click.stop="$emit('view', operator)" class="cursor-pointer text-sm">
+              <Eye class="mr-2 h-3.5 w-3.5" />
+              Voir les détails
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              v-if="canEdit !== false"
+              @click.stop="$emit('edit', operator)"
+              class="cursor-pointer text-sm"
+            >
+              <Pencil class="mr-2 h-3.5 w-3.5" />
+              Modifier
+            </DropdownMenuItem>
+            <DropdownMenuSeparator v-if="canDelete !== false" />
+            <DropdownMenuItem
+              v-if="canDelete !== false"
+              @click.stop="$emit('delete', operator)"
+              class="text-destructive focus:text-destructive cursor-pointer text-sm"
+            >
+              <Trash2 class="mr-2 h-3.5 w-3.5" />
+              Supprimer
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <!-- Séparateur -->
+      <div class="h-px bg-border mb-3" />
+
+      <!-- Ligne 2 : codes IATA / OACI -->
+      <div class="flex items-center gap-1.5 flex-wrap mb-3">
+        <span
+          v-if="operator.iata_code"
+          class="inline-flex items-center font-mono text-[11px] font-medium px-1.5 py-0.5 rounded
+                 bg-muted border border-border text-muted-foreground leading-relaxed"
+        >
+          <span class="opacity-60 mr-1 font-normal">IATA</span>{{ operator.iata_code }}
+        </span>
+        <span
+          v-if="operator.icao_code"
+          class="inline-flex items-center font-mono text-[11px] font-medium px-1.5 py-0.5 rounded
+                 bg-muted border border-border text-muted-foreground leading-relaxed"
+        >
+          <span class="opacity-60 mr-1 font-normal">OACI</span>{{ operator.icao_code }}
+        </span>
+      </div>
+
+      <!-- Ligne 3 : badge type de vol -->
+      <div
+        class="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-[3px] rounded border"
+        :class="operator.flight_type?.value === 'regular'
+          ? 'bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800'
+          : 'bg-muted text-muted-foreground border-border'"
+      >
+        <Send
+          class="h-[11px] w-[11px]"
+          :class="operator.flight_type?.value === 'regular' ? 'text-blue-600 dark:text-blue-400' : ''"
+          :stroke-width="2"
+        />
+        {{ operator.flight_type?.label }}
+      </div>
+
+      <!-- Ligne 4 : pays + hint hover -->
+      <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-border">
+        <div v-if="operator.country" class="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <Globe class="h-3 w-3 shrink-0" :stroke-width="1.5" />
+          <span class="truncate">{{ operator.country }}</span>
         </div>
-      </CardContent>
+        <span
+          class="text-[11px] font-medium text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+        >
+          Voir →
+        </span>
+      </div>
     </div>
-  </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Eye, Pencil, Trash2, MoreVertical, MapPin, Building2, Plane, Briefcase, Ticket, Radio } from 'lucide-vue-next'
+import { Eye, Pencil, Trash2, MoreVertical, Building2, Send, Globe } from 'lucide-vue-next'
 import type { Operator } from '~/types/api'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,

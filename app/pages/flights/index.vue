@@ -234,9 +234,18 @@
     <!-- Dialogs -->
     <MultiStepFlightForm v-model:open="formDialogOpen" :flight="selectedFlight" @submit="handleFormSubmit" />
 
-    <FlightViewDialog v-model:open="viewDialogOpen" :flight="selectedFlight" @edit="openEditDialog" />
+    <FlightViewDialog
+      v-model:open="viewDialogOpen"
+      :flight="selectedFlight"
+      :aircrafts="aircrafts"
+      @edit="openEditDialog"
+      @updated="handleFlightUpdated"
+    />
 
-    <TodayFlightsDialog v-model:open="todayFlightsDialogOpen" />
+    <TodayFlightsDialog
+      v-model:open="todayFlightsDialogOpen"
+      @view="openViewDialog"
+    />
 
     <AlertDialog v-model:open="deleteDialogOpen">
       <AlertDialogContent>
@@ -538,20 +547,26 @@ const openTodayFlightsDialog = async () => {
 }
 
 const openCreateDialog = () => {
+  viewDialogOpen.value = false
+  todayFlightsDialogOpen.value = false
   selectedFlight.value = null
   formDialogOpen.value = true
 }
 
 const openEditDialog = async (flight: Flight) => {
+  viewDialogOpen.value = false
+  todayFlightsDialogOpen.value = false
   const result = await flightsStore.fetchFlight(flight.id)
 
   if (result.success && result.data) {
-    selectedFlight.value = result.data   // <-- le bon state !
+    selectedFlight.value = result.data
     formDialogOpen.value = true
   }
 }
 
 const openViewDialog = async (flight: Flight) => {
+  formDialogOpen.value = false
+  todayFlightsDialogOpen.value = false
   const result = await flightsStore.fetchFlight(flight.id)
   if (result.success && result.data) {
     selectedFlight.value = result.data
@@ -577,6 +592,11 @@ const deleteFlight = async () => {
 }
 
 const handleFormSubmit = async () => {
+  await fetchFlights()
+}
+
+const handleFlightUpdated = async (flight: Flight) => {
+  selectedFlight.value = flight
   await fetchFlights()
 }
 

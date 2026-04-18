@@ -120,6 +120,15 @@ export interface OperatorFormData {
   flight_type: 'regular' | 'non_regular'
 }
 
+export interface OperatorKPIs {
+  total_flights_current_year: number
+  total_flights_previous_year: number
+  growth_percentage: number
+  active_aircrafts_count: number
+  inactive_aircrafts_count: number
+  total_aircrafts: number
+}
+
 // ==================== AIRCRAFT TYPES ====================
 export interface AircraftType {
   id: number

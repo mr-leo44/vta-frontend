@@ -323,12 +323,42 @@
           <X class="mr-2 h-4 w-4" />
           Fermer
         </Button>
-        <Button @click="handleEdit">
+        <Button v-if="can('operator.update')" @click="handleEdit">
           <Pencil class="mr-2 h-4 w-4" />
           Modifier
         </Button>
+        <Button v-if="can('operator.delete')" variant="destructive" @click="handleDelete">
+          <Trash class="mr-2 h-4 w-4" />
+          Supprimer
+        </Button>
       </DialogFooter>
     </DialogContent>
+    <!-- Dialog confirmation suppression -->
+    <AlertDialog v-model:open="deleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle class="flex items-center gap-2">
+            <AlertTriangle class="h-5 w-5 text-destructive" />
+            Confirmer la suppression
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Êtes-vous sûr de vouloir supprimer l'exploitant
+            <strong class="text-foreground">"{{ operatorToDelete?.name }}"</strong> ?
+            Cette action est irréversible et supprimera toutes les données associées.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction
+            @click="performDelete"
+            class="bg-destructive text-white hover:bg-destructive/90 gap-2"
+          >
+            <Trash class="h-4 w-4" />
+            Supprimer
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </Dialog>
 </template>
 
@@ -357,7 +387,8 @@ import {
   BarChart3,
   Activity,
   Target,
-  Gauge
+  Gauge,
+  Trash
 } from 'lucide-vue-next'
 import type { Operator, OperatorKPIs } from '~/types/api'
 import {
@@ -368,6 +399,16 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -383,9 +424,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [value: boolean]
   edit: [operator: Operator]
+  delete: [operator: Operator]
 }>()
 
 const operatorsStore = useOperatorsStore()
+const { can } = usePermission()
+const { success: showSuccess, error: showError } = useToast()
+
+const deleteDialogOpen = ref(false)
+const operatorToDelete = ref<Operator | null>(null)
 
 const isOpen = computed({
   get: () => props.open,
@@ -514,5 +561,30 @@ const handleEdit = () => {
     emit('edit', props.operator)
     isOpen.value = false
   }
+}
+
+const confirmDelete = () => {
+  if (props.operator) {
+    operatorToDelete.value = props.operator
+    deleteDialogOpen.value = true
+  }
+}
+
+const performDelete = async () => {
+  if (!operatorToDelete.value) return
+  const result = await operatorsStore.deleteOperator(operatorToDelete.value.id)
+  if (result.success) {
+    showSuccess('Exploitant supprimé avec succès')
+    deleteDialogOpen.value = false
+    operatorToDelete.value = null
+    isOpen.value = false
+    emit('delete', operatorToDelete.value)
+  } else {
+    showError(result.message || 'Erreur lors de la suppression')
+  }
+}
+
+const handleDelete = () => {
+  confirmDelete()
 }
 </script>

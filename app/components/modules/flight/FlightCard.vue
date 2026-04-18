@@ -47,17 +47,28 @@
                 <MoreVertical class="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-48">
+            <DropdownMenuContent align="end" class="w-52">
               <DropdownMenuItem @click.stop="$emit('view', flight)" class="cursor-pointer">
                 <Eye class="mr-2 h-4 w-4" />
                 Voir les détails
               </DropdownMenuItem>
-              <DropdownMenuItem @click.stop="$emit('edit', flight)" class="cursor-pointer">
+
+              <!-- Saisie rapide — visible selon la fonction de l'utilisateur -->
+              <DropdownMenuItem
+                v-if="quickEditMode"
+                @click.stop="$emit('quickEdit', flight)"
+                class="cursor-pointer text-sky-600 dark:text-sky-400 focus:text-sky-700 focus:bg-sky-50 dark:focus:bg-sky-950/30"
+              >
+                <component :is="quickEditIcon" class="mr-2 h-4 w-4" />
+                {{ quickEditLabel }}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem v-if="canEdit !== false" @click.stop="$emit('edit', flight)" class="cursor-pointer">
                 <Pencil class="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuSeparator v-if="canDelete !== false" />
+              <DropdownMenuItem v-if="canDelete !== false"
                 @click.stop="$emit('delete', flight)"
                 class="text-destructive focus:text-destructive cursor-pointer"
               >
@@ -70,31 +81,29 @@
       </CardHeader>
 
       <CardContent class="space-y-3">
-        <!-- Route avec style moderne -->
+        <!-- Route -->
         <div class="relative p-4 bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl border-2 border-blue-200/50 dark:border-blue-800/30">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center justify-between gap-2">
             <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <MapPin class="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span class="text-xs text-muted-foreground">Départ</span>
+              <div class="flex items-center gap-1.5 mb-1">
+                <MapPin class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span class="text-xs text-muted-foreground">De</span>
               </div>
-              <span class="font-mono font-bold text-lg">
-                {{ formatLocation(flight.departure) }}
-              </span>
+              <span class="font-mono font-bold text-lg">{{ departureFrom(flight) }}</span>
+              <div class="text-xs text-muted-foreground truncate">{{ departureFromName(flight) }}</div>
             </div>
-            
-            <div class="flex flex-col items-center">
-              <ArrowRight class="h-6 w-6 text-primary animate-pulse" />
+
+            <div class="flex flex-col items-center gap-0.5">
+              <ArrowRight class="h-5 w-5 text-primary" />
             </div>
-            
+
             <div class="flex-1 text-right">
-              <div class="flex items-center justify-end gap-2 mb-1">
-                <span class="text-xs text-muted-foreground">Arrivée</span>
-                <MapPin class="h-4 w-4 text-green-600 dark:text-green-400" />
+              <div class="flex items-center justify-end gap-1.5 mb-1">
+                <span class="text-xs text-muted-foreground">Vers</span>
+                <MapPin class="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <span class="font-mono font-bold text-lg">
-                {{ formatLocation(flight.arrival) }}
-              </span>
+              <span class="font-mono font-bold text-lg">{{ departureTo(flight) }}</span>
+              <div class="text-xs text-muted-foreground truncate">{{ departureToName(flight) }}</div>
             </div>
           </div>
         </div>
@@ -145,6 +154,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   PlaneTakeoff,
   MoreVertical,
@@ -157,7 +167,11 @@ import {
   Plane,
   Users,
   Building2,
-  Layers
+  Layers,
+  Bus,
+  TrendingUp,
+  BarChart3,
+  ClipboardEdit,
 } from 'lucide-vue-next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -178,13 +192,44 @@ import {
 
 defineProps<{
   flight: Flight
+  canEdit?: boolean
+  canDelete?: boolean
 }>()
 
 defineEmits<{
   view: [flight: Flight]
   edit: [flight: Flight]
   delete: [flight: Flight]
+  quickEdit: [flight: Flight]
 }>()
+
+// ── Quick-edit mode selon la fonction de l'utilisateur ──────────────────────
+
+const { userFunction } = usePermission()
+
+const quickEditMode = computed<'paxbus' | 'idef' | 'trafic' | null>(() => {
+  const fn = (userFunction.value ?? '').toLowerCase()
+  if (fn.includes('paxbus') || fn === 'vta-paxbus') return 'paxbus'
+  if (fn.includes('idef') || fn === 'vta-idef') return 'idef'
+  if (fn.includes('trafic') || fn === 'vta-trafic') return 'trafic'
+  return null
+})
+
+const quickEditLabel = computed(() => {
+  if (quickEditMode.value === 'paxbus') return 'Saisie Pax Bus'
+  if (quickEditMode.value === 'idef') return 'Saisie IDEF'
+  if (quickEditMode.value === 'trafic') return 'Saisie Trafic'
+  return ''
+})
+
+const quickEditIcon = computed(() => {
+  if (quickEditMode.value === 'paxbus') return Bus
+  if (quickEditMode.value === 'idef') return TrendingUp
+  if (quickEditMode.value === 'trafic') return BarChart3
+  return ClipboardEdit
+})
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 const getStatusBorderColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -228,21 +273,8 @@ const formatTime = (datetime: string) => {
   })
 }
 
-const formatLocation = (location: any): string => {
-  if (!location) return 'N/A'
-  
-  if (typeof location === 'object' && location.iata && location.name) {
-    return location.iata
-  }
-  
-  if (Array.isArray(location) && location.length > 0) {
-    const loc = location[0]
-    if (typeof loc === 'object' && loc.iata && loc.name) {
-      return loc.iata
-    }
-    return loc
-  }
-  
-  return location
-}
+const departureFrom = (flight: any): string => flight.departure?.from?.iata || '???'
+const departureFromName = (flight: any): string => flight.departure?.from?.name || ''
+const departureTo = (flight: any): string => flight.departure?.to?.iata || '???'
+const departureToName = (flight: any): string => flight.departure?.to?.name || ''
 </script>

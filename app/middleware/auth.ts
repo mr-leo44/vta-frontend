@@ -1,36 +1,21 @@
-export default defineNuxtRouteMiddleware(async (to, from) => {
-  // Côté serveur, on laisse passer
-  if (process.server) {
-    return
-  }
+export default defineNuxtRouteMiddleware(async (to) => {
+  if (process.server) return
 
-  const authStore = useAuthStore()
+  const auth = useAuthStore()
 
-  // Attendre l'hydratation du store
-  if (authStore.$hydrate) {
-    await authStore.$hydrate()
+  if (auth.$hydrate) {
+    await auth.$hydrate()
   }
   await nextTick()
-  
-  // Vérifier l'authentification
-  const isAuth = authStore.isAuthenticated
 
-  // Si non authentifié et que l'utilisateur essaie d'accéder à une page protégée
+  const isAuth = auth.isAuthenticated
+
   if (!isAuth && to.path !== '/login') {
-    const redirectPath = to.fullPath || '/'
-    return navigateTo(`/login?redirect=${encodeURIComponent(redirectPath)}`)
+    return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath || '/')}`)
   }
 
-  // Si authentifié et que l'utilisateur essaie d'accéder à la page de login
   if (isAuth && to.path === '/login') {
-    // Vérifier s'il y a un paramètre de redirection dans l'URL
     const redirect = to.query.redirect as string
-    
-    if (redirect && redirect !== '/login') {
-      return navigateTo(redirect)
-    }
-    
-    // Sinon rediriger vers la page d'accueil
-    return navigateTo('/')
+    return navigateTo(redirect && redirect !== '/login' ? redirect : '/')
   }
 })

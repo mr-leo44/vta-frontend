@@ -26,12 +26,14 @@
       <!-- Route & Horaires -->
       <div class="flex items-center gap-2 text-sm">
         <div>
-          <div class="font-medium">{{ formatLocation(flight.departure) }}</div>
+          <div class="font-mono font-semibold">{{ departureFrom(flight) }}</div>
+          <div class="text-xs text-muted-foreground truncate max-w-20">{{ departureFromName(flight) }}</div>
           <div class="text-xs text-muted-foreground">{{ formatTime(flight.departure_time) }}</div>
         </div>
-        <ArrowRight class="h-4 w-4 text-muted-foreground" />
+        <ArrowRight class="h-4 w-4 text-muted-foreground shrink-0" />
         <div>
-          <div class="font-medium">{{ formatLocation(flight.arrival) }}</div>
+          <div class="font-mono font-semibold">{{ departureTo(flight) }}</div>
+          <div class="text-xs text-muted-foreground truncate max-w-20">{{ departureToName(flight) }}</div>
           <div class="text-xs text-muted-foreground">{{ formatTime(flight.arrival_time) }}</div>
         </div>
       </div>
@@ -58,17 +60,28 @@
           <MoreVertical class="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" class="w-52">
         <DropdownMenuItem @click="$emit('view', flight)">
           <Eye class="mr-2 h-4 w-4" />
           Voir les détails
         </DropdownMenuItem>
-        <DropdownMenuItem @click="$emit('edit', flight)">
+
+        <!-- Saisie rapide — visible selon la fonction de l'utilisateur -->
+        <DropdownMenuItem
+          v-if="quickEditMode"
+          @click="$emit('quickEdit', flight)"
+          class="cursor-pointer text-sky-600 dark:text-sky-400 focus:text-sky-700 focus:bg-sky-50 dark:focus:bg-sky-950/30"
+        >
+          <component :is="quickEditIcon" class="mr-2 h-4 w-4" />
+          {{ quickEditLabel }}
+        </DropdownMenuItem>
+
+        <DropdownMenuItem v-if="canEdit !== false" @click="$emit('edit', flight)">
           <Pencil class="mr-2 h-4 w-4" />
           Modifier
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem @click="$emit('delete', flight)" class="text-destructive">
+        <DropdownMenuSeparator v-if="canDelete !== false" />
+        <DropdownMenuItem v-if="canDelete !== false" @click="$emit('delete', flight)" class="text-destructive">
           <Trash2 class="mr-2 h-4 w-4" />
           Supprimer
         </DropdownMenuItem>
@@ -78,7 +91,11 @@
 </template>
 
 <script setup lang="ts">
-import { PlaneTakeoff, Eye, Pencil, Trash2, MoreVertical, ArrowRight } from 'lucide-vue-next'
+import { computed } from 'vue'
+import {
+  PlaneTakeoff, Eye, Pencil, Trash2, MoreVertical, ArrowRight,
+  Bus, TrendingUp, BarChart3, ClipboardEdit,
+} from 'lucide-vue-next'
 import type { Flight, FlightStatus } from '~/types/api'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -92,13 +109,44 @@ import {
 
 defineProps<{
   flight: Flight
+  canEdit?: boolean
+  canDelete?: boolean
 }>()
 
 defineEmits<{
   view: [flight: Flight]
   edit: [flight: Flight]
   delete: [flight: Flight]
+  quickEdit: [flight: Flight]
 }>()
+
+// ── Quick-edit mode selon la fonction de l'utilisateur ──────────────────────
+
+const { userFunction } = usePermission()
+
+const quickEditMode = computed<'paxbus' | 'idef' | 'trafic' | null>(() => {
+  const fn = (userFunction.value ?? '').toLowerCase()
+  if (fn.includes('paxbus') || fn === 'vta-paxbus') return 'paxbus'
+  if (fn.includes('idef') || fn === 'vta-idef') return 'idef'
+  if (fn.includes('trafic') || fn === 'vta-trafic') return 'trafic'
+  return null
+})
+
+const quickEditLabel = computed(() => {
+  if (quickEditMode.value === 'paxbus') return 'Saisie Pax Bus'
+  if (quickEditMode.value === 'idef') return 'Saisie IDEF'
+  if (quickEditMode.value === 'trafic') return 'Saisie Trafic'
+  return ''
+})
+
+const quickEditIcon = computed(() => {
+  if (quickEditMode.value === 'paxbus') return Bus
+  if (quickEditMode.value === 'idef') return TrendingUp
+  if (quickEditMode.value === 'trafic') return BarChart3
+  return ClipboardEdit
+})
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatStatus = (status: FlightStatus) => {
   const statusMap: Record<FlightStatus, string> = {
@@ -126,25 +174,10 @@ const getStatusColor = (status: FlightStatus) => {
   return 'bg-gray-100 text-gray-600'
 }
 
-const formatLocation = (location: any): string => {
-  if (!location) return 'N/A'
-  
-  // Si c'est un objet avec iata et name
-  if (typeof location === 'object' && !Array.isArray(location) && location.iata && location.name) {
-    return `${location.iata} (${location.name})`
-  }
-  
-  // Si c'est un array
-  if (Array.isArray(location) && location.length > 0) {
-    const loc = location[0]
-    if (typeof loc === 'object' && loc.iata && loc.name) {
-      return `${loc.iata} (${loc.name})`
-    }
-    return loc
-  }
-  
-  return location
-}
+const departureFrom = (flight: any): string => flight.departure?.from?.iata || '???'
+const departureFromName = (flight: any): string => flight.departure?.from?.name || ''
+const departureTo = (flight: any): string => flight.departure?.to?.iata || '???'
+const departureToName = (flight: any): string => flight.departure?.to?.name || ''
 
 const formatTime = (dateTime: string) => {
   return new Date(dateTime).toLocaleTimeString('fr-FR', {

@@ -1,147 +1,166 @@
 <template>
-  <!-- Écran de chargement pendant la vérification -->
   <LoadingScreen v-if="checking" message="Vérification de votre session..." />
 
-  <div v-else class="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-950 dark:via-blue-950 dark:to-purple-950 relative overflow-hidden">
-    <!-- Animated background elements -->
-    <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl animate-pulse"></div>
-      <div class="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-purple-400/20 blur-3xl animate-pulse delay-1000"></div>
-      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-60 w-60 rounded-full bg-indigo-400/10 blur-3xl animate-pulse delay-500"></div>
-    </div>
+  <div v-else class="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
 
-    <!-- Login Card -->
-    <Card class="w-full max-w-md relative z-10 shadow-2xl border-2">
-      <CardHeader class="space-y-4 pb-8">
-        <!-- Logo avec animation -->
-        <div class="flex justify-center">
-          <div class="relative group">
-            <div class="absolute inset-0 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-            <div class="relative h-20 w-20 rounded-full bg-linear-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-xl transform group-hover:scale-110 transition-transform duration-300">
-              <span class="text-3xl font-black text-white">VTA</span>
+    <!-- Panneau gauche branding (md+) -->
+    <div class="hidden md:flex md:w-5/12 bg-blue-600 flex-col justify-between p-10 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10"
+        style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 28px 28px;" />
+
+      <div class="relative z-10 flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-white/20 flex items-center justify-center">
+          <span class="text-sm font-black text-white">VTA</span>
+        </div>
+        <span class="text-white font-bold text-lg">VTA System</span>
+      </div>
+
+      <div class="relative z-10 space-y-6">
+        <div>
+          <h1 class="text-4xl font-bold text-white leading-tight">
+            Gestion du<br />Trafic Aérien
+          </h1>
+          <p class="text-blue-100 mt-3 text-base leading-relaxed max-w-xs">
+            Plateforme centralisée pour la gestion des vols, opérateurs et aéronefs.
+          </p>
+        </div>
+        <div class="space-y-3">
+          <div v-for="item in features" :key="item.label" class="flex items-center gap-3 text-blue-100 text-sm">
+            <div class="h-6 w-6 rounded-md bg-white/20 flex items-center justify-center shrink-0">
+              <component :is="item.icon" class="h-3.5 w-3.5 text-white" />
             </div>
+            {{ item.label }}
           </div>
         </div>
+      </div>
 
-        <div class="text-center space-y-2">
-          <CardTitle class="text-3xl font-bold bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Connexion
-          </CardTitle>
-          <CardDescription class="text-base">
-            Connectez-vous à votre compte VTA
-          </CardDescription>
+      <div class="relative z-10 text-blue-200 text-xs">
+        © {{ new Date().getFullYear() }} VTA System · v1.0.0
+      </div>
+    </div>
+
+    <!-- Panneau droit formulaire -->
+    <div class="flex-1 flex flex-col items-center justify-center px-6 py-12">
+
+      <!-- Logo mobile only -->
+      <div class="md:hidden flex items-center gap-2.5 mb-10">
+        <div class="h-9 w-9 rounded-lg bg-blue-600 flex items-center justify-center">
+          <span class="text-sm font-black text-white">VTA</span>
         </div>
-      </CardHeader>
+        <span class="font-bold text-gray-900 dark:text-white text-lg">VTA System</span>
+      </div>
 
-      <CardContent>
-        <form @submit.prevent="handleLogin" class="space-y-5">
-          <div class="space-y-2">
-            <Label for="username" class="text-sm font-semibold">Nom d'utilisateur</Label>
+      <div class="w-full max-w-sm">
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Connexion</h2>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Entrez vos identifiants pour accéder au système
+          </p>
+        </div>
+
+        <form @submit.prevent="handleLogin" class="space-y-4">
+
+          <div class="space-y-1.5">
+            <label for="username" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Nom d'utilisateur
+            </label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <User class="h-5 w-5 text-muted-foreground" />
-              </div>
-              <Input
+              <User class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input
                 id="username"
                 v-model="username"
                 type="text"
-                placeholder="Votre nom d'utilisateur"
+                placeholder="Votre identifiant"
                 required
                 :disabled="loading"
                 autocomplete="username"
-                class="pl-10 h-12 text-base border-2 focus:border-primary transition-all"
+                class="w-full pl-9 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-shadow"
               />
             </div>
           </div>
-          
-          <div class="space-y-2">
-            <Label for="password" class="text-sm font-semibold">Mot de passe</Label>
+
+          <div class="space-y-1.5">
+            <label for="password" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Mot de passe
+            </label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Lock class="h-5 w-5 text-muted-foreground" />
-              </div>
-              <Input
+              <Lock class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <input
                 id="password"
                 v-model="password"
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 placeholder="••••••••"
                 required
                 :disabled="loading"
                 autocomplete="current-password"
-                class="pl-10 h-12 text-base border-2 focus:border-primary transition-all"
+                class="w-full pl-9 pr-10 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-shadow"
               />
+              <button
+                type="button"
+                tabindex="-1"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                @click="showPassword = !showPassword"
+              >
+                <Eye v-if="!showPassword" class="h-4 w-4" />
+                <EyeOff v-else class="h-4 w-4" />
+              </button>
             </div>
           </div>
 
-          <Alert v-if="error" variant="destructive" class="animate-in fade-in-50">
-            <AlertCircle class="h-4 w-4" />
-            <AlertDescription>{{ error }}</AlertDescription>
-          </Alert>
+          <div v-if="error"
+            class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+            <AlertCircle class="h-4 w-4 shrink-0" />
+            {{ error }}
+          </div>
 
-          <Button 
-            type="submit" 
-            class="w-full h-12 text-base font-semibold bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300" 
+          <button
+            type="submit"
             :disabled="loading"
+            class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-400 text-white text-sm font-semibold rounded-lg transition-colors duration-150 flex items-center justify-center gap-2"
           >
-            <span v-if="loading" class="flex items-center gap-2">
-              <div class="h-5 w-5 animate-spin rounded-full border-3 border-white border-t-transparent"></div>
-              Connexion en cours...
-            </span>
-            <span v-else class="flex items-center gap-2">
-              <LogIn class="h-5 w-5" />
-              Se connecter
-            </span>
-          </Button>
+            <div v-if="loading" class="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            <LogIn v-else class="h-4 w-4" />
+            {{ loading ? 'Connexion...' : 'Se connecter' }}
+          </button>
+
         </form>
-      </CardContent>
 
-      <CardFooter class="flex flex-col gap-4">
-        <div class="text-sm text-muted-foreground text-center w-full flex items-center gap-2 justify-center">
-          <Shield class="h-4 w-4" />
-          Système de gestion du Trafic Aérien • VTA
+        <div class="mt-8 flex items-center justify-center gap-2 text-xs text-gray-400 dark:text-gray-600">
+          <Shield class="h-3.5 w-3.5" />
+          Accès sécurisé · Système VTA
         </div>
-      </CardFooter>
-    </Card>
-
-    <!-- Version info -->
-    <div class="absolute bottom-4 right-4 text-xs text-muted-foreground">
-      v1.0.0
+      </div>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { AlertCircle, User, Lock, LogIn, Shield } from 'lucide-vue-next'
+import { AlertCircle, User, Lock, LogIn, Shield, Eye, EyeOff, PlaneTakeoff, Plane, BarChart3 } from 'lucide-vue-next'
 import { ref, onMounted } from 'vue'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import LoadingScreen from '@/components/LoadingScreen.vue'
 
-definePageMeta({
-  layout: false,
-  middleware: []
-})
+definePageMeta({ layout: false, middleware: [] })
 
 const authStore = useAuthStore()
-const router = useRouter()
-const route = useRoute()
+const router    = useRouter()
+const route     = useRoute()
 
-const username = ref('')
-const password = ref('')
-const loading = ref(false)
-const error = ref('')
-const checking = ref(true)
+const username     = ref('')
+const password     = ref('')
+const loading      = ref(false)
+const error        = ref('')
+const checking     = ref(true)
+const showPassword = ref(false)
+
+const features = [
+  { icon: PlaneTakeoff, label: 'Suivi des vols en temps réel' },
+  { icon: Plane,        label: 'Gestion des aéronefs et opérateurs' },
+  { icon: BarChart3,    label: 'Rapports et statistiques de trafic' },
+]
 
 onMounted(async () => {
-  // Attendre l'hydratation complète
-  if (authStore.$hydrate) {
-    await authStore.$hydrate()
-  }
-  
-  // Vérifier si déjà authentifié
+  if (authStore.$hydrate) await authStore.$hydrate()
   if (authStore.isAuthenticated) {
     const redirect = route.query.redirect as string
     await router.push(redirect && redirect !== '/login' ? redirect : '/')
@@ -152,47 +171,16 @@ onMounted(async () => {
 
 const handleLogin = async () => {
   loading.value = true
-  error.value = ''
-  
-  const result = await authStore.login({
-    username: username.value,
-    password: password.value
-  })
-  
+  error.value   = ''
+  const result  = await authStore.login({ username: username.value, password: password.value })
   loading.value = false
-  
+
   if (result.success) {
-    // Récupérer le paramètre de redirection depuis l'URL
     const redirect = route.query.redirect as string
-    
-    // Rediriger vers la page demandée ou vers l'accueil
     await router.push(redirect && redirect !== '/login' ? redirect : '/')
   } else {
-    error.value = result.message || 'Identifiants incorrects'
+    error.value    = result.message || 'Identifiants incorrects'
     password.value = ''
   }
 }
 </script>
-
-<style scoped>
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.animate-pulse {
-  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.delay-500 {
-  animation-delay: 500ms;
-}
-
-.delay-1000 {
-  animation-delay: 1000ms;
-}
-</style>

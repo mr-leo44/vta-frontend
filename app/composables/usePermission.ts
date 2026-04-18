@@ -15,6 +15,21 @@
  * ⚠️  Après tout changement de fonction ou d'override, appeler
  *     authStore.refreshMe() ou refreshMeSilent() pour re-hydrater
  *     le store et déclencher la réactivité de tous les can().
+ *
+ * ─── Matrice de visibilité nav ──────────────────────────────────────
+ *
+ *  Rubrique         │ admin │ manager │ agent │ permanent
+ * ──────────────────┼───────┼─────────┼───────┼──────────
+ *  Tableau de bord  │  ✓    │   ✓     │  ✓    │   ✓
+ *  Vols             │  ✓    │   ✓     │  ✓    │   ✓
+ *  Exploitants      │  ✓    │   ✓     │  ✓    │   ✗
+ *  Aéronefs         │  ✓    │   ✓     │  ✓    │   ✗
+ *  Types aéronef    │  ✓    │   ✓     │  ✓    │   ✗
+ *  Rapports         │  ✓    │   ✓     │  ✗    │   ✗
+ *  Agents           │  ✓    │   ✗     │  ✗    │   ✗
+ *  Imports          │  ✓    │   ✗     │  ✗    │   ✗
+ *  Permissions      │  ✓    │   ✓     │  ✓    │   ✓  (toujours)
+ *  Logs d'audit     │  ✓    │   ✗     │  ✗    │   ✗
  */
 export function usePermission() {
   const auth = useAuthStore()
@@ -50,7 +65,7 @@ export function usePermission() {
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── Vols ──────────────────────────────────────────────────────────────────
-  const canViewFlights     = computed(() => auth.can('flight.viewAny'))
+  const canViewFlights     = computed(() => auth.can('flight.view'))
   const canCreateFlight    = computed(() => auth.can('flight.create'))
   const canUpdateFlight    = computed(() => auth.can(['flight.updateOwn', 'flight.updateAny']))
   const canUpdateAnyFlight = computed(() => auth.can('flight.updateAny'))
@@ -59,7 +74,7 @@ export function usePermission() {
   const canExportFlight    = computed(() => auth.can('flight.export'))
 
   // ── Avions ────────────────────────────────────────────────────────────────
-  const canViewAircrafts   = computed(() => auth.can('aircraft.viewAny'))
+  const canViewAircrafts   = computed(() => auth.can('aircraft.view'))
   const canCreateAircraft  = computed(() => auth.can('aircraft.create'))
   const canUpdateAircraft  = computed(() => auth.can('aircraft.update'))
   const canDeleteAircraft  = computed(() => auth.can('aircraft.delete'))
@@ -68,7 +83,7 @@ export function usePermission() {
   )
 
   // ── Types d'avion ─────────────────────────────────────────────────────────
-  const canViewAircraftTypes   = computed(() => auth.can('aircraftType.viewAny'))
+  const canViewAircraftTypes   = computed(() => auth.can('aircraftType.view'))
   const canCreateAircraftType  = computed(() => auth.can('aircraftType.create'))
   const canUpdateAircraftType  = computed(() => auth.can('aircraftType.update'))
   const canDeleteAircraftType  = computed(() => auth.can('aircraftType.delete'))
@@ -77,7 +92,7 @@ export function usePermission() {
   )
 
   // ── Opérateurs ────────────────────────────────────────────────────────────
-  const canViewOperators   = computed(() => auth.can('operator.viewAny'))
+  const canViewOperators   = computed(() => auth.can('operator.view'))
   const canCreateOperator  = computed(() => auth.can('operator.create'))
   const canUpdateOperator  = computed(() => auth.can('operator.update'))
   const canDeleteOperator  = computed(() => auth.can('operator.delete'))
@@ -86,12 +101,12 @@ export function usePermission() {
   )
 
   // ── Utilisateurs / Agents ─────────────────────────────────────────────────
-  const canViewUsers      = computed(() => auth.can('user.viewAny'))
+  const canViewUsers      = computed(() => auth.can('user.view'))
   const canCreateUser     = computed(() => auth.can('user.create'))
   const canUpdateUser     = computed(() => auth.can('user.update'))
   const canDeleteUser     = computed(() => auth.can('user.delete'))
   const canAssignFunction = computed(() => auth.can('user.assignFunction'))
-  const canManageUsers    = computed(() => auth.can('user.viewAny'))
+  const canManageUsers    = computed(() => auth.can('user.view'))
 
   // ── Rapports ──────────────────────────────────────────────────────────────
   const canViewReports   = computed(() => auth.can('report.view'))
@@ -104,24 +119,56 @@ export function usePermission() {
 
   // ─── Navigation ────────────────────────────────────────────────────────────
   /**
-   * Visibilité des items de nav.
+   * Visibilité des items de navigation par rôle.
    *
-   * `permissions` est TOUJOURS true : chaque utilisateur authentifié peut
-   * consulter ses propres permissions et soumettre une demande via
-   * permissionRequest.create. La page /permissions affiche ensuite
-   * les actions supplémentaires selon le rôle (gestion admin vs vue user).
+   * Les valeurs reposent sur les permissions effectives calculées côté backend
+   * (rôle + overrides grant/revoke). La matrice ci-dessous est documentée
+   * en en-tête du fichier.
+   *
+   * Règles explicites par rôle :
+   *   admin     → tout
+   *   manager   → vols + exploitants + aéronefs + rapports + permissions
+   *              (pas agents, pas imports, pas logs)
+   *   agent     → vols + exploitants + aéronefs + permissions
+   *              (pas rapports, pas agents, pas imports, pas logs)
+   *   permanent → vols + permissions seulement
+   *              (pas exploitants, pas aéronefs, pas rapports, pas admin)
+   *
+   * `permissions` est TOUJOURS true : tout utilisateur authentifié peut
+   * consulter ses propres permissions et soumettre une demande.
    */
-  const nav = computed(() => ({
-    flights:       auth.can('flight.viewAny'),
-    operators:     auth.can('operator.viewAny'),
-    aircrafts:     auth.can('aircraft.viewAny'),
-    aircraftTypes: auth.can('aircraftType.viewAny'),
-    agents:        auth.can('user.create'),
-    reports:       auth.can('report.view'),
-    imports:       auth.can('files.import'),
-    permissions:   true, // Visible pour tout utilisateur authentifié
-    logs:          auth.isAdmin
-  }))
+  const nav = computed(() => {
+    const role = auth.user?.role
+
+    return {
+      // ── Vols : tous les rôles ─────────────────────────────────────────────
+      flights: auth.can('flight.view'),
+
+      // ── Exploitants : admin / manager / agent — pas permanent ─────────────
+      operators: role !== 'permanent' && auth.can('operator.view'),
+
+      // ── Aéronefs : admin / manager / agent — pas permanent ────────────────
+      aircrafts: role !== 'permanent' && auth.can('aircraft.view'),
+
+      // ── Types aéronef : admin / manager / agent — pas permanent ───────────
+      aircraftTypes: role !== 'permanent' && auth.can('aircraftType.view'),
+
+      // ── Rapports : admin / manager — pas agent, pas permanent ─────────────
+      reports: (role === 'admin' || role === 'manager') && auth.can('report.view'),
+
+      // ── Agents (gestion users) : admin uniquement ─────────────────────────
+      agents: role === 'admin' && auth.can('user.create'),
+
+      // ── Imports : admin uniquement ────────────────────────────────────────
+      imports: role === 'admin' && auth.can('files.import'),
+
+      // ── Permissions : toujours visible ────────────────────────────────────
+      permissions: true,
+
+      // ── Logs d'audit : admin uniquement ───────────────────────────────────
+      logs: role === 'admin' && auth.isAdmin,
+    }
+  })
 
   return {
     /** Vrai si l'utilisateur a AU MOINS UNE des permissions listées. */
@@ -134,6 +181,13 @@ export function usePermission() {
     role,
     userFunction,
     userName,
+
+    // Rôles
+    isAdmin,
+    isManager,
+    isPermanent,
+    isAgent,
+    isSupervisor,
 
     // Navigation
     nav,

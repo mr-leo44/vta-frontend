@@ -112,7 +112,7 @@
       </div>
 
       <!-- Request New Permission -->
-      <div class="space-y-4">
+      <div class="space-y-4" v-if="authStore.user?.role != 'admin'">
         <Card class="border-2 border-blue-200 dark:border-blue-800">
           <CardHeader>
             <CardTitle class="text-base flex items-center gap-2">
@@ -222,12 +222,125 @@
           </div>
         </div>
       </div>
+
+      <!-- Card : demandes de permissions (admin only) -->
+      <div v-else-if="can('permissionRequest.manage')" class="space-y-4">
+        <Card class="border-2">
+          <CardHeader class="pb-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <CardTitle class="text-base">Demandes de permissions</CardTitle>
+                <span
+                  v-if="adminPendingRequests.length"
+                  class="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold"
+                >
+                  {{ adminPendingRequests.length }}
+                </span>
+              </div>
+              <Button variant="ghost" size="icon" class="h-7 w-7" :disabled="requestsLoading" @click="fetchPermissionRequests">
+                <RefreshCw :class="['h-3.5 w-3.5', requestsLoading && 'animate-spin']" />
+              </Button>
+            </div>
+            <CardDescription>Demandes en attente d'approbation</CardDescription>
+          </CardHeader>
+
+          <CardContent class="p-0">
+            <!-- Loading -->
+            <div v-if="requestsLoading" class="flex items-center justify-center py-12">
+              <div class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+
+            <!-- Vide -->
+            <div v-else-if="!permissionRequests.length" class="text-center py-12 text-muted-foreground px-4">
+              <ClipboardCheck class="h-10 w-10 mx-auto mb-2 opacity-30" />
+              <p class="text-sm">Aucune demande en attente</p>
+            </div>
+
+            <!-- Liste -->
+            <ul v-else class="divide-y">
+              <li
+                v-for="req in permissionRequests"
+                :key="req.id"
+                class="px-4 py-3 hover:bg-muted/30 transition-colors"
+              >
+                <!-- En-tête : agent + date -->
+                <div class="flex items-start justify-between gap-2 mb-1.5">
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium truncate">{{ req.user?.name }}</p>
+                    <p class="text-xs text-muted-foreground truncate">{{ req.user?.username }}</p>
+                  </div>
+                  <span :class="requestStatusClass(req.status)" class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium">
+                    {{ requestStatusLabel(req.status) }}
+                  </span>
+                </div>
+
+                <!-- Permission demandée -->
+                <div class="flex items-center gap-1.5 mb-2">
+                  <Key class="h-3 w-3 text-muted-foreground shrink-0" />
+                  <code class="text-xs font-mono bg-muted px-1.5 py-0.5 rounded truncate">{{ req.permission }}</code>
+                </div>
+
+                <!-- Raison -->
+                <p v-if="req.reason" class="text-xs text-muted-foreground italic mb-2 line-clamp-2">
+                  « {{ req.reason }} »
+                </p>
+
+                <!-- Date -->
+                <p class="text-xs text-muted-foreground mb-3">
+                  {{ formatRelativeDate(req.created_at) }}
+                </p>
+
+                <!-- Actions (seulement si pending) -->
+                <div v-if="req.status === 'pending'" class="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    class="flex-1 h-7 text-xs border-green-500 text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                    :disabled="req._saving"
+                    @click="approveRequest(req)"
+                  >
+                    <Check class="h-3 w-3 mr-1" />
+                    Approuver
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    class="flex-1 h-7 text-xs border-red-400 text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    :disabled="req._saving"
+                    @click="rejectRequest(req)"
+                  >
+                    <X class="h-3 w-3 mr-1" />
+                    Rejeter
+                  </Button>
+                </div>
+              </li>
+            </ul>
+          </CardContent>
+
+          <!-- Footer : filtre statut -->
+          <div class="flex items-center gap-1 px-4 py-3 border-t">
+            <button
+              v-for="f in requestFilters"
+              :key="f.value"
+              :class="[
+                'px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
+                requestFilter === f.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              ]"
+              @click="setRequestFilter(f.value)"
+            >
+              {{ f.label }}
+            </button>
+          </div>
+        </Card>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Plus, AlertCircle, Lock, Send } from 'lucide-vue-next'
+import { Plus, AlertCircle, Lock, Send, RefreshCw, Key, Check, X, ClipboardCheck } from 'lucide-vue-next'
 import { ref, computed, onMounted } from 'vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -241,6 +354,7 @@ import { useToast } from '@/composables/useToast'
 
 definePageMeta({ middleware: 'auth' })
 
+const { can } = usePermission()
 const { apiFetch } = useApi()
 const { success: showSuccess, error: showError } = useToast()
 const authStore = useAuthStore()
@@ -248,18 +362,18 @@ const authStore = useAuthStore()
 // Toutes les permissions disponibles (hardcodé comme référence)
 const ALL_PERMISSIONS = [
   // Flight
-  'flight.viewAny', 'flight.view', 'flight.create', 'flight.updateOwn', 'flight.updateAny',
+  'flight.view', 'flight.view', 'flight.create', 'flight.updateOwn', 'flight.updateAny',
   'flight.deleteOwn', 'flight.deleteAny', 'flight.validate', 'flight.export',
   // Aircraft
-  'aircraft.viewAny', 'aircraft.view', 'aircraft.create', 'aircraft.update', 'aircraft.delete',
+  'aircraft.view', 'aircraft.view', 'aircraft.create', 'aircraft.update', 'aircraft.delete',
   // Aircraft Type
-  'aircraftType.viewAny', 'aircraftType.view', 'aircraftType.create', 'aircraftType.update', 'aircraftType.delete',
+  'aircraftType.view', 'aircraftType.view', 'aircraftType.create', 'aircraftType.update', 'aircraftType.delete',
   // Operator
-  'operator.viewAny', 'operator.view', 'operator.create', 'operator.update', 'operator.delete',
+  'operator.view', 'operator.view', 'operator.create', 'operator.update', 'operator.delete',
   // Report
   'report.view', 'report.export',
   // User
-  'user.viewAny', 'user.create', 'user.update', 'user.delete', 'user.assignFunction',
+  'user.view', 'user.create', 'user.update', 'user.delete', 'user.assignFunction',
   // Permission Request
   'permissionRequest.create', 'permissionRequest.manage',
   // Files
@@ -293,11 +407,41 @@ const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   'files.import': 'Importer des fichiers',
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────
+
+interface PermissionRequest {
+  id:         number
+  user?:      { id: number; name: string; username: string }
+  permission: string
+  reason?:    string
+  status:     'pending' | 'approved' | 'rejected'
+  created_at: string
+  _saving?:   boolean
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────
+
 const loading = ref(true)
 const submitting = ref(false)
 const currentUser = ref<AuthUser | null>(null)
 const currentPermissions = ref<string[]>([])
 const pendingRequests = ref<any[]>([])
+
+// Permission requests (admin only)
+const permissionRequests = ref<PermissionRequest[]>([])
+const requestsLoading    = ref(false)
+const requestFilter      = ref<'pending' | 'approved' | 'rejected' | 'all'>('pending')
+
+const requestFilters = [
+  { value: 'pending',  label: 'En attente' },
+  { value: 'approved', label: 'Approuvées' },
+  { value: 'rejected', label: 'Rejetées'  },
+  { value: 'all',      label: 'Toutes'    },
+] as const
 
 const requestForm = ref({
   permission: '',
@@ -324,6 +468,30 @@ const roleClass = (role?: string | null) => ({
 
 const getPermissionDesc = (perm: string) => PERMISSION_DESCRIPTIONS[perm] || ''
 
+const requestStatusLabel = (status: string) => ({
+  pending:  'En attente',
+  approved: 'Approuvée',
+  rejected: 'Rejetée',
+}[status] ?? status)
+
+const requestStatusClass = (status: string) => ({
+  pending:  'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+}[status] ?? 'bg-gray-100 text-gray-600')
+
+const formatRelativeDate = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins  = Math.floor(diff / 60_000)
+  const hours = Math.floor(diff / 3_600_000)
+  const days  = Math.floor(diff / 86_400_000)
+  if (mins < 1)   return 'À l\'instant'
+  if (mins < 60)  return `Il y a ${mins} min`
+  if (hours < 24) return `Il y a ${hours} h`
+  if (days < 7)   return `Il y a ${days} j`
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+}
+
 const groupedCurrentPermissions = computed(() => {
   const groups: Record<string, string[]> = {}
   for (const perm of currentPermissions.value) {
@@ -336,6 +504,10 @@ const groupedCurrentPermissions = computed(() => {
 
 const pendingPermissions = computed(() =>
   pendingRequests.value.map(r => r.permission)
+)
+
+const adminPendingRequests = computed(() =>
+  permissionRequests.value.filter(r => r.status === 'pending')
 )
 
 const availablePermissions = computed(() => {
@@ -378,12 +550,74 @@ const fetchData = async () => {
     pendingRequests.value = 
     // requestsRes.data || 
     []
+
+    // Charger les demandes de permissions pour les admins
+    if (can('permissionRequest.manage')) {
+      await fetchPermissionRequests()
+    }
   } catch (err) {
     showError('Erreur lors du chargement des données')
   } finally {
     loading.value = false
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// API — permission requests (admin only)
+// ─────────────────────────────────────────────────────────────────────
+
+const fetchPermissionRequests = async () => {
+  if (!can('permissionRequest.manage')) return
+  requestsLoading.value = true
+  try {
+    const params = requestFilter.value !== 'all' ? `?status=${requestFilter.value}` : ''
+    const res = await apiFetch<any>(`/permission-requests${params}`)
+    // Supporte à la fois { data: [...] } et [...] directement
+    permissionRequests.value = (res.data ?? res).map((r: PermissionRequest) => ({
+      ...r,
+      _saving: false,
+    }))
+  } catch {
+    showError('Impossible de charger les demandes')
+  } finally {
+    requestsLoading.value = false
+  }
+}
+
+const setRequestFilter = (value: typeof requestFilter.value) => {
+  requestFilter.value = value
+  fetchPermissionRequests()
+}
+
+const approveRequest = async (req: PermissionRequest) => {
+  req._saving = true
+  try {
+    await apiFetch(`/permission-requests/${req.id}/approve`, { method: 'POST' })
+    showSuccess(`Permission « ${req.permission} » accordée`)
+    await fetchPermissionRequests()
+  } catch (e: any) {
+    showError(e?.data?.message ?? 'Erreur lors de l\'approbation')
+  } finally {
+    req._saving = false
+  }
+}
+
+const rejectRequest = async (req: PermissionRequest) => {
+  req._saving = true
+  try {
+    await apiFetch(`/permission-requests/${req.id}/reject`, { method: 'POST' })
+    showSuccess('Demande rejetée')
+    await fetchPermissionRequests()
+  } catch (e: any) {
+    showError(e?.data?.message ?? 'Erreur lors du rejet')
+  } finally {
+    req._saving = false
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// User permission request submission
+// ─────────────────────────────────────────────────────────────────────
 
 const submitRequest = async () => {
   if (!requestForm.value.permission) return

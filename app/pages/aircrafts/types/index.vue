@@ -1,431 +1,368 @@
 <template>
-  <div class="space-y-6">
-    <!-- Header avec linear moderne -->
-    <div class="relative overflow-hidden rounded-2xl p-2">
-      <div class="relative z-10 flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <div class="flex items-center gap-3 mb-2">
-            <div class="h-16 w-16 rounded-lg bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 flex items-center justify-center shadow-lg">
-              <Layers class="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 class="text-4xl font-bold tracking-tight">Types d'aéronefs</h1>
-              <p class="text-muted-foreground text-sm mt-1">
-                Gérer les types d'aéronefs et analyser leur utilisation dans la flotte
-              </p>
-            </div>
-          </div>
-        </div>
-        <Button v-if="can('aircraftType.create')"
-          @click="openCreateDialog" 
-          size="lg"
-          class="bg-linear-to-br from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 shadow-xl gap-2"
-        >
-          <Plus class="h-5 w-5" />
-          Nouveau type
-        </Button>
+  <div class="space-y-5">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Types d'aéronefs</h1>
+        <p class="text-sm text-muted-foreground mt-0.5">
+          {{ total ?? 0 }} type{{ (total ?? 0) > 1 ? 's' : '' }} enregistré{{ (total ?? 0) > 1 ? 's' : '' }}
+        </p>
       </div>
-      <!-- Decorative circles -->
-      <div class="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-      <div class="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-white/10 blur-2xl"></div>
-    </div>
-
-    <!-- KPI Cards -->
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card v-if="loading" v-for="i in 4" :key="i">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Skeleton class="h-4 w-24" />
-          <Skeleton class="h-10 w-10 rounded-lg" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton class="h-8 w-16 mb-2" />
-          <Skeleton class="h-3 w-32" />
-        </CardContent>
-      </Card>
-
-      <template v-else>
-        <!-- Total types -->
-        <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
-          <div class="absolute inset-0 bg-linear-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-            <CardTitle class="text-sm font-semibold">Total types</CardTitle>
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Layers class="h-6 w-6 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent class="relative">
-            <div class="text-4xl font-bold bg-linear-to-br from-blue-600 to-blue-800 bg-clip-text text-transparent">
-              {{ kpis.totalTypes }}
-            </div>
-            <p class="text-xs flex items-center gap-1 mt-2">
-              <Database class="h-3 w-3 text-muted-foreground" />
-              <span class="text-muted-foreground">Types enregistrés</span>
-            </p>
-          </CardContent>
-        </Card>
-
-        <!-- Flotte totale -->
-        <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
-          <div class="absolute inset-0 bg-linear-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-            <CardTitle class="text-sm font-semibold">Flotte totale</CardTitle>
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Plane class="h-6 w-6 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent class="relative">
-            <div class="text-4xl font-bold bg-linear-to-br from-green-600 to-green-800 bg-clip-text text-transparent">
-              {{ kpis.totalAircrafts }}
-            </div>
-            <div class="flex items-center gap-2 mt-2">
-              <Badge variant="default" class="gap-1 text-xs">
-                <div class="h-1.5 w-1.5 rounded-full bg-green-200"></div>
-                {{ kpis.activeAircrafts }}
-              </Badge>
-              <Badge variant="secondary" class="gap-1 text-xs">
-                <div class="h-1.5 w-1.5 rounded-full bg-gray-400"></div>
-                {{ kpis.inactiveAircrafts }}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <!-- Type le plus utilisé -->
-        <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
-          <div class="absolute inset-0 bg-linear-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-            <CardTitle class="text-sm font-semibold">Type populaire</CardTitle>
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <TrendingUp class="h-6 w-6 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent class="relative">
-            <div class="text-lg font-bold truncate bg-linear-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent" :title="kpis.mostUsedType?.name">
-              {{ kpis.mostUsedType?.name || '—' }}
-            </div>
-            <p class="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
-              <Plane class="h-3 w-3" />
-              {{ kpis.mostUsedType?.count || 0 }} aéronefs
-            </p>
-          </CardContent>
-        </Card>
-
-        <!-- Exploitants -->
-        <Card class="group border-2 hover:shadow-xl transition-all cursor-pointer relative overflow-hidden">
-          <div class="absolute inset-0 bg-linear-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-            <CardTitle class="text-sm font-semibold">Exploitants</CardTitle>
-            <div class="h-12 w-12 rounded-xl bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Building2 class="h-6 w-6 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent class="relative">
-            <div class="text-4xl font-bold bg-linear-to-br from-orange-600 to-orange-800 bg-clip-text text-transparent">
-              {{ kpis.totalOperators }}
-            </div>
-            <p class="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
-              <Building2 class="h-3 w-3" />
-              Compagnies actives
-            </p>
-          </CardContent>
-        </Card>
-      </template>
-    </div>
-
-    <!-- Filtres et recherche -->
-    <Card class="border-2 shadow-lg">
-      <CardHeader>
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <Filter class="h-5 w-5 text-muted-foreground" />
-            <CardTitle>Recherche et filtres</CardTitle>
-            <Badge v-if="hasActiveFilters" variant="secondary">
-              Active
-            </Badge>
-          </div>
-          <Button 
-            v-if="hasActiveFilters" 
-            variant="ghost" 
-            size="sm" 
-            @click="clearSearch"
-            class="gap-2"
-          >
-            <X class="h-4 w-4" />
-            Réinitialiser
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div class="flex flex-col sm:flex-row gap-4">
-          <div class="flex-1">
-            <div class="relative">
-              <Search class="absolute left-3 top-4 h-4 w-4 text-muted-foreground" />
-              <Input
-                v-model="searchQuery"
-                placeholder="Rechercher par nom ou code ICAO..."
-                class="pl-10 h-12 border-2"
-                @input="debouncedSearch"
-              />
-            </div>
-          </div>
-          <Select v-model="sortBy">
-            <SelectTrigger class="w-full sm:w-60 h-12">
-              <SelectValue placeholder="Trier par..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Par défaut</SelectItem>
-              <SelectItem value="name_asc">Nom (A → Z)</SelectItem>
-              <SelectItem value="name_desc">Nom (Z → A)</SelectItem>
-              <SelectItem value="sigle_asc">Code ICAO (A → Z)</SelectItem>
-              <SelectItem value="sigle_desc">Code ICAO (Z → A)</SelectItem>
-              <SelectItem value="created_desc">Plus récents</SelectItem>
-              <SelectItem value="created_asc">Plus anciens</SelectItem>
-              <SelectItem value="usage_desc">Plus utilisés</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
-
-    <!-- Liste des types -->
-    <Card class="border-2 shadow-lg">
-      <CardHeader>
-        <div class="flex items-center justify-between">
-          <div>
-            <CardTitle class="flex items-center gap-2 text-xl">
-              <Layers class="h-5 w-5" />
-              Types d'aéronefs ({{ displayedTypes.length }})
-            </CardTitle>
-            <CardDescription class="mt-1">
-              Liste complète des types disponibles
-            </CardDescription>
-          </div>
-          <div class="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              @click="viewMode = 'grid'"
-              :class="viewMode === 'grid' ? 'bg-primary text-primary-foreground' : ''"
-            >
-              <LayoutGrid class="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              @click="viewMode = 'list'"
-              :class="viewMode === 'list' ? 'bg-primary text-primary-foreground' : ''"
-            >
-              <List class="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <!-- Loading -->
-        <div v-if="loading && displayedTypes.length === 0" class="space-y-3">
-          <div v-if="viewMode === 'grid'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <AircraftTypeCardSkeleton v-for="i in 6" :key="i" />
-          </div>
-          <div v-else class="space-y-2">
-            <AircraftTypeRowSkeleton v-for="i in 6" :key="i" />
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div 
-          v-else-if="displayedTypes.length === 0" 
-          class="text-center py-16"
-        >
-          <div class="h-24 w-24 rounded-2xl bg-linear-to-br from-green-100 to-emerald-100 dark:from-green-950 dark:to-emerald-950 mx-auto mb-6 flex items-center justify-center">
-            <Layers class="h-12 w-12 text-green-600 dark:text-green-400" />
-          </div>
-          <h3 class="text-xl font-semibold mb-2">Aucun type trouvé</h3>
-          <p class="text-muted-foreground mb-6">
-            {{ searchQuery ? 'Aucun résultat pour cette recherche' : 'Commencez par créer un type d\'aéronef' }}
-          </p>
-          <Button v-if="!searchQuery && can('aircraftType.create')" @click="openCreateDialog" size="lg" class="gap-2">
-            <Plus class="h-4 w-4" />
-            Créer un type
-          </Button>
-        </div>
-
-        <!-- Grid View -->
-        <div v-else-if="viewMode === 'grid'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card
-            v-for="type in displayedTypes"
-            :key="type.id"
-            class="group hover:shadow-2xl transition-all cursor-pointer border-2 hover:border-primary/50 relative overflow-hidden"
-            @click="openViewDialog(type)"
-          >
-            <div class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <CardHeader class="pb-3 relative">
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-3">
-                    <div class="h-12 w-12 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                      <Plane class="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                  <CardTitle class="text-lg group-hover:text-primary transition-colors leading-tight">
-                    {{ type.name }}
-                  </CardTitle>
-                  <div class="flex gap-2 mt-1 flex-wrap">
-                    <Badge variant="secondary" class="font-mono mt-2 text-xs">
-                      {{ type.sigle }}
-                    </Badge>
-                    <Badge variant="default" class="font-mono mt-2 text-xs">
-                      {{ kgToTons(type.default_pmad) }}
-                    </Badge>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger as-child @click.stop>
-                    <Button variant="ghost" size="icon" class="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreVertical class="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem @click.stop="openViewDialog(type)">
-                      <Eye class="mr-2 h-4 w-4" />
-                      Voir les détails
-                    </DropdownMenuItem>
-                    <DropdownMenuItem v-if="can('aircraftType.update')" @click.stop="openEditDialog(type)">
-                      <Pencil class="mr-2 h-4 w-4" />
-                      Modifier
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator v-if="can('aircraftType.delete')" />
-                    <DropdownMenuItem v-if="can('aircraftType.delete')"
-                      @click.stop="confirmDelete(type)"
-                      class="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 class="mr-2 h-4 w-4" />
-                      Supprimer
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent class="relative">
-              <div class="space-y-3 text-sm">
-                <div class="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <span class="text-muted-foreground flex items-center gap-2">
-                    <Plane class="h-3.5 w-3.5" />
-                    Aéronefs
-                  </span>
-                  <Badge variant="default" class="font-semibold">
-                    {{ getAircraftCount(type.id) }}
-                  </Badge>
-                </div>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-muted-foreground flex items-center gap-1">
-                    <Calendar class="h-3 w-3" />
-                    Créé le
-                  </span>
-                  <span class="font-medium">{{ formatDate(type.created_at) }}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <!-- List View -->
-        <div v-else class="space-y-2">
-          <Card
-            v-for="type in displayedTypes"
-            :key="type.id"
-            class="hover:bg-muted/50 transition-all cursor-pointer border-2"
-            @click="openViewDialog(type)"
-          >
-            <CardContent class="p-4">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4 flex-1">
-                  <div class="h-14 w-14 rounded-full bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0 shadow-lg">
-                    <Layers class="h-7 w-7 text-white" />
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="font-bold text-lg">{{ type.name }}</div>
-                    <div class="text-sm text-muted-foreground flex items-center gap-2 mt-1 flex-wrap">
-                      <div class="flex gap-2">
-                        <Badge variant="secondary" class="font-mono text-xs">
-                          {{ type.sigle }}
-                        </Badge>
-                        <Badge variant="default" class="font-mono text-xs">
-                          {{ kgToTons(type.default_pmad) }}
-                        </Badge>
-                      </div>
-                      <span>•</span>
-                      <span class="flex items-center gap-1">
-                        <Plane class="h-3 w-3" />
-                        {{ getAircraftCount(type.id) }} aéronefs
-                      </span>
-                      <span>•</span>
-                      <span>{{ formatDate(type.created_at) }}</span>
-                    </div>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger as-child @click.stop>
-                    <Button variant="ghost" size="icon" class="h-8 w-8">
-                      <MoreVertical class="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem @click.stop="openViewDialog(type)">
-                      <Eye class="mr-2 h-4 w-4" />
-                      Voir les détails
-                    </DropdownMenuItem>
-                    <DropdownMenuItem v-if="can('aircraftType.update')" @click.stop="openEditDialog(type)">
-                      <Pencil class="mr-2 h-4 w-4" />
-                      Modifier
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator v-if="can('aircraftType.delete')" />
-                    <DropdownMenuItem v-if="can('aircraftType.delete')"
-                      @click.stop="confirmDelete(type)"
-                      class="text-destructive focus:text-destructive"
-                    >
-                      <Trash2 class="mr-2 h-4 w-4" />
-                      Supprimer
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </CardContent>
-    </Card>
-
-    <!-- Load More Trigger -->
-    <div v-if="hasMorePages && !aircraftTypesStore.loading && !searchQuery" ref="loadMoreTrigger" class="flex justify-center py-8">
-      <Button variant="outline" @click="loadMore" :disabled="aircraftTypesStore.loading" size="lg" class="gap-2">
-        <ChevronDown class="h-4 w-4" />
-        Charger plus de types
+      <Button v-if="can('aircraftType.create')" @click="openCreateDialog" size="sm" class="gap-1.5">
+        <Plus class="h-4 w-4" />
+        Nouveau type
       </Button>
     </div>
 
-    <!-- Loading More -->
-    <div v-if="aircraftTypesStore.loading && displayedTypes.length > 0" class="py-4">
-      <div v-if="viewMode === 'grid'" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <AircraftTypeCardSkeleton v-for="i in 3" :key="i" />
+    <!-- KPI Cards -->
+    <div class="hidden md:grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- Skeletons -->
+      <template v-if="loading && aircraftTypesStore.aircraftTypes.length === 0">
+        <div v-for="i in 4" :key="i" class="bg-card border border-border rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <Skeleton class="h-3.5 w-20" />
+            <Skeleton class="h-8 w-8 rounded-lg" />
+          </div>
+          <Skeleton class="h-7 w-12" />
+          <Skeleton class="h-3 w-28" />
+        </div>
+      </template>
+
+      <template v-else>
+        <!-- Total types -->
+        <div class="bg-card border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total types</span>
+            <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+              <Layers class="h-4 w-4 text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-foreground">{{ kpis.totalTypes }}</p>
+          <p class="text-xs text-muted-foreground mt-1">Types enregistrés</p>
+        </div>
+
+        <!-- Flotte totale -->
+        <div class="bg-card border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Flotte</span>
+            <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+              <Plane class="h-4 w-4 text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-foreground">{{ kpis.totalAircrafts }}</p>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-300">
+              <span class="h-1.5 w-1.5 rounded-full bg-green-500 inline-block"></span>
+              {{ kpis.activeAircrafts }} actifs
+            </span>
+            <span class="text-xs text-muted-foreground">·</span>
+            <span class="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <span class="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 inline-block"></span>
+              {{ kpis.inactiveAircrafts }} inactifs
+            </span>
+          </div>
+        </div>
+
+        <!-- Type le plus utilisé -->
+        <div class="bg-card border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Type populaire</span>
+            <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+              <TrendingUp class="h-4 w-4 text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+            </div>
+          </div>
+          <p class="text-base font-bold text-foreground truncate" :title="kpis.mostUsedType?.name">
+            {{ kpis.mostUsedType?.name || '—' }}
+          </p>
+          <p class="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+            <Plane class="h-3 w-3" :stroke-width="1.5" />
+            {{ kpis.mostUsedType?.count || 0 }} aéronefs
+          </p>
+        </div>
+
+        <!-- Exploitants -->
+        <div class="bg-card border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Exploitants</span>
+            <div class="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+              <Building2 class="h-4 w-4 text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-foreground">{{ kpis.totalOperators }}</p>
+          <p class="text-xs text-muted-foreground mt-1">Compagnies actives</p>
+        </div>
+      </template>
+    </div>
+
+    <!-- Barre recherche + tri + toggle vue -->
+    <div class="flex items-center gap-2">
+      <div class="flex-1 relative">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <Input
+          v-model="searchQuery"
+          placeholder="Rechercher par nom ou code ICAO..."
+          class="pl-9 h-9 text-sm"
+          @input="debouncedSearch"
+        />
       </div>
-      <div v-else class="space-y-2">
-        <AircraftTypeRowSkeleton v-for="i in 3" :key="i" />
+
+      <!-- Clear recherche -->
+      <Button v-if="searchQuery" variant="ghost" size="icon" class="h-9 w-9 shrink-0" @click="clearSearch">
+        <X class="h-4 w-4" />
+      </Button>
+
+      <!-- Select tri — valeur sentinelle "default" pour éviter l'erreur shadcn value="" -->
+      <Select v-model="sortBy">
+        <SelectTrigger class="h-9 w-44 text-sm shrink-0">
+          <SelectValue placeholder="Trier par..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="default">Par défaut</SelectItem>
+          <SelectItem value="name_asc">Nom (A → Z)</SelectItem>
+          <SelectItem value="name_desc">Nom (Z → A)</SelectItem>
+          <SelectItem value="sigle_asc">Code ICAO (A → Z)</SelectItem>
+          <SelectItem value="sigle_desc">Code ICAO (Z → A)</SelectItem>
+          <SelectItem value="created_desc">Plus récents</SelectItem>
+          <SelectItem value="created_asc">Plus anciens</SelectItem>
+          <SelectItem value="usage_desc">Plus utilisés</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <!-- Toggle vue grid / list -->
+      <div class="flex items-center bg-muted rounded-md p-0.5 shrink-0">
+        <button
+          @click="viewMode = 'grid'"
+          class="h-7 w-7 flex items-center justify-center rounded transition-all"
+          :class="viewMode === 'grid' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+        >
+          <LayoutGrid class="h-3.5 w-3.5" />
+        </button>
+        <button
+          @click="viewMode = 'list'"
+          class="h-7 w-7 flex items-center justify-center rounded transition-all"
+          :class="viewMode === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+        >
+          <List class="h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
 
-    <!-- Dialogs -->
+    <!-- Contenu : liste des types -->
+    <div class="space-y-3">
+
+      <!-- Skeleton chargement initial -->
+      <template v-if="loading && displayedTypes.length === 0">
+        <div v-if="viewMode === 'grid'" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <AircraftTypeCardSkeleton v-for="i in 6" :key="i" />
+        </div>
+        <div v-else class="space-y-1.5">
+          <AircraftTypeRowSkeleton v-for="i in 6" :key="i" />
+        </div>
+      </template>
+
+      <!-- État vide -->
+      <div v-else-if="displayedTypes.length === 0" class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="h-14 w-14 rounded-xl bg-muted flex items-center justify-center mb-4">
+          <Layers class="h-7 w-7 text-muted-foreground" :stroke-width="1.5" />
+        </div>
+        <p class="font-medium text-sm mb-1">
+          {{ searchQuery ? 'Aucun résultat trouvé' : 'Aucun type enregistré' }}
+        </p>
+        <p class="text-xs text-muted-foreground mb-5 max-w-xs">
+          {{ searchQuery ? 'Essayez avec d\'autres termes.' : 'Commencez par créer un type d\'aéronef.' }}
+        </p>
+        <Button v-if="!searchQuery && can('aircraftType.create')" @click="openCreateDialog" size="sm" class="gap-1.5">
+          <Plus class="h-4 w-4" />
+          Créer un type
+        </Button>
+        <Button v-else-if="searchQuery" variant="outline" size="sm" @click="clearSearch" class="gap-1.5">
+          <X class="h-4 w-4" />
+          Effacer la recherche
+        </Button>
+      </div>
+
+      <!-- Vue grille -->
+      <div v-else-if="viewMode === 'grid'" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          v-for="type in displayedTypes"
+          :key="type.id"
+          class="group relative bg-card border border-border rounded-xl overflow-hidden cursor-pointer transition-all duration-150
+                 hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,95,165,0.08)]"
+          @click="openViewDialog(type)"
+        >
+          <!-- Barre latérale bleue -->
+          <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-blue-600" />
+
+          <div class="pl-5 pr-4 pt-4 pb-4">
+            <!-- En-tête -->
+            <div class="flex items-start justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="h-9 w-9 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
+                  <Layers class="h-[18px] w-[18px] text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[13.5px] font-semibold leading-tight truncate text-foreground
+                             group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {{ type.name }}
+                  </p>
+                  <p class="text-[11px] font-mono text-muted-foreground mt-0.5">{{ type.sigle }}</p>
+                </div>
+              </div>
+
+              <!-- Menu -->
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child @click.stop>
+                  <Button
+                    variant="ghost" size="icon"
+                    class="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity border border-border rounded-md"
+                  >
+                    <MoreVertical class="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" class="w-44">
+                  <DropdownMenuItem @click.stop="openViewDialog(type)" class="cursor-pointer text-sm">
+                    <Eye class="mr-2 h-3.5 w-3.5" />Voir les détails
+                  </DropdownMenuItem>
+                  <DropdownMenuItem v-if="can('aircraftType.update')" @click.stop="openEditDialog(type)" class="cursor-pointer text-sm">
+                    <Pencil class="mr-2 h-3.5 w-3.5" />Modifier
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator v-if="can('aircraftType.delete')" />
+                  <DropdownMenuItem v-if="can('aircraftType.delete')" @click.stop="confirmDelete(type)"
+                    class="text-destructive focus:text-destructive cursor-pointer text-sm">
+                    <Trash2 class="mr-2 h-3.5 w-3.5" />Supprimer
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div class="h-px bg-border mb-3" />
+
+            <!-- PMAD -->
+            <div class="flex items-center gap-1.5 mb-3">
+              <span class="inline-flex items-center font-mono text-[11px] font-medium px-1.5 py-0.5 rounded
+                           bg-muted border border-border text-muted-foreground leading-relaxed">
+                <span class="opacity-60 mr-1 font-normal">PMAD</span>{{ kgToTons(type.default_pmad) }}
+              </span>
+            </div>
+
+            <!-- Footer : nb aéronefs + hint -->
+            <div class="flex items-center justify-between pt-2.5 border-t border-border">
+              <span class="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                <Plane class="h-3 w-3 shrink-0" :stroke-width="1.5" />
+                {{ getAircraftCount(type.id) }} aéronef{{ getAircraftCount(type.id) > 1 ? 's' : '' }}
+              </span>
+              <span class="text-[11px] font-medium text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                Voir →
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vue liste -->
+      <div v-else class="space-y-1.5">
+        <div
+          v-for="type in displayedTypes"
+          :key="type.id"
+          class="group flex items-center gap-3 px-4 py-3 bg-card border border-border rounded-lg
+                 hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:bg-muted/30 transition-all duration-150 cursor-pointer"
+          @click="openViewDialog(type)"
+        >
+          <!-- Indicateur -->
+          <div class="w-0.5 self-stretch rounded-full bg-blue-600 shrink-0" />
+
+          <!-- Icône -->
+          <div class="h-8 w-8 rounded-md bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
+            <Layers class="h-4 w-4 text-blue-600 dark:text-blue-400" :stroke-width="1.5" />
+          </div>
+
+          <!-- Infos -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-sm truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {{ type.name }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <span class="font-mono">{{ type.sigle }}</span>
+              <span>·</span>
+              <span>PMAD {{ kgToTons(type.default_pmad) }}</span>
+              <span>·</span>
+              <span class="flex items-center gap-1">
+                <Plane class="h-3 w-3" :stroke-width="1.5" />
+                {{ getAircraftCount(type.id) }} aéronefs
+              </span>
+            </div>
+          </div>
+
+          <!-- Menu -->
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child @click.stop>
+              <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <MoreVertical class="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-44">
+              <DropdownMenuItem @click.stop="openViewDialog(type)" class="cursor-pointer text-sm">
+                <Eye class="mr-2 h-3.5 w-3.5" />Voir les détails
+              </DropdownMenuItem>
+              <DropdownMenuItem v-if="can('aircraftType.update')" @click.stop="openEditDialog(type)" class="cursor-pointer text-sm">
+                <Pencil class="mr-2 h-3.5 w-3.5" />Modifier
+              </DropdownMenuItem>
+              <DropdownMenuSeparator v-if="can('aircraftType.delete')" />
+              <DropdownMenuItem v-if="can('aircraftType.delete')" @click.stop="confirmDelete(type)"
+                class="text-destructive focus:text-destructive cursor-pointer text-sm">
+                <Trash2 class="mr-2 h-3.5 w-3.5" />Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <!-- Charger plus (infinite scroll trigger) -->
+      <div v-if="hasMorePages && !loading && !searchQuery" ref="loadMoreTrigger" class="flex justify-center pt-4 pb-2">
+        <Button variant="outline" size="sm" @click="loadMore" :disabled="loading" class="gap-1.5 text-xs">
+          <ChevronDown class="h-3.5 w-3.5" />
+          Charger plus
+        </Button>
+      </div>
+
+      <!-- Skeleton chargement page suivante -->
+      <template v-if="loading && displayedTypes.length > 0">
+        <div v-if="viewMode === 'grid'" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <AircraftTypeCardSkeleton v-for="i in 3" :key="i" />
+        </div>
+        <div v-else class="space-y-1.5">
+          <AircraftTypeRowSkeleton v-for="i in 3" :key="i" />
+        </div>
+      </template>
+
+      <!-- Fin de liste -->
+      <div v-if="!hasMorePages && displayedTypes.length > 0 && !searchQuery" class="flex justify-center pt-4 pb-2">
+        <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Check class="h-3.5 w-3.5 text-green-500" />
+          Tous les types sont affichés
+        </span>
+      </div>
+    </div>
+
+    <!-- Dialog formulaire -->
     <AircraftTypeFormDialog
       v-model:open="dialogOpen"
       :aircraft-type="selectedType"
       @success="handleSuccess"
     />
 
+    <!-- Dialog vue détail -->
     <AircraftTypeViewDialog
       v-model:open="viewDialogOpen"
       :aircraft-type="selectedType"
       @edit="handleEditFromView"
+      @delete="confirmDelete"
     />
 
+    <!-- Dialog confirmation suppression -->
     <AlertDialog v-model:open="deleteDialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -434,10 +371,19 @@
             Confirmer la suppression
           </AlertDialogTitle>
           <AlertDialogDescription class="space-y-2">
-            <p>Êtes-vous sûr de vouloir supprimer le type <strong class="text-foreground">{{ typeToDelete?.name }}</strong> ?</p>
-            <p v-if="getAircraftCount(typeToDelete?.id || 0) > 0" class="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive font-medium">
+            <p>
+              Êtes-vous sûr de vouloir supprimer le type
+              <strong class="text-foreground">{{ typeToDelete?.name }}</strong> ?
+            </p>
+            <p
+              v-if="getAircraftCount(typeToDelete?.id ?? 0) > 0"
+              class="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm font-medium"
+            >
               <AlertTriangle class="h-4 w-4 shrink-0 mt-0.5" />
-              <span>Ce type est utilisé par {{ getAircraftCount(typeToDelete?.id || 0) }} aéronef(s). Cette action est irréversible.</span>
+              <span>
+                Ce type est utilisé par {{ getAircraftCount(typeToDelete?.id ?? 0) }} aéronef(s).
+                Cette action est irréversible.
+              </span>
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -445,7 +391,7 @@
           <AlertDialogCancel>Annuler</AlertDialogCancel>
           <AlertDialogAction
             @click="handleDelete"
-            class="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
+            class="bg-destructive text-white hover:bg-destructive/90 gap-2"
           >
             <Trash2 class="h-4 w-4" />
             Supprimer définitivement
@@ -458,54 +404,25 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { 
-  Plus, 
-  Search, 
-  Pencil, 
-  Trash2, 
-  MoreVertical,
-  Layers,
-  Plane,
-  Calendar,
-  TrendingUp,
-  Building2,
-  X,
-  Eye,
-  LayoutGrid,
-  List,
-  Filter,
-  Database,
-  AlertTriangle,
-  ChevronDown
+import {
+  Plus, Search, Pencil, Trash2, MoreVertical,
+  Layers, Plane, TrendingUp, Building2,
+  X, Eye, LayoutGrid, List, AlertTriangle,
+  ChevronDown, Check
 } from 'lucide-vue-next'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog'
 import AircraftTypeFormDialog from '~/components/modules/aircraft-type/AircraftTypeFormDialog.vue'
 import AircraftTypeViewDialog from '~/components/modules/aircraft-type/AircraftTypeViewDialog.vue'
@@ -513,15 +430,11 @@ import AircraftTypeCardSkeleton from '@/components/modules/aircraft-type/Aircraf
 import AircraftTypeRowSkeleton from '@/components/modules/aircraft-type/AircraftTypeRowSkeleton.vue'
 import type { AircraftType } from '~/types/api'
 
-definePageMeta({
-  middleware: 'auth'
-})
+definePageMeta({ middleware: 'auth' })
 
 useHead({
   title: 'Types d\'aéronefs | VTA',
-  meta: [
-    { name: 'description', content: 'Gestion des types d\'aéronefs. Consultez et modifiez les caractéristiques des différents types d\'aéronefs disponibles.' }
-  ]
+  meta: [{ name: 'description', content: 'Gestion des types d\'aéronefs.' }]
 })
 
 const { kgToTons } = useAircraftUtils()
@@ -531,32 +444,39 @@ const operatorsStore = useOperatorsStore()
 const { success: showSuccess, error: showError } = useToast()
 const { can } = usePermission()
 
-const searchQuery = ref('')
-const sortBy = ref('all')
-const viewMode = ref<'grid' | 'list'>('grid')
-const dialogOpen = ref(false)
+// ─── State ────────────────────────────────────────────────────────────────────
+const searchQuery    = ref('')
+// Utilise "default" comme sentinelle pour éviter l'erreur shadcn "value cannot be empty string"
+const sortBy         = ref('default')
+const viewMode       = ref<'grid' | 'list'>('grid')
+const dialogOpen     = ref(false)
 const viewDialogOpen = ref(false)
 const deleteDialogOpen = ref(false)
-const selectedType = ref<AircraftType | null>(null)
-const typeToDelete = ref<AircraftType | null>(null)
-const isSearching = ref(false)
+const selectedType   = ref<AircraftType | null>(null)
+const typeToDelete   = ref<AircraftType | null>(null)
+const isSearching    = ref(false)
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+let searchTimeout: ReturnType<typeof setTimeout>
 
-// KPIs calculés
+// ─── Computed ─────────────────────────────────────────────────────────────────
+const loading      = computed(() => aircraftTypesStore.loading)
+const hasMorePages = computed(() => aircraftTypesStore.hasMorePages)
+const total        = computed(() => aircraftTypesStore.total)
+
 const kpis = computed(() => {
-  const types = aircraftTypesStore.aircraftTypes
+  const types    = aircraftTypesStore.aircraftTypes
   const aircrafts = aircraftsStore.allAircrafts
-  
-  const typeCounts = types.map(type => ({
-    id: type.id,
-    name: type.name,
-    count: aircrafts.filter(a => a.type?.id === type.id).length
+
+  const typeCounts = types.map(t => ({
+    id: t.id, name: t.name,
+    count: aircrafts.filter(a => a.type?.id === t.id).length
   }))
-  
-  const mostUsedType = typeCounts.sort((a, b) => b.count - a.count)[0]
-  const activeAircrafts = aircrafts.filter(a => a.in_activity).length
+  const mostUsedType      = [...typeCounts].sort((a, b) => b.count - a.count)[0]
+  const activeAircrafts   = aircrafts.filter(a => a.in_activity).length
   const inactiveAircrafts = aircrafts.length - activeAircrafts
-  const uniqueOperators = new Set(aircrafts.map(a => a.operator?.id).filter(Boolean))
-  
+  const uniqueOperators   = new Set(aircrafts.map(a => a.operator?.id).filter(Boolean))
+
   return {
     totalTypes: total.value,
     totalAircrafts: aircrafts.length,
@@ -567,107 +487,73 @@ const kpis = computed(() => {
   }
 })
 
-const hasActiveFilters = computed(() => searchQuery.value || sortBy.value !== 'all')
-
-// Computed
-const loading = computed(() => aircraftTypesStore.loading)
-const hasMorePages = computed(() => aircraftTypesStore.hasMorePages)
-const total = computed(() => aircraftTypesStore.total)
-
-// Computed pour les types affichés avec recherche et tri
+/**
+ * displayedTypes applique tri local sur la liste du store.
+ * La recherche est gérée côté API (debouncedSearch).
+ * Le tri utilise "default" comme valeur neutre (pas de tri supplémentaire).
+ */
 const displayedTypes = computed(() => {
   let types = [...aircraftTypesStore.aircraftTypes]
-  
-  // Appliquer la recherche locale si une requête existe
+
+  // Filtre local de sécurité si une recherche est en cours
   if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase().trim()
-    types = types.filter(type => 
-      type.name.toLowerCase().includes(query) ||
-      type.sigle.toLowerCase().includes(query)
+    const q = searchQuery.value.toLowerCase().trim()
+    types = types.filter(t =>
+      t.name.toLowerCase().includes(q) || t.sigle.toLowerCase().includes(q)
     )
   }
-  
-  // Appliquer le tri
+
   switch (sortBy.value) {
-    case 'name_asc':
-      types.sort((a, b) => a.name.localeCompare(b.name))
-      break
-    case 'name_desc':
-      types.sort((a, b) => b.name.localeCompare(a.name))
-      break
-    case 'sigle_asc':
-      types.sort((a, b) => a.sigle.localeCompare(b.sigle))
-      break
-    case 'sigle_desc':
-      types.sort((a, b) => b.sigle.localeCompare(a.sigle))
-      break
-    case 'created_desc':
-      types.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-      break
-    case 'created_asc':
-      types.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
-      break
-    case 'usage_desc':
-      types.sort((a, b) => getAircraftCount(b.id) - getAircraftCount(a.id))
-      break
+    case 'name_asc':     types.sort((a, b) => a.name.localeCompare(b.name)); break
+    case 'name_desc':    types.sort((a, b) => b.name.localeCompare(a.name)); break
+    case 'sigle_asc':    types.sort((a, b) => a.sigle.localeCompare(b.sigle)); break
+    case 'sigle_desc':   types.sort((a, b) => b.sigle.localeCompare(a.sigle)); break
+    case 'created_desc': types.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()); break
+    case 'created_asc':  types.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()); break
+    case 'usage_desc':   types.sort((a, b) => getAircraftCount(b.id) - getAircraftCount(a.id)); break
+    // "default" : pas de tri supplémentaire — ordre API
   }
-  
+
   return types
 })
 
-// Intersection Observer
-const loadMoreTrigger = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
-let searchTimeout: NodeJS.Timeout
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const getAircraftCount = (typeId: number) =>
+  aircraftsStore.allAircrafts.filter(a => a.type?.id === typeId).length
 
-// Fetch initial types
+// ─── Fetch ────────────────────────────────────────────────────────────────────
 const fetchAircraftTypes = async () => {
   aircraftTypesStore.resetPagination()
   const result = await aircraftTypesStore.fetchAircraftTypesPage(1)
-
-  if (!result.success) {
-    showError(result.message || 'Erreur lors du chargement des types')
-  }
+  if (!result.success) showError(result.message || 'Erreur lors du chargement des types')
 }
 
-// Load more for infinite scroll
 const loadMore = async () => {
   if (!hasMorePages.value || loading.value) return
   await aircraftTypesStore.loadNextPage()
 }
 
-// Search with debounce - utilise toujours l'API
+// ─── Recherche ────────────────────────────────────────────────────────────────
 const debouncedSearch = () => {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(async () => {
     const query = searchQuery.value.trim()
-    
+
     if (!query) {
-      // Si la recherche est vide, recharger tous les types
       isSearching.value = false
       await fetchAircraftTypes()
       return
     }
-    
+
     isSearching.value = true
-    
-    // Toujours chercher via l'API pour avoir les résultats exacts
     try {
       const result = await aircraftTypesStore.findAircraftType(query)
-      
       if (result.success && result.data) {
-        // L'API retourne un seul type ou un tableau
-        if (Array.isArray(result.data)) {
-          aircraftTypesStore.aircraftTypes = result.data
-        } else {
-          aircraftTypesStore.aircraftTypes = [result.data]
-        }
+        aircraftTypesStore.aircraftTypes = Array.isArray(result.data) ? result.data : [result.data]
       } else {
-        // Aucun résultat trouvé
         aircraftTypesStore.aircraftTypes = []
       }
-    } catch (error) {
-      console.error('Search error:', error)
+    } catch {
       showError('Erreur lors de la recherche')
       aircraftTypesStore.aircraftTypes = []
     } finally {
@@ -676,88 +562,45 @@ const debouncedSearch = () => {
   }, 300)
 }
 
-// Réinitialiser la recherche
 const clearSearch = async () => {
   searchQuery.value = ''
-  sortBy.value = 'all'
+  sortBy.value      = 'default'
   isSearching.value = false
-  
-  // Recharger tous les types
   await fetchAircraftTypes()
 }
 
-// Setup Intersection Observer for infinite scroll
-const setupIntersectionObserver = () => {
-  if (!loadMoreTrigger.value) return
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting && hasMorePages.value && !loading.value && !searchQuery.value) {
-        loadMore()
-      }
-    },
-    { threshold: 0.5, rootMargin: '100px' }
-  )
-
-  observer.observe(loadMoreTrigger.value)
-}
-
-const getAircraftCount = (typeId: number) => {
-  return aircraftsStore.allAircrafts.filter(a => a.type?.id === typeId).length
-}
-
-const formatDate = (date: string | null) => {
-  if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
-}
-
-const openCreateDialog = () => {
-  selectedType.value = null
-  dialogOpen.value = true
-}
-
-const openEditDialog = (type: AircraftType) => {
-  selectedType.value = type
-  dialogOpen.value = true
-}
-
-const openViewDialog = (type: AircraftType) => {
-  selectedType.value = type
-  viewDialogOpen.value = true
-}
+// ─── Dialogs ──────────────────────────────────────────────────────────────────
+const openCreateDialog = () => { selectedType.value = null; dialogOpen.value = true }
+const openEditDialog   = (type: AircraftType) => { selectedType.value = type; dialogOpen.value = true }
+const openViewDialog   = (type: AircraftType) => { selectedType.value = type; viewDialogOpen.value = true }
 
 const handleEditFromView = (type: AircraftType) => {
-  selectedType.value = type
-  viewDialogOpen.value = false
-  dialogOpen.value = true
+  selectedType.value    = type
+  viewDialogOpen.value  = false
+  dialogOpen.value      = true
 }
 
 const confirmDelete = (type: AircraftType) => {
-  typeToDelete.value = type
+  typeToDelete.value    = type
+  viewDialogOpen.value  = false   // ferme le view dialog si ouvert
   deleteDialogOpen.value = true
 }
 
 const handleDelete = async () => {
   if (!typeToDelete.value) return
-  
   try {
     const result = await aircraftTypesStore.deleteAircraftType(typeToDelete.value.id)
-    
     if (result.success) {
       showSuccess('Type supprimé avec succès')
       await fetchAircraftTypes()
     } else {
       throw new Error(result.message)
     }
-  } catch (error: any) {
-    showError(error?.message || 'Impossible de supprimer ce type.')
+  } catch (err: any) {
+    showError(err?.message || 'Impossible de supprimer ce type.')
   } finally {
     deleteDialogOpen.value = false
-    typeToDelete.value = null
+    typeToDelete.value     = null
   }
 }
 
@@ -766,34 +609,43 @@ const handleSuccess = async () => {
   dialogOpen.value = false
 }
 
-// Watcher pour le tri
-watch(sortBy, () => {
-  // Le tri est géré par le computed displayedTypes
-  // Pas besoin de recharger les données
-})
+// ─── Infinite scroll ──────────────────────────────────────────────────────────
+const setupIntersectionObserver = () => {
+  if (!loadMoreTrigger.value) return
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && hasMorePages.value && !loading.value && !searchQuery.value) loadMore()
+    },
+    { threshold: 0.5, rootMargin: '100px' }
+  )
+  observer.observe(loadMoreTrigger.value)
+}
 
-// Lifecycle
+// ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
+  // Restore view preference
+  if (import.meta.client) {
+    const saved = localStorage.getItem('aircraft-types-view-mode')
+    if (saved === 'list' || saved === 'grid') viewMode.value = saved
+  }
   try {
     await Promise.all([
       fetchAircraftTypes(),
       aircraftsStore.fetchAllAircrafts(),
       operatorsStore.fetchAllOperators()
     ])
-  } catch (error) {
-    console.error('Failed to load initial data:', error)
+  } catch {
     showError('Erreur lors du chargement des données initiales')
   }
-
-  setTimeout(() => {
-    setupIntersectionObserver()
-  }, 100)
+  setTimeout(setupIntersectionObserver, 100)
 })
 
 onUnmounted(() => {
-  if (observer) {
-    observer.disconnect()
-  }
+  observer?.disconnect()
   clearTimeout(searchTimeout)
+})
+
+watch(viewMode, (mode) => {
+  if (import.meta.client) localStorage.setItem('aircraft-types-view-mode', mode)
 })
 </script>

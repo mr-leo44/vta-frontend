@@ -145,6 +145,27 @@ export interface AircraftTypeFormData {
   default_pmad?: number | 0
 }
 
+export interface AircraftTypeKPIs {
+  active_aircrafts: number
+  inactive_aircrafts: number
+  total_aircrafts: number
+  total_operators: number
+  total_flights_current_year: number
+  total_flights: number
+  utilization_rate: number
+  average_pmad: number | null
+  flights_per_aircraft: number
+}
+
+export interface OperatorWithAircraftCount {
+  id: number
+  name: string
+  sigle: string
+  country?: string | null
+  aircrafts_count: number
+  active_aircrafts_count: number
+}
+
 // ==================== AIRCRAFTS ====================
 export interface Aircraft {
   id: number
@@ -178,6 +199,50 @@ export interface AircraftFormData {
   in_activity: boolean
   aircraft_type_id: number
   operator_id: number
+}
+
+export interface AircraftKPIs {
+  total_flights_current_year: number
+  total_flights_current_month: number
+  average_flights_per_month: number
+  is_active: boolean
+  pmad: number | null
+  total_flight_hours: number
+  average_flight_duration: number
+  utilization_rate: number
+  last_flight_date: string | null
+}
+
+export type AircraftFilterActivity = '' | 'true' | 'false'
+
+export type AircraftFilterSort =
+  | ''
+  | 'immatriculation_asc'
+  | 'immatriculation_desc'
+  | 'created_desc'
+  | 'created_asc'
+  | 'pmad_desc'
+  | 'pmad_asc'
+
+export interface AircraftFilters {
+  operator_id: string
+  aircraft_type_id: string
+  in_activity: AircraftFilterActivity
+  pmad_min: number | null
+  pmad_max: number | null
+  sort_by: AircraftFilterSort
+  has_flights: boolean
+}
+
+export interface AircraftFilterQuery {
+  search?: string | null
+  operator_id?: number | null
+  aircraft_type_id?: number | null
+  pmad_from?: number | null
+  pmad_to?: number | null
+  in_activity?: boolean | null
+  with_flights?: boolean | null
+  per_page?: number | null
 }
 
 // ==================== FLIGHTS ====================

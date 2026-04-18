@@ -1,131 +1,137 @@
 <template>
-  <Card class="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 hover:border-primary/50 relative overflow-hidden">
-    <!-- Status indicator border -->
-    <div :class="[
-      'absolute left-0 top-0 bottom-0 w-1 transition-all',
-      aircraft.in_activity ? 'bg-green-500' : 'bg-gray-400'
-    ]"></div>
-    
-    <!-- Linear overlay on hover -->
-    <div class="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-    
-    <!-- Main clickable area for view -->
-    <div @click="$emit('view', aircraft)" class="relative">
-      <CardHeader class="pb-3">
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <!-- Aircraft icon with status indicator -->
-            <div class="relative inline-block mb-3">
-              <div :class="[
-                'h-16 w-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg',
-                aircraft.in_activity 
-                  ? 'bg-linear-to-br from-green-500 to-emerald-600' 
-                  : 'bg-linear-to-br from-gray-400 to-gray-600'
-              ]">
-                <Plane class="h-8 w-8 text-white" />
-              </div>
-              <!-- Status dot -->
-              <div :class="[
-                'absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-4 border-background',
-                aircraft.in_activity ? 'bg-green-500' : 'bg-gray-400'
-              ]"></div>
-            </div>
-            
-            <CardTitle class="text-xl font-mono mb-2 group-hover:text-primary transition-colors">
+  <div
+    class="group relative bg-card border border-border rounded-xl overflow-hidden cursor-pointer transition-all duration-150
+           hover:border-blue-400/60 dark:hover:border-blue-500/40 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,95,165,0.08)]"
+    @click="$emit('view', aircraft)"
+  >
+    <!-- Barre latérale : vert = actif, gris = inactif -->
+    <div
+      class="absolute left-0 top-0 bottom-0 w-[3px]"
+      :class="aircraft.in_activity ? 'bg-green-500' : 'bg-border'"
+    />
+
+    <div class="pl-5 pr-4 pt-4 pb-4">
+
+      <!-- En-tête : icône + immatriculation + statut + menu -->
+      <div class="flex items-start justify-between gap-2 mb-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div
+            class="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+            :class="aircraft.in_activity
+              ? 'bg-green-50 dark:bg-green-950'
+              : 'bg-muted'"
+          >
+            <Plane
+              class="h-[18px] w-[18px]"
+              :class="aircraft.in_activity
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-muted-foreground'"
+              :stroke-width="1.5"
+            />
+          </div>
+          <div class="min-w-0">
+            <p class="text-[13.5px] font-semibold font-mono leading-tight truncate text-foreground
+                       group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
               {{ aircraft.immatriculation }}
-            </CardTitle>
-            
-            <CardDescription class="mt-2">
-              <div class="flex items-center gap-2 flex-wrap">
-                <Badge variant="secondary" class="font-semibold gap-1">
-                  <Layers class="h-3 w-3" />
-                  {{ aircraft.type?.sigle || 'N/A' }}
-                </Badge>
-                <Badge variant="outline" class="gap-1">
-                  <Weight class="h-3 w-3" />
-                  {{ kgToTons(aircraft.pmad) }}
-                </Badge>
-                <Badge :variant="aircraft.in_activity ? 'default' : 'outline'" class="gap-1">
-                  <Activity class="h-3 w-3" />
-                  {{ aircraft.in_activity ? 'Actif' : 'Inactif' }}
-                </Badge>
-              </div>
-            </CardDescription>
+            </p>
+            <span
+              class="text-[11px] font-medium"
+              :class="aircraft.in_activity
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-muted-foreground'"
+            >
+              {{ aircraft.in_activity ? 'En activité' : 'Inactif' }}
+            </span>
           </div>
-          
-          <!-- Actions menu -->
-          <DropdownMenu>
-            <DropdownMenuTrigger as-child @click.stop>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                class="h-9 w-9 opacity-0 group-hover:opacity-100 transition-all hover:bg-primary/10"
-              >
-                <MoreVertical class="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-48">
-              <DropdownMenuItem @click.stop="$emit('view', aircraft)" class="cursor-pointer">
-                <Eye class="mr-2 h-4 w-4" />
-                Voir les détails
-              </DropdownMenuItem>
-              <DropdownMenuItem v-if="canEdit !== false" @click.stop="$emit('edit', aircraft)" class="cursor-pointer">
-                <Pencil class="mr-2 h-4 w-4" />
-                Modifier
-              </DropdownMenuItem>
-              <DropdownMenuSeparator v-if="canDelete !== false" />
-              <DropdownMenuItem v-if="canDelete !== false"
-                @click.stop="$emit('delete', aircraft)" 
-                class="text-destructive focus:text-destructive cursor-pointer"
-              >
-                <Trash2 class="mr-2 h-4 w-4" />
-                Supprimer
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-
-      <CardContent class="space-y-3">
-        <!-- Aircraft type -->
-        <div class="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-          <Plane class="h-4 w-4 text-muted-foreground shrink-0" />
-          <span class="font-medium">{{ aircraft.type?.name || 'Type inconnu' }}</span>
-        </div>
-        
-        <!-- Operator -->
-        <div class="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-          <Building2 class="h-4 w-4 text-muted-foreground shrink-0" />
-          <span class="font-medium">{{ aircraft.operator?.name || 'Opérateur inconnu' }}</span>
         </div>
 
-        <!-- Flights count -->
-        <div v-if="aircraft.flights && aircraft.flights.length > 0" class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div class="flex items-center gap-2">
-            <PlaneTakeoff class="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <span class="text-sm font-medium">Vols enregistrés</span>
-          </div>
-          <Badge variant="default" class="font-bold">
-            {{ aircraft.flights.length }}
-          </Badge>
+        <!-- Menu actions -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child @click.stop>
+            <Button
+              variant="ghost" size="icon"
+              class="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity border border-border rounded-md"
+            >
+              <MoreVertical class="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-44">
+            <DropdownMenuItem @click.stop="$emit('view', aircraft)" class="cursor-pointer text-sm">
+              <Eye class="mr-2 h-3.5 w-3.5" />Voir les détails
+            </DropdownMenuItem>
+            <DropdownMenuItem v-if="canEdit !== false" @click.stop="$emit('edit', aircraft)" class="cursor-pointer text-sm">
+              <Pencil class="mr-2 h-3.5 w-3.5" />Modifier
+            </DropdownMenuItem>
+            <DropdownMenuSeparator v-if="canDelete !== false" />
+            <DropdownMenuItem
+              v-if="canDelete !== false"
+              @click.stop="$emit('delete', aircraft)"
+              class="text-destructive focus:text-destructive cursor-pointer text-sm"
+            >
+              <Trash2 class="mr-2 h-3.5 w-3.5" />Supprimer
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <!-- Séparateur -->
+      <div class="h-px bg-border mb-3" />
+
+      <!-- Codes : type + PMAD -->
+      <div class="flex items-center gap-1.5 flex-wrap mb-3">
+        <span
+          v-if="aircraft.type?.sigle"
+          class="inline-flex items-center font-mono text-[11px] font-medium px-1.5 py-0.5 rounded
+                 bg-muted border border-border text-muted-foreground leading-relaxed"
+        >
+          <span class="opacity-60 mr-1 font-normal">TYPE</span>{{ aircraft.type.sigle }}
+        </span>
+        <span
+          v-if="aircraft.pmad"
+          class="inline-flex items-center font-mono text-[11px] font-medium px-1.5 py-0.5 rounded
+                 bg-muted border border-border text-muted-foreground leading-relaxed"
+        >
+          <span class="opacity-60 mr-1 font-normal">PMAD</span>{{ kgToTons(aircraft.pmad) }}
+        </span>
+      </div>
+
+      <!-- Infos : type complet + opérateur -->
+      <div class="space-y-1.5 mb-3">
+        <div v-if="aircraft.type?.name" class="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <Layers class="h-3 w-3 shrink-0" :stroke-width="1.5" />
+          <span class="truncate">{{ aircraft.type.name }}</span>
         </div>
-      </CardContent>
+        <div v-if="aircraft.operator?.name" class="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+          <Building2 class="h-3 w-3 shrink-0" :stroke-width="1.5" />
+          <span class="truncate">{{ aircraft.operator.name }}</span>
+        </div>
+      </div>
+
+      <!-- Footer : vols + hint -->
+      <div class="flex items-center justify-between pt-2.5 border-t border-border">
+        <span
+          v-if="aircraft.flights && aircraft.flights.length > 0"
+          class="flex items-center gap-1.5 text-[12px] text-blue-600 dark:text-blue-400 font-medium"
+        >
+          <PlaneTakeoff class="h-3 w-3 shrink-0" :stroke-width="1.5" />
+          {{ aircraft.flights.length }} vol{{ aircraft.flights.length > 1 ? 's' : '' }}
+        </span>
+        <span v-else class="text-[12px] text-muted-foreground">Aucun vol</span>
+        <span class="text-[11px] font-medium text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+          Voir →
+        </span>
+      </div>
     </div>
-  </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Eye, Pencil, Trash2, MoreVertical, Plane, Building2, Layers, Activity, Weight, PlaneTakeoff } from 'lucide-vue-next'
+import { Eye, Pencil, Trash2, MoreVertical, Plane, Building2, Layers, PlaneTakeoff } from 'lucide-vue-next'
 import type { Aircraft } from '~/types/api'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 
 defineProps<{
